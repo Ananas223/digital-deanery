@@ -1,0 +1,29 @@
+# Секреты
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Зависимости и сборка
+node_modules/
+.next/
+dist/
+build/
+out/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Логи и системные файлы
+*.log
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
