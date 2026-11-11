@@ -7,6 +7,17 @@
 - [`docs/PRD.md`](docs/PRD.md) — продуктовые требования: базовые функции, пользовательские сценарии и критерии приёмки.
 - [`AGENTS.md`](AGENTS.md) — обязательные ограничения для ИИ-агентов: архитектура, безопасность, качество и процесс.
 
+## Стек
+
+- Next.js (App Router), React, TypeScript
+- Tailwind CSS, shadcn/ui
+- React Hook Form, Zod
+- PostgreSQL, Prisma ORM 7.x
+- Better Auth
+- Playwright, Vitest
+
+Правила работы со стеком и ограничения — в [`AGENTS.md`](AGENTS.md) § 2.
+
 ## Статус
 
 Прототип находится в разработке. Документы описывают целевую версию продукта.
