@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  applicationName: "Цифровой деканат будущего",
   title: {
     default: "Цифровой деканат будущего",
     template: "%s — Цифровой деканат будущего",
