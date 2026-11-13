@@ -1,4 +1,3 @@
-// Схема Prisma. Модели Better Auth и доменные модели добавляются в задаче P0-BE-03.
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -6,4 +5,149 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  DEAN_EMPLOYEE
+}
+
+enum StudyForm {
+  BUDGET
+  PAID
+}
+
+// --- Better Auth (сгенерировано CLI 1.7.23, модели проверены вручную) ---
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          Role      @default(STUDENT)
+  sessions      Session[]
+  accounts      Account[]
+
+  studentProfile StudentProfile?
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// --- Доменные модели этапа 0 ---
+
+model Faculty {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  programs Program[]
+  students StudentProfile[]
+
+  @@map("faculty")
+}
+
+model Program {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  facultyId String
+  faculty   Faculty  @relation(fields: [facultyId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  groups   Group[]
+  students StudentProfile[]
+
+  @@index([facultyId])
+  @@map("program")
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  programId String
+  program   Program  @relation(fields: [programId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  students StudentProfile[]
+
+  @@index([programId])
+  @@map("group")
+}
+
+model StudentProfile {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studentNumber String    @unique
+  facultyId     String
+  faculty       Faculty   @relation(fields: [facultyId], references: [id])
+  programId     String
+  program       Program   @relation(fields: [programId], references: [id])
+  groupId       String
+  group         Group     @relation(fields: [groupId], references: [id])
+  course        Int
+  studyForm     StudyForm
+  enrolledAt    DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([groupId])
+  @@index([programId])
+  @@map("student_profile")
 }
