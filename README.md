@@ -9,17 +9,35 @@
 - [`AGENTS.md`](AGENTS.md) — обязательные ограничения для ИИ-агентов: архитектура, безопасность, качество и процесс.
 - [`docs/SUBMISSION.md`](docs/SUBMISSION.md) — чек-лист сдачи работы по требованиям конкурса.
 - [`docs/ai-log.md`](docs/ai-log.md) — журнал работы ИИ-агентов: инструменты, промпты, этапы.
+- [`docs/adr/0001-stack.md`](docs/adr/0001-stack.md) — архитектурное решение по стеку и ограничения совместимости.
+- [`docs/third-party.md`](docs/third-party.md) — реестр сторонних компонентов и лицензий.
 
 ## Стек
 
-- Next.js (App Router), React, TypeScript
-- Tailwind CSS, shadcn/ui
+**Frontend**
+
+- Next.js (App Router), React, TypeScript (strict)
+- Tailwind CSS v4, shadcn/ui, Base UI
+- Motion, Recharts, Lucide React
 - React Hook Form, Zod
-- PostgreSQL, Prisma ORM 7.x
-- Better Auth
+- React Context + `useReducer` для локального UI-состояния
+
+**Backend**
+
+- Next.js Server Actions, Route Handlers
+- PostgreSQL, Prisma ORM
+- Better Auth, RBAC
+- Zod для серверной валидации
+
+**AI (опциональный трек)**
+
+- Vercel AI SDK, Agent Tools, LLM Provider API
+
+**Тесты**
+
 - Playwright, Vitest
 
-Правила работы со стеком и ограничения — в [`AGENTS.md`](AGENTS.md) § 2.
+Правила работы со стеком и ограничения — в [`AGENTS.md`](AGENTS.md) § 2. Архитектурное обоснование — в [`docs/adr/0001-stack.md`](docs/adr/0001-stack.md).
 
 ## Статус
 

@@ -6,7 +6,7 @@
 | Статус | Базовая версия для разработки |
 | Продукт | Личный кабинет студента «Цифровой деканат будущего» |
 | Платформа | Веб-приложение: компьютер и смартфон |
-| Технологическая основа | Next.js, TypeScript, PostgreSQL, Prisma 7, Better Auth; детали и ограничения — `AGENTS.md` § 2 |
+| Технологическая основа | Next.js (App Router), React, TypeScript, Tailwind CSS v4, shadcn/ui, Base UI, PostgreSQL, Prisma ORM, Better Auth, RBAC, Vercel AI SDK; детали и ограничения — `AGENTS.md` § 2 |
 | Язык интерфейса | Русский |
 | Связанные документы | `AGENTS.md` — правила разработки; `docs/DEVELOPMENT_PLAN.md` — план ядра; `docs/adr/` — архитектурные решения; `docs/ai-log.md` — журнал работы с ИИ |
 
@@ -485,7 +485,7 @@
 
 ## 12. Связь с другими документами
 
-- `AGENTS.md` — инженерные ограничения, безопасность, качество, процесс и чек-листы для ИИ-агентов. Продуктовые требования здесь не повторяются: на них даются ссылки по ID (`Ф-XX`, `US-XX`, `A-XX`). В § 2 зафиксирован стек: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, React Hook Form, Zod, PostgreSQL, Prisma 7, Better Auth, Playwright и Vitest.
+- `AGENTS.md` — инженерные ограничения, безопасность, качество, процесс и чек-листы для ИИ-агентов. Продуктовые требования здесь не повторяются: на них даются ссылки по ID (`Ф-XX`, `US-XX`, `A-XX`). В § 2 зафиксирован стек: фронтенд — Next.js (App Router), React, TypeScript (strict), Tailwind CSS v4, shadcn/ui, Base UI, Motion, Recharts, React Hook Form, Zod, Lucide React, React Context/`useReducer`; бэкенд — Server Actions, Route Handlers, PostgreSQL, Prisma ORM, Better Auth, RBAC, Zod; ИИ — Vercel AI SDK, Agent Tools, LLM Provider API; тесты — Playwright и Vitest.
 - `docs/DEVELOPMENT_PLAN.md` — пошаговый план ядра с задачами, зависимостями, гейтами и статусами.
 - `docs/adr/` — архитектурные решения и отклонения от зафиксированного стека.
 - `docs/ai-log.md` — журнал использования ИИ-инструментов, ключевых промптов и решений: основа для конкурсного описания процесса.
