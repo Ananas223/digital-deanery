@@ -1,29 +1,29 @@
-# Секреты
+# Зависимости
+/node_modules
+
+# Next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Prisma: клиент генерируется командой prisma generate
+/src/generated/
+
+# Окружение и секреты
 .env
-.env.*
-!.env.example
-*.pem
-*.key
+.env.local
+.env.*.local
 
-# Зависимости и сборка
-node_modules/
-.next/
-dist/
-build/
-out/
-coverage/
+# Тесты
+/coverage
+/playwright-report
+/test-results
+/blob-report
 
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-
-# Логи и системные файлы
-*.log
+# Служебное
 .DS_Store
-Thumbs.db
+*.log
 
 # IDE
-.vscode/
-.idea/
+/.idea/

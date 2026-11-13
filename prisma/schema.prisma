@@ -1,0 +1,9 @@
+// Схема Prisma. Модели Better Auth и доменные модели добавляются в задаче P0-BE-03.
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
