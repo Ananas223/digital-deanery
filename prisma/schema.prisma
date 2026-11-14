@@ -17,6 +17,27 @@ enum StudyForm {
   PAID
 }
 
+enum LessonType {
+  LECTURE
+  PRACTICE
+  LABORATORY
+  SEMINAR
+}
+
+enum LessonSubgroup {
+  ALL
+  FIRST
+  SECOND
+}
+
+enum LessonChangeType {
+  CANCELLATION
+  TIME_CHANGE
+  ROOM_CHANGE
+  TEACHER_CHANGE
+  LESSON_REPLACEMENT
+}
+
 // --- Better Auth (сгенерировано CLI 1.7.23, модели проверены вручную) ---
 
 model User {
@@ -125,29 +146,141 @@ model Group {
   updatedAt DateTime @updatedAt
 
   students StudentProfile[]
+  lessons  Lesson[]
 
   @@index([programId])
   @@map("group")
 }
 
 model StudentProfile {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  studentNumber String    @unique
+  id            String         @id @default(cuid())
+  userId        String         @unique
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studentNumber String         @unique
   facultyId     String
-  faculty       Faculty   @relation(fields: [facultyId], references: [id])
+  faculty       Faculty        @relation(fields: [facultyId], references: [id])
   programId     String
-  program       Program   @relation(fields: [programId], references: [id])
+  program       Program        @relation(fields: [programId], references: [id])
   groupId       String
-  group         Group     @relation(fields: [groupId], references: [id])
+  group         Group          @relation(fields: [groupId], references: [id])
   course        Int
   studyForm     StudyForm
+  subgroup      LessonSubgroup @default(ALL)
   enrolledAt    DateTime
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([groupId])
   @@index([programId])
   @@map("student_profile")
+}
+
+// --- Расписание этапа 2 ---
+
+model Teacher {
+  id        String   @id @default(cuid())
+  fullName  String
+  email     String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  disciplines    Discipline[]   @relation("DisciplineTeacher")
+  lessons        Lesson[]       @relation("LessonTeacher")
+  changedLessons LessonChange[] @relation("ChangedTeacher")
+
+  @@map("teacher")
+}
+
+model Discipline {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  teacherId String?
+  teacher   Teacher? @relation("DisciplineTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lessons            Lesson[]       @relation("LessonDiscipline")
+  replacementChanges LessonChange[] @relation("ReplacementDiscipline")
+
+  @@index([teacherId])
+  @@map("discipline")
+}
+
+model Building {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rooms Room[]
+
+  @@map("building")
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id])
+  number     String
+  name       String?
+  capacity   Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  lessons        Lesson[]       @relation("LessonRoom")
+  changedLessons LessonChange[] @relation("ChangedRoom")
+
+  @@unique([buildingId, number])
+  @@index([buildingId])
+  @@map("room")
+}
+
+model Lesson {
+  id           String         @id @default(cuid())
+  groupId      String
+  group        Group          @relation(fields: [groupId], references: [id])
+  disciplineId String
+  discipline   Discipline     @relation("LessonDiscipline", fields: [disciplineId], references: [id])
+  teacherId    String
+  teacher      Teacher        @relation("LessonTeacher", fields: [teacherId], references: [id])
+  roomId       String
+  room         Room           @relation("LessonRoom", fields: [roomId], references: [id])
+  type         LessonType
+  subgroup     LessonSubgroup @default(ALL)
+  startsAt     DateTime
+  endsAt       DateTime
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  changes LessonChange[]
+
+  @@index([groupId, startsAt])
+  @@index([teacherId, startsAt])
+  @@index([roomId, startsAt])
+  @@index([disciplineId])
+  @@map("lesson")
+}
+
+model LessonChange {
+  id                      String           @id @default(cuid())
+  lessonId                String
+  lesson                  Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  type                    LessonChangeType
+  reason                  String?
+  newStartsAt             DateTime?
+  newEndsAt               DateTime?
+  newRoomId               String?
+  newRoom                 Room?            @relation("ChangedRoom", fields: [newRoomId], references: [id], onDelete: SetNull)
+  newTeacherId            String?
+  newTeacher              Teacher?         @relation("ChangedTeacher", fields: [newTeacherId], references: [id], onDelete: SetNull)
+  replacementDisciplineId String?
+  replacementDiscipline   Discipline?      @relation("ReplacementDiscipline", fields: [replacementDisciplineId], references: [id], onDelete: SetNull)
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+
+  @@index([lessonId, createdAt])
+  @@map("lesson_change")
 }
