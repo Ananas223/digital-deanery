@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Route } from "next";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -24,7 +25,12 @@ type LoginValues = z.infer<typeof loginSchema>;
 const NEUTRAL_ERROR = "Не удалось войти. Проверьте e-mail и пароль.";
 const NETWORK_ERROR = "Сервис временно недоступен. Проверьте подключение и повторите попытку.";
 
-export function LoginForm() {
+type LoginFormProps = {
+  /** Проверенный внутренний путь для возврата после входа (PRD Ф-01.2). */
+  nextPath?: string | null;
+};
+
+export function LoginForm({ nextPath }: LoginFormProps) {
   const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +59,7 @@ export function LoginForm() {
         return;
       }
 
-      router.replace("/");
+      router.replace((nextPath ?? "/") as Route);
       router.refresh();
     } catch {
       setFormError(NETWORK_ERROR);

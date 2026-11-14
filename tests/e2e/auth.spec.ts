@@ -15,8 +15,51 @@ test.describe("US-01: вход в кабинет", () => {
   test("неавторизованный посетитель попадает на страницу входа", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/login\?next=%2F$/);
     await expect(page.getByRole("heading", { level: 1, name: "Вход в кабинет" })).toBeVisible();
+  });
+
+  test("после входа возвращает на запрошенную страницу", async ({ page }) => {
+    await page.goto("/grades?tab=session");
+
+    await expect(page).toHaveURL(/\/login\?next=%2Fgrades%3Ftab%3Dsession$/);
+
+    await emailField(page).fill(DEMO_STUDENTS.anna.email);
+    await passwordField(page).fill(DEMO_STUDENTS.anna.password);
+    await page.getByRole("button", { name: "Войти", exact: true }).click();
+
+    await expect(page).toHaveURL(/\/grades\?tab=session$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Успеваемость" })).toBeVisible();
+  });
+
+  test("истёкшая сессия объясняется и возвращает на запрошенную страницу", async ({
+    browser,
+    baseURL,
+  }) => {
+    const context = await browser.newContext({ baseURL });
+    await context.addCookies([
+      {
+        name: "better-auth.session_token",
+        value: "expired.invalid-token",
+        domain: "localhost",
+        path: "/",
+      },
+    ]);
+    const page = await context.newPage();
+
+    await page.goto("/profile");
+
+    await expect(page).toHaveURL(/\/login\?next=%2Fprofile&expired=1$/);
+    await expect(page.getByRole("status").filter({ hasText: "Сессия истекла" })).toBeVisible();
+
+    await emailField(page).fill(DEMO_STUDENTS.mark.email);
+    await passwordField(page).fill(DEMO_STUDENTS.mark.password);
+    await page.getByRole("button", { name: "Войти", exact: true }).click();
+
+    await expect(page).toHaveURL(/\/profile$/);
+    await expect(page.getByText(DEMO_STUDENTS.mark.name).first()).toBeVisible();
+
+    await context.close();
   });
 
   test("вход с верным паролем ведёт на главный экран и сохраняет сессию", async ({ page }) => {
@@ -101,11 +144,16 @@ test.describe("US-01: вход в кабинет", () => {
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.getByRole("dialog").getByRole("button", { name: "Выйти", exact: true }).click();
 
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/login(\?|$)/);
     await expect(page.getByText(DEMO_STUDENTS.mark.name)).toHaveCount(0);
+
+    // После выхода сессия недействительна (P1-BE-05, A-01).
+    const session = await page.request.get("/api/auth/get-session");
+    expect(session.status()).toBe(200);
+    expect(await session.json()).toBeNull();
 
     // После выхода защищённый адрес снова требует входа (A-01).
     await page.goto("/profile");
-    await expect(page).toHaveURL(/\/login$/);
+    await expect(page).toHaveURL(/\/login(\?|$)/);
   });
 });

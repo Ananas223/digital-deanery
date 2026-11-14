@@ -1,12 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
 import { redirect } from "next/navigation";
 
 import { Logo } from "@/components/layout/logo";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
+import { Alert } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
+import { sanitizeNextPath } from "@/lib/auth/redirect";
 import { getCurrentUser } from "@/lib/auth/session";
 
+import { DemoAccess } from "./demo-access";
 import { LoginForm } from "./login-form";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +18,23 @@ export const metadata: Metadata = {
   title: "Вход",
 };
 
-/** Страница входа вне оболочки кабинета. Уже вошедшего пользователя отправляем на главную. */
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+/** Страница входа вне оболочки кабинета. Уже вошедшего пользователя отправляем дальше. */
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const nextPath = sanitizeNextPath(params["next"]);
+  const sessionExpired = firstParam(params["expired"]) === "1";
   const user = await getCurrentUser();
 
   if (user) {
-    redirect("/");
+    redirect((nextPath ?? "/") as Route);
   }
 
   return (
@@ -38,7 +52,15 @@ export default async function LoginPage() {
         tabIndex={-1}
         className="flex flex-1 items-center justify-center px-4 py-10"
       >
-        <div className="w-full max-w-md space-y-6">
+        <div className="w-full max-w-md space-y-4">
+          {sessionExpired ? (
+            <Alert tone="info" title="Сессия истекла">
+              {nextPath
+                ? "Войдите снова, чтобы вернуться на запрошенную страницу. Введённые данные не сохраняются."
+                : "Войдите снова, чтобы продолжить работу. Введённые данные не сохраняются."}
+            </Alert>
+          ) : null}
+
           <div className="space-y-2 text-center">
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Вход в кабинет</h1>
             <p className="text-sm text-muted-foreground">
@@ -48,9 +70,11 @@ export default async function LoginPage() {
 
           <Card>
             <CardContent className="pt-5">
-              <LoginForm />
+              <LoginForm nextPath={nextPath} />
             </CardContent>
           </Card>
+
+          <DemoAccess />
         </div>
       </main>
 

@@ -47,7 +47,7 @@ test.describe("US-10: разделение данных", () => {
 
     for (const path of ["/", "/profile", "/schedule", "/grades", "/requests", "/notifications"]) {
       await page.goto(path);
-      await expect(page).toHaveURL(/\/login$/);
+      await expect(page).toHaveURL(/\/login(\?|$)/);
     }
   });
 });
