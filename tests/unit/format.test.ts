@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDate, formatDateTime, formatNumber, getFirstName, getInitials } from "@/lib/format";
+import {
+  formatCourse,
+  formatDate,
+  formatDateTime,
+  formatNumber,
+  getFirstName,
+  getInitials,
+} from "@/lib/format";
 
 const NBSP = "\u00A0";
 
@@ -42,6 +49,22 @@ describe("formatNumber", () => {
 
   it("возвращает прочерк для нечислового значения", () => {
     expect(formatNumber(Number.POSITIVE_INFINITY)).toBe("—");
+  });
+});
+
+describe("formatCourse", () => {
+  it("склоняет слово «курс» по числу", () => {
+    expect(formatCourse(1)).toBe("1 курс");
+    expect(formatCourse(2)).toBe("2 курса");
+    expect(formatCourse(4)).toBe("4 курса");
+    expect(formatCourse(5)).toBe("5 курсов");
+    expect(formatCourse(11)).toBe("11 курсов");
+    expect(formatCourse(21)).toBe("21 курс");
+  });
+
+  it("возвращает прочерк для некорректного значения", () => {
+    expect(formatCourse(0)).toBe("—");
+    expect(formatCourse(1.5)).toBe("—");
   });
 });
 

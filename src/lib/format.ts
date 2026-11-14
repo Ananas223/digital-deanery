@@ -62,6 +62,26 @@ export function formatNumber(value: number, options?: Intl.NumberFormatOptions):
   return new Intl.NumberFormat(LOCALE, options).format(value);
 }
 
+/** Курс обучения: «1 курс», «2 курса», «5 курсов». */
+export function formatCourse(value: number): string {
+  if (!Number.isInteger(value) || value <= 0) {
+    return EMPTY_VALUE;
+  }
+
+  const mod100 = value % 100;
+  const mod10 = value % 10;
+  const word =
+    mod100 >= 11 && mod100 <= 14
+      ? "курсов"
+      : mod10 === 1
+        ? "курс"
+        : mod10 >= 2 && mod10 <= 4
+          ? "курса"
+          : "курсов";
+
+  return `${formatNumber(value)} ${word}`;
+}
+
 /** Первое слово имени для приветствия: «Анна» из «Анна Петрова». */
 export function getFirstName(fullName: string): string {
   const [first] = fullName.trim().split(/\s+/);
