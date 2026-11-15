@@ -41,6 +41,21 @@ async function getGroupWeekStart(groupCode: string): Promise<Date> {
   return startOfMoscowWeek(lesson.startsAt);
 }
 
+/** Минимальный набор полей занятия для временных записей в тестах. */
+async function getLessonTemplate() {
+  const template = await prisma.lesson.findFirst({
+    where: { group: { code: "MO-21-4" } },
+    orderBy: { startsAt: "asc" },
+    select: { groupId: true, disciplineId: true, teacherId: true, roomId: true },
+  });
+
+  if (!template) {
+    throw new Error("Нет занятия-шаблона для проверки переноса; проверьте seed.");
+  }
+
+  return template;
+}
+
 function noonOf(dayStart: Date): Date {
   return new Date(dayStart.getTime() + NOON_OFFSET_MS);
 }
@@ -163,15 +178,7 @@ describe("расписание на неделю", () => {
 
   it("переносит занятие на другой день недели", async () => {
     const annaId = await findStudent("anna.petrova@example.com");
-    const template = await prisma.lesson.findFirst({
-      where: { group: { code: "MO-21-4" } },
-      orderBy: { startsAt: "asc" },
-      select: { groupId: true, disciplineId: true, teacherId: true, roomId: true },
-    });
-
-    if (!template) {
-      throw new Error("Нет занятия-шаблона для проверки переноса; проверьте seed.");
-    }
+    const template = await getLessonTemplate();
 
     const weekStart = startOfMoscowWeek(new Date("2031-05-06T12:00:00.000Z"));
     const tuesdayStart = new Date(addMoscowDays(weekStart, 1).getTime() + 9 * HOUR_MS);
@@ -215,5 +222,159 @@ describe("расписание на неделю", () => {
 
   it("возвращает null, если у пользователя нет академического профиля", async () => {
     await expect(getWeekSchedule("missing-user-id", new Date())).resolves.toBeNull();
+  });
+});
+
+describe("границы недели и сохранность изменений", () => {
+  it("включает занятие ровно в начале недели и исключает ровно в начале следующей", async () => {
+    const annaId = await findStudent("anna.petrova@example.com");
+    const template = await getLessonTemplate();
+    const weekStart = startOfMoscowWeek(new Date("2032-02-02T12:00:00.000Z"));
+    const nextWeekStart = addMoscowDays(weekStart, 7);
+
+    const atStart = await prisma.lesson.create({
+      data: {
+        ...template,
+        type: "SEMINAR",
+        subgroup: "ALL",
+        startsAt: weekStart,
+        endsAt: new Date(weekStart.getTime() + 90 * 60 * 1000),
+      },
+      select: { id: true },
+    });
+    const atNextStart = await prisma.lesson.create({
+      data: {
+        ...template,
+        type: "SEMINAR",
+        subgroup: "ALL",
+        startsAt: nextWeekStart,
+        endsAt: new Date(nextWeekStart.getTime() + 90 * 60 * 1000),
+      },
+      select: { id: true },
+    });
+
+    try {
+      const week = await getWeekSchedule(annaId, weekStart);
+      const weekLessons = week?.days.flatMap((day) => day.lessons) ?? [];
+
+      expect(week?.weekStart).toBe(getMoscowDateKey(weekStart));
+      expect(weekLessons.some((lesson) => lesson.id === atStart.id)).toBe(true);
+      expect(weekLessons.some((lesson) => lesson.id === atNextStart.id)).toBe(false);
+
+      const nextWeek = await getWeekSchedule(annaId, nextWeekStart);
+      const nextWeekLessons = nextWeek?.days.flatMap((day) => day.lessons) ?? [];
+
+      expect(nextWeek?.weekStart).toBe(getMoscowDateKey(nextWeekStart));
+      expect(nextWeekLessons.some((lesson) => lesson.id === atNextStart.id)).toBe(true);
+      expect(nextWeekLessons.some((lesson) => lesson.id === atStart.id)).toBe(false);
+
+      const day = await getTodaySchedule(annaId, weekStart);
+      expect(day?.date).toBe(getMoscowDateKey(weekStart));
+      expect(day?.lessons.some((lesson) => lesson.id === atStart.id)).toBe(true);
+    } finally {
+      await prisma.lesson.deleteMany({
+        where: { id: { in: [atStart.id, atNextStart.id] } },
+      });
+    }
+  });
+
+  it("переносит занятие через границу недели и не теряет изменение", async () => {
+    const annaId = await findStudent("anna.petrova@example.com");
+    const template = await getLessonTemplate();
+    const weekAStart = startOfMoscowWeek(new Date("2032-03-01T12:00:00.000Z"));
+    const weekBStart = addMoscowDays(weekAStart, 7);
+    const originalStart = new Date(addMoscowDays(weekAStart, 1).getTime() + 9 * HOUR_MS);
+
+    const lesson = await prisma.lesson.create({
+      data: {
+        ...template,
+        type: "SEMINAR",
+        subgroup: "ALL",
+        startsAt: originalStart,
+        endsAt: new Date(originalStart.getTime() + 90 * 60 * 1000),
+      },
+      select: { id: true },
+    });
+
+    try {
+      await prisma.lessonChange.create({
+        data: {
+          lessonId: lesson.id,
+          type: "TIME_CHANGE",
+          reason: "Перенос на следующую неделю",
+          newStartsAt: weekBStart,
+          newEndsAt: new Date(weekBStart.getTime() + 90 * 60 * 1000),
+        },
+      });
+
+      const weekA = await getWeekSchedule(annaId, noonOf(weekAStart));
+      expect(weekA?.days.flatMap((day) => day.lessons).some((item) => item.id === lesson.id)).toBe(
+        false,
+      );
+
+      const weekB = await getWeekSchedule(annaId, noonOf(weekBStart));
+      const moved = weekB?.days[0]?.lessons.find((item) => item.id === lesson.id);
+
+      expect(moved?.effective.startsAt.getTime()).toBe(weekBStart.getTime());
+      expect(moved?.changes.some((change) => change.type === "TIME_CHANGE")).toBe(true);
+
+      const day = await getTodaySchedule(annaId, weekBStart);
+      expect(day?.lessons.some((item) => item.id === lesson.id)).toBe(true);
+    } finally {
+      await prisma.lesson.deleteMany({ where: { id: lesson.id } });
+    }
+  });
+
+  it("относит воскресенье к неделе с понедельника", async () => {
+    const annaId = await findStudent("anna.petrova@example.com");
+    const weekStart = await getGroupWeekStart("MO-21-4");
+    const sunday = addMoscowDays(weekStart, 6);
+
+    const week = await getWeekSchedule(annaId, noonOf(sunday));
+
+    expect(week?.weekStart).toBe(getMoscowDateKey(weekStart));
+    expect(week?.days[6]?.date).toBe(getMoscowDateKey(sunday));
+  });
+
+  it("оставляет поздний вечер по Москве в текущем дне", async () => {
+    const annaId = await findStudent("anna.petrova@example.com");
+    const weekStart = await getGroupWeekStart("MO-21-4");
+    const mondayLate = new Date(addMoscowDays(weekStart, 1).getTime() - 60 * 1000);
+
+    const day = await getTodaySchedule(annaId, mondayLate);
+
+    expect(day?.date).toBe(getMoscowDateKey(weekStart));
+  });
+
+  it("не теряет в недельном расписании изменения всех пяти типов", async () => {
+    const annaId = await findStudent("anna.petrova@example.com");
+    const weekStart = await getGroupWeekStart("MO-21-4");
+
+    const week = await getWeekSchedule(annaId, noonOf(weekStart));
+    const changes =
+      week?.days.flatMap((day) => day.lessons.flatMap((lesson) => lesson.changes)) ?? [];
+    const types = [...new Set(changes.map((change) => change.type))].sort();
+
+    expect(types).toEqual([
+      "CANCELLATION",
+      "LESSON_REPLACEMENT",
+      "ROOM_CHANGE",
+      "TEACHER_CHANGE",
+      "TIME_CHANGE",
+    ]);
+    expect(changes.every((change) => Boolean(change.reason?.trim()))).toBe(true);
+
+    const timeChange = changes.find((change) => change.type === "TIME_CHANGE");
+    expect(timeChange?.newStartsAt).toBeInstanceOf(Date);
+    expect(timeChange?.newEndsAt).toBeInstanceOf(Date);
+
+    const roomChange = changes.find((change) => change.type === "ROOM_CHANGE");
+    expect(roomChange?.newRoom).not.toBeNull();
+
+    const teacherChange = changes.find((change) => change.type === "TEACHER_CHANGE");
+    expect(teacherChange?.newTeacher).not.toBeNull();
+
+    const replacement = changes.find((change) => change.type === "LESSON_REPLACEMENT");
+    expect(replacement?.replacementDiscipline).not.toBeNull();
   });
 });
