@@ -2,8 +2,9 @@ import "server-only";
 
 import type { AssessmentType, GradeStatus, SemesterTerm } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
+import { buildGradesSummary, type GradesSummary } from "./grades-summary";
 
-export type { AssessmentType, GradeStatus, SemesterTerm };
+export type { AssessmentType, GradeStatus, SemesterTerm, GradesSummary };
 
 export type Semester = {
   id: string;
@@ -43,6 +44,8 @@ export type SemesterOverview = {
   grades: GradeEntry[];
   /** Экзамены и зачёты группы по времени начала (`US-05`). */
   session: SessionExam[];
+  /** Средний балл, зачётные единицы, задолженности и текстовый вывод (`Ф-03.5`). */
+  summary: GradesSummary;
 };
 
 export const SEMESTER_TERM_LABELS: Record<SemesterTerm, string> = {
@@ -101,6 +104,30 @@ function toSemester(semester: SemesterRow, now: Date): Semester {
   return { ...semester, isCurrent: isWithin(semester, now) };
 }
 
+/** Все семестры от нового к старому: и для переключателя, и для выбора текущего. */
+async function loadSemesters(): Promise<SemesterRow[]> {
+  return prisma.semester.findMany({
+    orderBy: [{ startsAt: "desc" }, { id: "asc" }],
+    select: semesterSelect,
+  });
+}
+
+/**
+ * Выбирает семестр тем же правилом, что и `isCurrent`: явный идентификатор,
+ * иначе текущий по датам, иначе последний по времени начала.
+ */
+function pickSemester(
+  semesters: readonly SemesterRow[],
+  semesterId: string | undefined,
+  now: Date,
+): SemesterRow | null {
+  if (semesterId) {
+    return semesters.find((semester) => semester.id === semesterId) ?? null;
+  }
+
+  return semesters.find((semester) => isWithin(semester, now)) ?? semesters[0] ?? null;
+}
+
 /** Профиль студента — единственный источник доступа к его успеваемости. */
 async function getGradesContext(userId: string) {
   return prisma.studentProfile.findUnique({
@@ -122,10 +149,7 @@ export async function getSemesters(userId: string, now: Date = new Date()): Prom
     return [];
   }
 
-  const semesters = await prisma.semester.findMany({
-    orderBy: [{ startsAt: "desc" }, { id: "asc" }],
-    select: semesterSelect,
-  });
+  const semesters = await loadSemesters();
 
   return semesters.map((semester) => toSemester(semester, now));
 }
@@ -149,17 +173,7 @@ export async function getSemesterOverview(
     return null;
   }
 
-  const semester = semesterId
-    ? await prisma.semester.findUnique({ where: { id: semesterId }, select: semesterSelect })
-    : ((await prisma.semester.findFirst({
-        where: { startsAt: { lte: now }, endsAt: { gte: now } },
-        orderBy: { startsAt: "desc" },
-        select: semesterSelect,
-      })) ??
-      (await prisma.semester.findFirst({
-        orderBy: { startsAt: "desc" },
-        select: semesterSelect,
-      })));
+  const semester = pickSemester(await loadSemesters(), semesterId, now);
 
   if (!semester) {
     return null;
@@ -210,17 +224,19 @@ export async function getSemesterOverview(
     grades.map((grade) => [grade.discipline.id, { score: grade.score, status: grade.status }]),
   );
 
+  const entries: GradeEntry[] = grades.map((grade) => ({
+    id: grade.id,
+    discipline: grade.discipline,
+    teacherName: grade.discipline.teacher?.fullName ?? null,
+    assessmentType: grade.assessmentType,
+    credits: grade.credits,
+    score: grade.score,
+    status: grade.status,
+  }));
+
   return {
     semester: toSemester(semester, now),
-    grades: grades.map((grade) => ({
-      id: grade.id,
-      discipline: grade.discipline,
-      teacherName: grade.discipline.teacher?.fullName ?? null,
-      assessmentType: grade.assessmentType,
-      credits: grade.credits,
-      score: grade.score,
-      status: grade.status,
-    })),
+    grades: entries,
     session: exams.map((exam) => ({
       id: exam.id,
       discipline: exam.discipline,
@@ -237,5 +253,6 @@ export async function getSemesterOverview(
       teacherName: exam.teacher?.fullName ?? null,
       result: results.get(exam.discipline.id) ?? null,
     })),
+    summary: buildGradesSummary(entries, semester, now),
   };
 }

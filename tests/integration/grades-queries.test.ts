@@ -26,15 +26,19 @@ type Fixture = {
 };
 
 let fixture: Fixture;
-let createdSemesterIds: string[] = [];
+
+const TEST_YEARS = [CURRENT_YEAR, PAST_YEAR, EMPTY_YEAR];
+
+/** Удаляет временные семестры вместе с оценками и экзаменами; безопасно при частичном beforeAll. */
+async function cleanupTestSemesters(): Promise<void> {
+  const where = { semester: { academicYear: { in: TEST_YEARS } } };
+  await prisma.exam.deleteMany({ where });
+  await prisma.grade.deleteMany({ where });
+  await prisma.semester.deleteMany({ where: { academicYear: { in: TEST_YEARS } } });
+}
 
 afterAll(async () => {
-  if (createdSemesterIds.length > 0) {
-    await prisma.exam.deleteMany({ where: { semesterId: { in: createdSemesterIds } } });
-    await prisma.grade.deleteMany({ where: { semesterId: { in: createdSemesterIds } } });
-    await prisma.semester.deleteMany({ where: { id: { in: createdSemesterIds } } });
-  }
-
+  await cleanupTestSemesters();
   await prisma.$disconnect();
 });
 
@@ -71,6 +75,8 @@ async function getDisciplineIds(codes: readonly string[]): Promise<Map<string, s
 }
 
 beforeAll(async () => {
+  await cleanupTestSemesters();
+
   const [annaId, markId] = await Promise.all([
     findStudent("anna.petrova@example.com"),
     findStudent("mark.sokolov@example.com"),
@@ -213,7 +219,6 @@ beforeAll(async () => {
     pastSemesterId: past.id,
     emptySemesterId: empty.id,
   };
-  createdSemesterIds = [current.id, past.id, empty.id];
 });
 
 describe("семестры успеваемости", () => {
@@ -261,6 +266,34 @@ describe("успеваемость за семестр", () => {
 
     const pending = overview?.grades.find((grade) => grade.discipline.code === "MO-103");
     expect(pending?.status).toBe("NOT_GRADED");
+
+    expect(overview?.summary).toMatchObject({
+      averageScore: 5,
+      totalCredits: 9,
+      earnedCredits: 6,
+      plannedCredits: 3,
+      failedCredits: 0,
+      debtCount: 0,
+      state: "OK",
+    });
+    expect(overview?.summary.message).toBe("Учёба в норме, задолженностей нет.");
+  });
+
+  it("считает задолженностью несданный предмет после окончания семестра", async () => {
+    const afterSemester = new Date("2031-01-10T00:00:00.000Z");
+    const overview = await getSemesterOverview(
+      fixture.annaId,
+      fixture.currentSemesterId,
+      afterSemester,
+    );
+
+    expect(overview?.semester.isCurrent).toBe(false);
+    expect(overview?.summary).toMatchObject({
+      averageScore: 5,
+      debtCount: 1,
+      state: "DEBTS",
+    });
+    expect(overview?.summary.message).toBe("Есть задолженности: 1 задолженность.");
   });
 
   it("отдаёт прошлый семестр по идентификатору", async () => {
@@ -274,6 +307,15 @@ describe("успеваемость за семестр", () => {
       credits: 4,
       score: 4,
       status: "PASSED",
+    });
+    expect(overview?.summary).toMatchObject({
+      averageScore: 4,
+      totalCredits: 4,
+      earnedCredits: 4,
+      plannedCredits: 0,
+      failedCredits: 0,
+      debtCount: 0,
+      state: "OK",
     });
   });
 
@@ -291,6 +333,16 @@ describe("успеваемость за семестр", () => {
     expect(overview?.semester.id).toBe(fixture.emptySemesterId);
     expect(overview?.grades).toEqual([]);
     expect(overview?.session).toEqual([]);
+    expect(overview?.summary).toMatchObject({
+      averageScore: null,
+      totalCredits: 0,
+      earnedCredits: 0,
+      plannedCredits: 0,
+      failedCredits: 0,
+      debtCount: 0,
+      state: "NO_DATA",
+    });
+    expect(overview?.summary.message).toBe("За семестр пока нет данных.");
   });
 
   it("возвращает null для несуществующего семестра и пользователя без профиля", async () => {
