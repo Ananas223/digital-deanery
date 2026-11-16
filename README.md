@@ -198,7 +198,7 @@ Workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) запускае
 - `BETTER_AUTH_SECRET` и адреса приложения — нейтральные значения, нужные только для тестового прогона; это не секреты и не данные демо-аккаунтов.
 - Порядок шагов: установка Chromium документированной командой `npm run test:e2e:install`, `npx prisma validate`, `npm run format:check`, затем полный `npm run gate` (типы, линтер, Vitest, Playwright, сборка).
 
-CI — это проверка, а не размещение: прототип по-прежнему рассчитан на локальный запуск (см. «Известные ограничения»). Статус задачи — `P7-QA-11` в [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md); пункт остаётся открытым до первого зелёного прогона на GitHub.
+CI — это проверка, а не размещение: прототип по-прежнему рассчитан на локальный запуск (см. «Известные ограничения»). Статус задачи — `P7-QA-11` в [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md); первый прогон на GitHub успешен ([run 43970903703](https://github.com/Ananas223/digital-deanery/actions/runs/43970903703)), задача отмечена `[x]`.
 
 ## Как велась работа с ИИ
 
