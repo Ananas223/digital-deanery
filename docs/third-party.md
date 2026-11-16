@@ -2,25 +2,25 @@
 
 Реестр сторонних библиотек, инструментов и материалов прототипа. Требование — `AGENTS.md` § 4.3 и § 7.4. Запись добавляется при подключении нового компонента.
 
-| Компонент | Роль в проекте | Лицензия | Источник |
-| --- | --- | --- | --- |
-| Next.js | Фреймворк: App Router, Server Components, Server Actions, Route Handlers | MIT | https://nextjs.org |
-| React | Библиотека интерфейса | MIT | https://react.dev |
-| TypeScript | Типизация клиента и сервера | Apache-2.0 | https://www.typescriptlang.org |
-| Tailwind CSS v4 | Стилизация и дизайн-токены | MIT | https://tailwindcss.com |
-| shadcn/ui | Паттерны компонентов и доступная разметка | MIT | https://ui.shadcn.com |
-| Base UI | Примитивы доступности | MIT | https://base-ui.com |
-| Motion | Анимации и переходы | MIT | https://motion.dev |
-| Recharts | Графики успеваемости и сводок | MIT | https://recharts.org |
-| React Hook Form | Состояние форм | MIT | https://react-hook-form.com |
-| Zod | Схемы валидации клиента и сервера | MIT | https://zod.dev |
-| Lucide React | Набор иконок | ISC | https://lucide.dev |
-| PostgreSQL | Реляционная база данных | PostgreSQL License | https://www.postgresql.org |
-| Prisma ORM | Схема, миграции и типизированные запросы | Apache-2.0 | https://www.prisma.io |
-| Better Auth | Аутентификация и серверные сессии | MIT | https://www.better-auth.com |
-| Vercel AI SDK | Вызов LLM и стриминг ответа | Apache-2.0 | https://sdk.vercel.ai |
-| Playwright | E2E-тесты | Apache-2.0 | https://playwright.dev |
-| Vitest | Юнит- и интеграционные тесты | MIT | https://vitest.dev |
+| Компонент       | Роль в проекте                                                           | Лицензия           | Источник                       |
+| --------------- | ------------------------------------------------------------------------ | ------------------ | ------------------------------ |
+| Next.js         | Фреймворк: App Router, Server Components, Server Actions, Route Handlers | MIT                | https://nextjs.org             |
+| React           | Библиотека интерфейса                                                    | MIT                | https://react.dev              |
+| TypeScript      | Типизация клиента и сервера                                              | Apache-2.0         | https://www.typescriptlang.org |
+| Tailwind CSS v4 | Стилизация и дизайн-токены                                               | MIT                | https://tailwindcss.com        |
+| shadcn/ui       | Паттерны компонентов и доступная разметка                                | MIT                | https://ui.shadcn.com          |
+| Base UI         | Примитивы доступности                                                    | MIT                | https://base-ui.com            |
+| Motion          | Анимации и переходы                                                      | MIT                | https://motion.dev             |
+| Recharts        | Графики успеваемости и сводок                                            | MIT                | https://recharts.org           |
+| React Hook Form | Состояние форм                                                           | MIT                | https://react-hook-form.com    |
+| Zod             | Схемы валидации клиента и сервера                                        | MIT                | https://zod.dev                |
+| Lucide React    | Набор иконок                                                             | ISC                | https://lucide.dev             |
+| PostgreSQL      | Реляционная база данных                                                  | PostgreSQL License | https://www.postgresql.org     |
+| Prisma ORM      | Схема, миграции и типизированные запросы                                 | Apache-2.0         | https://www.prisma.io          |
+| Better Auth     | Аутентификация и серверные сессии                                        | MIT                | https://www.better-auth.com    |
+| Vercel AI SDK   | Вызов LLM и стриминг ответа                                              | Apache-2.0         | https://sdk.vercel.ai          |
+| Playwright      | E2E-тесты                                                                | Apache-2.0         | https://playwright.dev         |
+| Vitest          | Юнит- и интеграционные тесты                                             | MIT                | https://vitest.dev             |
 
 ## Правила ведения
 
@@ -29,6 +29,13 @@
 - Изображения и иконки, сгенерированные ИИ, помечать отдельно и проверять, что они не воспроизводят чужой товарный знак или защищённый персонаж.
 - Официальная символика вуза не используется.
 - При смене лицензии или мажорной версии компонента обновлять запись и, при необходимости, создавать ADR.
+
+## Сгенерировано ИИ
+
+- **Демонстрационные данные.** ФИО студентов, факультеты, направления, группы, преподаватели, дисциплины, аудитории и занятия созданы ИИ в OpenCode и хранятся в `prisma/seed.ts`; оценки и экзамены появятся на этапе 3 (`P3-BE-04`). Данные вымышлены, совпадения случайны, реальные люди и системы вуза не использовались.
+- **Тексты интерфейса.** Подписи, пояснения, пустые состояния и сообщения об ошибках написаны ИИ в рамках задач плана; сторонние тексты не копировались.
+- **Изображения и иконки.** Генеративные инструменты изображений и дизайна не использовались: в репозитории нет изображений, иконки берутся из Lucide React (см. таблицу выше), шрифты — только лицензионно совместимые.
+- **Официальная символика.** Логотип и символика вуза не используются; пометка о конкурсном концепте видна в интерфейсе.
 
 ## Материалы с особыми условиями
 

@@ -38,6 +38,24 @@ enum LessonChangeType {
   LESSON_REPLACEMENT
 }
 
+enum SemesterTerm {
+  AUTUMN
+  SPRING
+}
+
+enum AssessmentType {
+  EXAM
+  CREDIT
+  GRADED_CREDIT
+  COURSEWORK
+}
+
+enum GradeStatus {
+  PASSED
+  FAILED
+  NOT_GRADED
+}
+
 // --- Better Auth (сгенерировано CLI 1.7.23, модели проверены вручную) ---
 
 model User {
@@ -147,6 +165,7 @@ model Group {
 
   students StudentProfile[]
   lessons  Lesson[]
+  exams    Exam[]
 
   @@index([programId])
   @@map("group")
@@ -170,6 +189,8 @@ model StudentProfile {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
+  grades Grade[]
+
   @@index([groupId])
   @@index([programId])
   @@map("student_profile")
@@ -187,6 +208,7 @@ model Teacher {
   disciplines    Discipline[]   @relation("DisciplineTeacher")
   lessons        Lesson[]       @relation("LessonTeacher")
   changedLessons LessonChange[] @relation("ChangedTeacher")
+  exams          Exam[]
 
   @@map("teacher")
 }
@@ -202,6 +224,8 @@ model Discipline {
 
   lessons            Lesson[]       @relation("LessonDiscipline")
   replacementChanges LessonChange[] @relation("ReplacementDiscipline")
+  grades             Grade[]
+  exams              Exam[]
 
   @@index([teacherId])
   @@map("discipline")
@@ -232,6 +256,7 @@ model Room {
 
   lessons        Lesson[]       @relation("LessonRoom")
   changedLessons LessonChange[] @relation("ChangedRoom")
+  exams          Exam[]
 
   @@unique([buildingId, number])
   @@index([buildingId])
@@ -283,4 +308,69 @@ model LessonChange {
 
   @@index([lessonId, createdAt])
   @@map("lesson_change")
+}
+
+// --- Успеваемость этапа 3 ---
+
+model Semester {
+  id           String       @id @default(cuid())
+  academicYear String
+  term         SemesterTerm
+  startsAt     DateTime
+  endsAt       DateTime
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  grades Grade[]
+  exams  Exam[]
+
+  @@unique([academicYear, term])
+  @@index([startsAt])
+  @@map("semester")
+}
+
+model Grade {
+  id               String         @id @default(cuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  disciplineId     String
+  discipline       Discipline     @relation(fields: [disciplineId], references: [id])
+  semesterId       String
+  semester         Semester       @relation(fields: [semesterId], references: [id])
+  assessmentType   AssessmentType
+  credits          Int
+  score            Int?
+  status           GradeStatus    @default(NOT_GRADED)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([studentProfileId, disciplineId, semesterId])
+  @@index([studentProfileId, semesterId])
+  @@index([disciplineId])
+  @@map("grade")
+}
+
+model Exam {
+  id             String         @id @default(cuid())
+  groupId        String
+  group          Group          @relation(fields: [groupId], references: [id])
+  disciplineId   String
+  discipline     Discipline     @relation(fields: [disciplineId], references: [id])
+  semesterId     String
+  semester       Semester       @relation(fields: [semesterId], references: [id])
+  assessmentType AssessmentType
+  startsAt       DateTime
+  endsAt         DateTime
+  roomId         String?
+  room           Room?          @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  teacherId      String?
+  teacher        Teacher?       @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([groupId, disciplineId, semesterId])
+  @@index([groupId, startsAt])
+  @@index([semesterId, startsAt])
+  @@index([disciplineId])
+  @@map("exam")
 }
