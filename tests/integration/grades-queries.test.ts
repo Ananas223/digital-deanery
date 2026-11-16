@@ -16,6 +16,7 @@ const NOW = new Date("2030-10-15T09:00:00.000Z");
 const CURRENT_YEAR = "2099/2100";
 const PAST_YEAR = "2098/2099";
 const EMPTY_YEAR = "2097/2098";
+const FAIL_YEAR = "2096/2097";
 
 type Fixture = {
   annaId: string;
@@ -23,11 +24,12 @@ type Fixture = {
   currentSemesterId: string;
   pastSemesterId: string;
   emptySemesterId: string;
+  failSemesterId: string;
 };
 
 let fixture: Fixture;
 
-const TEST_YEARS = [CURRENT_YEAR, PAST_YEAR, EMPTY_YEAR];
+const TEST_YEARS = [CURRENT_YEAR, PAST_YEAR, EMPTY_YEAR, FAIL_YEAR];
 
 /** Удаляет временные семестры вместе с оценками и экзаменами; безопасно при частичном beforeAll. */
 async function cleanupTestSemesters(): Promise<void> {
@@ -111,15 +113,34 @@ beforeAll(async () => {
       },
       select: { id: true },
     }),
+    prisma.semester.create({
+      data: {
+        academicYear: FAIL_YEAR,
+        term: "SPRING",
+        startsAt: new Date("2028-02-01T00:00:00.000Z"),
+        endsAt: new Date("2028-06-30T23:59:59.000Z"),
+      },
+      select: { id: true },
+    }),
   ]);
 
-  const [current, past, empty] = semesters;
+  const [current, past, empty, fail] = semesters;
 
-  if (!current || !past || !empty) {
+  if (!current || !past || !empty || !fail) {
     throw new Error("Не удалось создать тестовые семестры.");
   }
 
-  const disciplines = await getDisciplineIds(["MO-101", "MO-102", "MO-103", "MO-104", "MO-105"]);
+  const disciplines = await getDisciplineIds([
+    "MO-101",
+    "MO-102",
+    "MO-103",
+    "MO-104",
+    "MO-105",
+    "MEO-101",
+    "MEO-102",
+    "MEO-103",
+    "MEO-104",
+  ]);
   const disciplineId = (code: string): string => {
     const id = disciplines.get(code);
     if (!id) {
@@ -184,6 +205,43 @@ beforeAll(async () => {
         score: 3,
         status: "PASSED",
       },
+      // Семестр с задолженностями: незачёт отличается от «не выставлено».
+      {
+        studentProfileId: markProfile.id,
+        disciplineId: disciplineId("MEO-101"),
+        semesterId: fail.id,
+        assessmentType: "EXAM",
+        credits: 4,
+        score: 2,
+        status: "FAILED",
+      },
+      {
+        studentProfileId: markProfile.id,
+        disciplineId: disciplineId("MEO-102"),
+        semesterId: fail.id,
+        assessmentType: "CREDIT",
+        credits: 3,
+        score: null,
+        status: "FAILED",
+      },
+      {
+        studentProfileId: markProfile.id,
+        disciplineId: disciplineId("MEO-103"),
+        semesterId: fail.id,
+        assessmentType: "CREDIT",
+        credits: 2,
+        score: null,
+        status: "PASSED",
+      },
+      {
+        studentProfileId: markProfile.id,
+        disciplineId: disciplineId("MEO-104"),
+        semesterId: fail.id,
+        assessmentType: "EXAM",
+        credits: 3,
+        score: 3,
+        status: "PASSED",
+      },
     ],
   });
 
@@ -218,6 +276,7 @@ beforeAll(async () => {
     currentSemesterId: current.id,
     pastSemesterId: past.id,
     emptySemesterId: empty.id,
+    failSemesterId: fail.id,
   };
 });
 
@@ -325,6 +384,41 @@ describe("успеваемость за семестр", () => {
     expect(mark?.grades).toHaveLength(1);
     expect(mark?.grades[0]?.discipline.code).toBe("MO-104");
     expect(mark?.grades.some((grade) => grade.discipline.code === "MO-101")).toBe(false);
+  });
+
+  it("различает зачёт и незачёт и считает средний балл только по числовым оценкам", async () => {
+    const overview = await getSemesterOverview(fixture.markId, fixture.failSemesterId, NOW);
+
+    expect(overview?.grades).toHaveLength(4);
+
+    const byCode = new Map(overview?.grades.map((grade) => [grade.discipline.code, grade]));
+    expect(byCode.get("MEO-101")).toMatchObject({
+      assessmentType: "EXAM",
+      score: 2,
+      status: "FAILED",
+    });
+    expect(byCode.get("MEO-102")).toMatchObject({
+      assessmentType: "CREDIT",
+      score: null,
+      status: "FAILED",
+    });
+    expect(byCode.get("MEO-103")).toMatchObject({
+      assessmentType: "CREDIT",
+      score: null,
+      status: "PASSED",
+    });
+
+    expect(overview?.summary).toMatchObject({
+      averageScore: 2.5,
+      totalCredits: 12,
+      earnedCredits: 5,
+      plannedCredits: 0,
+      failedCredits: 7,
+      debtCount: 2,
+      state: "DEBTS",
+    });
+    expect(overview?.summary.message).toBe("Есть задолженности: 2 задолженности.");
+    expect(overview?.grades.some((grade) => grade.discipline.code.startsWith("MO-"))).toBe(false);
   });
 
   it("возвращает пустой семестр без оценок и сессии", async () => {

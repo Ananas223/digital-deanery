@@ -98,11 +98,99 @@ describe("seed тестовой базы", () => {
     }
   });
 
+  it("наполняет два семестра оценками, зачётами и сессией двух разных студентов", async () => {
+    const profiles = await prisma.studentProfile.findMany({
+      where: { user: { email: { in: EXPECTED_STUDENTS.map((student) => student.email) } } },
+      select: { id: true, user: { select: { email: true } } },
+    });
+    const profileId = (email: string): string => {
+      const profile = profiles.find((item) => item.user.email === email);
+      if (!profile) {
+        throw new Error(`Профиль ${email} не найден; проверьте seed.`);
+      }
+      return profile.id;
+    };
+
+    const annaId = profileId("anna.petrova@example.com");
+    const markId = profileId("mark.sokolov@example.com");
+
+    const [annaGrades, markGrades] = await Promise.all([
+      prisma.grade.findMany({
+        where: { studentProfileId: annaId },
+        select: {
+          semesterId: true,
+          assessmentType: true,
+          credits: true,
+          score: true,
+          status: true,
+        },
+      }),
+      prisma.grade.findMany({
+        where: { studentProfileId: markId },
+        select: {
+          semesterId: true,
+          assessmentType: true,
+          credits: true,
+          score: true,
+          status: true,
+        },
+      }),
+    ]);
+
+    // У каждого студента записи в текущем и прошлом семестре.
+    expect(annaGrades.length).toBeGreaterThanOrEqual(8);
+    expect(markGrades.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(annaGrades.map((grade) => grade.semesterId)).size).toBe(2);
+    expect(new Set(markGrades.map((grade) => grade.semesterId)).size).toBe(2);
+
+    // Зачёт без числовой оценки не путается с незачётом.
+    expect(
+      annaGrades.some(
+        (grade) =>
+          grade.assessmentType === "CREDIT" && grade.score === null && grade.status === "PASSED",
+      ),
+    ).toBe(true);
+    expect(
+      markGrades.some((grade) => grade.assessmentType === "CREDIT" && grade.status === "FAILED"),
+    ).toBe(true);
+    expect(new Set(annaGrades.map((grade) => grade.status))).toEqual(
+      new Set(["PASSED", "NOT_GRADED"]),
+    );
+    expect(new Set(markGrades.map((grade) => grade.status))).toEqual(
+      new Set(["PASSED", "FAILED", "NOT_GRADED"]),
+    );
+
+    const averageScore = (grades: typeof annaGrades): number => {
+      const scores = grades.flatMap((grade) => (grade.score === null ? [] : [grade.score]));
+      return scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    };
+    expect(averageScore(annaGrades)).toBeGreaterThan(averageScore(markGrades) + 1);
+
+    // Сессия общей группы: есть испытания в обоих семестрах и разные результаты.
+    const groups = await prisma.group.findMany({
+      where: { code: { in: EXPECTED_STUDENTS.map((student) => student.groupCode) } },
+      select: { id: true },
+    });
+    const groupIds = groups.map((group) => group.id);
+    const exams = await prisma.exam.findMany({
+      where: { groupId: { in: groupIds } },
+      select: { groupId: true, semesterId: true },
+    });
+
+    expect(exams.length).toBeGreaterThanOrEqual(16);
+    expect(new Set(exams.map((exam) => exam.semesterId)).size).toBe(2);
+    for (const groupId of groupIds) {
+      expect(exams.filter((exam) => exam.groupId === groupId).length).toBeGreaterThanOrEqual(8);
+    }
+  });
+
   it("повторный seed идемпотентен и не создаёт дублей", async () => {
     const before = {
       users: await prisma.user.count(),
       profiles: await prisma.studentProfile.count(),
       accounts: await prisma.account.count(),
+      grades: await prisma.grade.count(),
+      exams: await prisma.exam.count(),
     };
 
     runSeed();
@@ -111,9 +199,13 @@ describe("seed тестовой базы", () => {
       users: await prisma.user.count(),
       profiles: await prisma.studentProfile.count(),
       accounts: await prisma.account.count(),
+      grades: await prisma.grade.count(),
+      exams: await prisma.exam.count(),
     };
 
-    expect(before).toEqual({ users: 2, profiles: 2, accounts: 2 });
+    expect(before).toMatchObject({ users: 2, profiles: 2, accounts: 2 });
+    expect(before.grades).toBeGreaterThanOrEqual(18);
+    expect(before.exams).toBeGreaterThanOrEqual(16);
     expect(after).toEqual(before);
   });
 });
