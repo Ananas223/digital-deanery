@@ -85,6 +85,43 @@ type DemoChange = {
   replacementDisciplineCode?: string;
 };
 
+type SemesterTermValue = "AUTUMN" | "SPRING";
+type AssessmentTypeValue = "EXAM" | "CREDIT" | "GRADED_CREDIT" | "COURSEWORK";
+type GradeStatusValue = "PASSED" | "FAILED" | "NOT_GRADED";
+type DemoSemesterSlot = "current" | "past";
+
+type DemoGrade = {
+  studentEmail: string;
+  disciplineCode: string;
+  semester: DemoSemesterSlot;
+  assessmentType: AssessmentTypeValue;
+  credits: number;
+  score: number | null;
+  status: GradeStatusValue;
+};
+
+type DemoExam = {
+  groupCode: string;
+  disciplineCode: string;
+  semester: DemoSemesterSlot;
+  assessmentType: AssessmentTypeValue;
+  /** Месяц и день сессии; год выводится из семестра. */
+  month: number;
+  day: number;
+  start: [number, number];
+  end: [number, number];
+  buildingCode: string;
+  roomNumber: string;
+};
+
+type DemoSemester = {
+  academicYear: string;
+  term: SemesterTermValue;
+  startYear: number;
+  startsAt: Date;
+  endsAt: Date;
+};
+
 const FACULTIES = [
   { code: "FMO", name: "Факультет международных отношений" },
   { code: "FMEO", name: "Факультет международных экономических отношений" },
@@ -189,6 +226,47 @@ const DISCIPLINES: DemoDiscipline[] = [
     code: "MEO-105",
     name: "Основы предпринимательства",
     teacherEmail: "i.sokolova@example.com",
+  },
+  // Дисциплины прошлого семестра: занятий не имеют, нужны для истории оценок.
+  {
+    code: "MO-091",
+    name: "Введение в специальность",
+    teacherEmail: "i.sokolova@example.com",
+  },
+  {
+    code: "MO-092",
+    name: "История России",
+    teacherEmail: "a.krylov@example.com",
+  },
+  {
+    code: "MO-093",
+    name: "Иностранный язык (базовый курс)",
+    teacherEmail: "m.orlova@example.com",
+  },
+  {
+    code: "MO-094",
+    name: "Информатика",
+    teacherEmail: "d.lebedev@example.com",
+  },
+  {
+    code: "MEO-091",
+    name: "Основы экономической теории",
+    teacherEmail: "p.melnikov@example.com",
+  },
+  {
+    code: "MEO-092",
+    name: "Математика для экономистов",
+    teacherEmail: "e.zakharova@example.com",
+  },
+  {
+    code: "MEO-093",
+    name: "Иностранный язык (базовый курс)",
+    teacherEmail: "m.orlova@example.com",
+  },
+  {
+    code: "MEO-094",
+    name: "Информационные технологии",
+    teacherEmail: "d.lebedev@example.com",
   },
 ];
 
@@ -584,12 +662,401 @@ const CHANGES: DemoChange[] = [
   },
 ];
 
+/**
+ * Демо-оценки двух студентов. Анна учится ровно и закрыла текущий семестр без
+ * долгов, у Марка — незачёт и неудовлетворительная оценка. Прошлый семестр
+ * закрыт у обоих: история доступна только для чтения.
+ */
+const DEMO_GRADES: DemoGrade[] = [
+  // Анна, текущий семестр.
+  {
+    studentEmail: "anna.petrova@example.com",
+    disciplineCode: "MO-101",
+    semester: "current",
+    assessmentType: "EXAM",
+    credits: 4,
+    score: 5,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "anna.petrova@example.com",
+    disciplineCode: "MO-102",
+    semester: "current",
+    assessmentType: "EXAM",
+    credits: 3,
+    score: 4,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "anna.petrova@example.com",
+    disciplineCode: "MO-103",
+    semester: "current",
+    assessmentType: "CREDIT",
+    credits: 2,
+    score: null,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "anna.petrova@example.com",
+    disciplineCode: "MO-104",
+    semester: "current",
+    assessmentType: "GRADED_CREDIT",
+    credits: 3,
+    score: 5,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "anna.petrova@example.com",
+    disciplineCode: "MO-105",
+    semester: "current",
+    assessmentType: "COURSEWORK",
+    credits: 2,
+    score: null,
+    status: "NOT_GRADED",
+  },
+  // Анна, прошлый семестр.
+  {
+    studentEmail: "anna.petrova@example.com",
+    disciplineCode: "MO-091",
+    semester: "past",
+    assessmentType: "CREDIT",
+    credits: 2,
+    score: null,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "anna.petrova@example.com",
+    disciplineCode: "MO-092",
+    semester: "past",
+    assessmentType: "EXAM",
+    credits: 4,
+    score: 5,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "anna.petrova@example.com",
+    disciplineCode: "MO-093",
+    semester: "past",
+    assessmentType: "GRADED_CREDIT",
+    credits: 3,
+    score: 5,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "anna.petrova@example.com",
+    disciplineCode: "MO-094",
+    semester: "past",
+    assessmentType: "CREDIT",
+    credits: 3,
+    score: null,
+    status: "PASSED",
+  },
+  // Марк, текущий семестр: незачёт и неудовлетворительная оценка.
+  {
+    studentEmail: "mark.sokolov@example.com",
+    disciplineCode: "MEO-101",
+    semester: "current",
+    assessmentType: "EXAM",
+    credits: 4,
+    score: 2,
+    status: "FAILED",
+  },
+  {
+    studentEmail: "mark.sokolov@example.com",
+    disciplineCode: "MEO-102",
+    semester: "current",
+    assessmentType: "CREDIT",
+    credits: 3,
+    score: null,
+    status: "FAILED",
+  },
+  {
+    studentEmail: "mark.sokolov@example.com",
+    disciplineCode: "MEO-103",
+    semester: "current",
+    assessmentType: "CREDIT",
+    credits: 2,
+    score: null,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "mark.sokolov@example.com",
+    disciplineCode: "MEO-104",
+    semester: "current",
+    assessmentType: "EXAM",
+    credits: 3,
+    score: 3,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "mark.sokolov@example.com",
+    disciplineCode: "MEO-105",
+    semester: "current",
+    assessmentType: "GRADED_CREDIT",
+    credits: 2,
+    score: null,
+    status: "NOT_GRADED",
+  },
+  // Марк, прошлый семестр.
+  {
+    studentEmail: "mark.sokolov@example.com",
+    disciplineCode: "MEO-091",
+    semester: "past",
+    assessmentType: "EXAM",
+    credits: 4,
+    score: 3,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "mark.sokolov@example.com",
+    disciplineCode: "MEO-092",
+    semester: "past",
+    assessmentType: "EXAM",
+    credits: 4,
+    score: 3,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "mark.sokolov@example.com",
+    disciplineCode: "MEO-093",
+    semester: "past",
+    assessmentType: "CREDIT",
+    credits: 3,
+    score: null,
+    status: "PASSED",
+  },
+  {
+    studentEmail: "mark.sokolov@example.com",
+    disciplineCode: "MEO-094",
+    semester: "past",
+    assessmentType: "GRADED_CREDIT",
+    credits: 3,
+    score: 4,
+    status: "PASSED",
+  },
+];
+
+/** Экзамены и зачёты сессии: расписание общее для группы, результат — в `Grade`. */
+const DEMO_EXAMS: DemoExam[] = [
+  // Анна, текущий семестр: предстоящие испытания.
+  {
+    groupCode: "MO-21-4",
+    disciplineCode: "MO-103",
+    semester: "current",
+    assessmentType: "CREDIT",
+    month: 11,
+    day: 18,
+    start: [10, 0],
+    end: [11, 30],
+    buildingCode: "B",
+    roomNumber: "12",
+  },
+  {
+    groupCode: "MO-21-4",
+    disciplineCode: "MO-101",
+    semester: "current",
+    assessmentType: "EXAM",
+    month: 11,
+    day: 21,
+    start: [10, 0],
+    end: [12, 30],
+    buildingCode: "A",
+    roomNumber: "203",
+  },
+  {
+    groupCode: "MO-21-4",
+    disciplineCode: "MO-104",
+    semester: "current",
+    assessmentType: "GRADED_CREDIT",
+    month: 11,
+    day: 23,
+    start: [13, 0],
+    end: [14, 30],
+    buildingCode: "A",
+    roomNumber: "305",
+  },
+  {
+    groupCode: "MO-21-4",
+    disciplineCode: "MO-102",
+    semester: "current",
+    assessmentType: "EXAM",
+    month: 0,
+    day: 14,
+    start: [10, 0],
+    end: [12, 30],
+    buildingCode: "A",
+    roomNumber: "410",
+  },
+  // Анна, прошлый семестр: результаты уже выставлены.
+  {
+    groupCode: "MO-21-4",
+    disciplineCode: "MO-091",
+    semester: "past",
+    assessmentType: "CREDIT",
+    month: 5,
+    day: 5,
+    start: [10, 0],
+    end: [11, 30],
+    buildingCode: "A",
+    roomNumber: "101",
+  },
+  {
+    groupCode: "MO-21-4",
+    disciplineCode: "MO-092",
+    semester: "past",
+    assessmentType: "EXAM",
+    month: 5,
+    day: 11,
+    start: [10, 0],
+    end: [12, 30],
+    buildingCode: "A",
+    roomNumber: "203",
+  },
+  {
+    groupCode: "MO-21-4",
+    disciplineCode: "MO-093",
+    semester: "past",
+    assessmentType: "GRADED_CREDIT",
+    month: 5,
+    day: 16,
+    start: [10, 0],
+    end: [11, 30],
+    buildingCode: "B",
+    roomNumber: "12",
+  },
+  {
+    groupCode: "MO-21-4",
+    disciplineCode: "MO-094",
+    semester: "past",
+    assessmentType: "CREDIT",
+    month: 5,
+    day: 9,
+    start: [10, 0],
+    end: [11, 30],
+    buildingCode: "A",
+    roomNumber: "410",
+  },
+  // Марк, текущий семестр.
+  {
+    groupCode: "MEO-11-2",
+    disciplineCode: "MEO-103",
+    semester: "current",
+    assessmentType: "CREDIT",
+    month: 11,
+    day: 17,
+    start: [10, 0],
+    end: [11, 30],
+    buildingCode: "B",
+    roomNumber: "24",
+  },
+  {
+    groupCode: "MEO-11-2",
+    disciplineCode: "MEO-102",
+    semester: "current",
+    assessmentType: "CREDIT",
+    month: 11,
+    day: 22,
+    start: [10, 0],
+    end: [11, 30],
+    buildingCode: "B",
+    roomNumber: "24",
+  },
+  {
+    groupCode: "MEO-11-2",
+    disciplineCode: "MEO-104",
+    semester: "current",
+    assessmentType: "EXAM",
+    month: 11,
+    day: 24,
+    start: [10, 0],
+    end: [12, 30],
+    buildingCode: "A",
+    roomNumber: "305",
+  },
+  {
+    groupCode: "MEO-11-2",
+    disciplineCode: "MEO-105",
+    semester: "current",
+    assessmentType: "GRADED_CREDIT",
+    month: 0,
+    day: 18,
+    start: [13, 0],
+    end: [14, 30],
+    buildingCode: "B",
+    roomNumber: "24",
+  },
+  {
+    groupCode: "MEO-11-2",
+    disciplineCode: "MEO-101",
+    semester: "current",
+    assessmentType: "EXAM",
+    month: 0,
+    day: 15,
+    start: [10, 0],
+    end: [12, 30],
+    buildingCode: "A",
+    roomNumber: "203",
+  },
+  // Марк, прошлый семестр.
+  {
+    groupCode: "MEO-11-2",
+    disciplineCode: "MEO-093",
+    semester: "past",
+    assessmentType: "CREDIT",
+    month: 5,
+    day: 6,
+    start: [10, 0],
+    end: [11, 30],
+    buildingCode: "B",
+    roomNumber: "24",
+  },
+  {
+    groupCode: "MEO-11-2",
+    disciplineCode: "MEO-094",
+    semester: "past",
+    assessmentType: "GRADED_CREDIT",
+    month: 5,
+    day: 9,
+    start: [10, 0],
+    end: [11, 30],
+    buildingCode: "A",
+    roomNumber: "203",
+  },
+  {
+    groupCode: "MEO-11-2",
+    disciplineCode: "MEO-091",
+    semester: "past",
+    assessmentType: "EXAM",
+    month: 5,
+    day: 10,
+    start: [10, 0],
+    end: [12, 30],
+    buildingCode: "A",
+    roomNumber: "203",
+  },
+  {
+    groupCode: "MEO-11-2",
+    disciplineCode: "MEO-092",
+    semester: "past",
+    assessmentType: "EXAM",
+    month: 5,
+    day: 15,
+    start: [10, 0],
+    end: [12, 30],
+    buildingCode: "A",
+    roomNumber: "305",
+  },
+];
+
 type SeedSummary = {
   created: number;
   updated: number;
   profiles: number;
   lessons: number;
   changes: number;
+  semesters: number;
+  grades: number;
+  exams: number;
 };
 
 /** Понедельник текущей недели в 00:00 по Москве, выраженный как UTC-инстант. */
@@ -780,6 +1247,173 @@ async function seedSchedule(
   }
 }
 
+/** Начало календарного дня по Москве, выраженное как UTC-инстант. */
+function moscowStartOfDay(year: number, month: number, day: number): Date {
+  return new Date(Date.UTC(year, month, day) - MSK_OFFSET_MS);
+}
+
+/** Последняя секунда календарного дня по Москве. */
+function moscowEndOfDay(year: number, month: number, day: number): Date {
+  return new Date(Date.UTC(year, month, day, 23, 59, 59) - MSK_OFFSET_MS);
+}
+
+function autumnSemester(startYear: number): DemoSemester {
+  return {
+    academicYear: `${startYear}/${startYear + 1}`,
+    term: "AUTUMN",
+    startYear,
+    startsAt: moscowStartOfDay(startYear, 8, 1),
+    endsAt: moscowEndOfDay(startYear, 11, 31),
+  };
+}
+
+function springSemester(startYear: number): DemoSemester {
+  return {
+    academicYear: `${startYear - 1}/${startYear}`,
+    term: "SPRING",
+    startYear,
+    startsAt: moscowStartOfDay(startYear, 1, 1),
+    endsAt: moscowEndOfDay(startYear, 5, 30),
+  };
+}
+
+/**
+ * Текущий и прошлый семестры относительно даты запуска seed.
+ * В июле–августе текущим считается предстоящий осенний семестр.
+ */
+function getDemoSemesters(now: Date = new Date()): {
+  current: DemoSemester;
+  past: DemoSemester;
+} {
+  const msk = new Date(now.getTime() + MSK_OFFSET_MS);
+  const year = msk.getUTCFullYear();
+  const month = msk.getUTCMonth();
+
+  if (month >= 6) {
+    return { current: autumnSemester(year), past: springSemester(year) };
+  }
+
+  return { current: springSemester(year), past: autumnSemester(year - 1) };
+}
+
+function examStartsAt(
+  semester: DemoSemester,
+  month: number,
+  day: number,
+  [hour, minute]: [number, number],
+): Date {
+  const year =
+    semester.term === "AUTUMN" && month < 6 ? semester.startYear + 1 : semester.startYear;
+
+  return new Date(Date.UTC(year, month, day, hour, minute) - MSK_OFFSET_MS);
+}
+
+async function ensureDemoSemester(semester: DemoSemester) {
+  const record = await prisma.semester.upsert({
+    where: {
+      academicYear_term: { academicYear: semester.academicYear, term: semester.term },
+    },
+    update: { startsAt: semester.startsAt, endsAt: semester.endsAt },
+    create: {
+      academicYear: semester.academicYear,
+      term: semester.term,
+      startsAt: semester.startsAt,
+      endsAt: semester.endsAt,
+    },
+    select: { id: true },
+  });
+
+  return { ...semester, id: record.id };
+}
+
+/**
+ * Seed владеет успеваемостью демо-студентов в текущем и прошлом семестрах:
+ * прежние оценки и экзамены этих семестров удаляются, затем создаются заново.
+ * Естественные ключи (`Grade`, `Exam`) при этом не дублируются.
+ */
+async function seedGrades(
+  semesters: Record<DemoSemesterSlot, DemoSemester & { id: string }>,
+  profiles: Map<string, string>,
+  groups: Map<string, string>,
+  teachers: Map<string, string>,
+  disciplines: Map<string, string>,
+  rooms: Map<string, string>,
+  summary: SeedSummary,
+) {
+  const semesterIds = [semesters.current.id, semesters.past.id];
+  const profileIds = [...profiles.values()];
+  const groupIds = [...groups.values()];
+
+  await prisma.grade.deleteMany({
+    where: { semesterId: { in: semesterIds }, studentProfileId: { in: profileIds } },
+  });
+  await prisma.exam.deleteMany({
+    where: { semesterId: { in: semesterIds }, groupId: { in: groupIds } },
+  });
+
+  const gradeRows = DEMO_GRADES.map((grade) => {
+    const studentProfileId = profiles.get(grade.studentEmail);
+    const disciplineId = disciplines.get(grade.disciplineCode);
+    const semesterId = semesters[grade.semester].id;
+
+    if (!studentProfileId) {
+      throw new Error(`Не найден профиль студента ${grade.studentEmail}`);
+    }
+    if (!disciplineId) {
+      throw new Error(`Не найдена дисциплина ${grade.disciplineCode}`);
+    }
+
+    return {
+      studentProfileId,
+      disciplineId,
+      semesterId,
+      assessmentType: grade.assessmentType,
+      credits: grade.credits,
+      score: grade.score,
+      status: grade.status,
+    };
+  });
+
+  await prisma.grade.createMany({ data: gradeRows });
+  summary.grades += gradeRows.length;
+
+  const examRows = DEMO_EXAMS.map((exam) => {
+    const groupId = groups.get(exam.groupCode);
+    const disciplineId = disciplines.get(exam.disciplineCode);
+    const roomId = rooms.get(`${exam.buildingCode}:${exam.roomNumber}`);
+    const semester = semesters[exam.semester];
+    const teacherEmail = DISCIPLINES.find(
+      (discipline) => discipline.code === exam.disciplineCode,
+    )?.teacherEmail;
+    const teacherId = teacherEmail ? teachers.get(teacherEmail) : undefined;
+
+    if (!groupId) {
+      throw new Error(`Не найдена группа ${exam.groupCode}`);
+    }
+    if (!disciplineId) {
+      throw new Error(`Не найдена дисциплина ${exam.disciplineCode}`);
+    }
+    if (!roomId) {
+      throw new Error(`Не найдена аудитория ${exam.buildingCode}-${exam.roomNumber}`);
+    }
+
+    return {
+      groupId,
+      disciplineId,
+      semesterId: semester.id,
+      assessmentType: exam.assessmentType,
+      startsAt: examStartsAt(semester, exam.month, exam.day, exam.start),
+      endsAt: examStartsAt(semester, exam.month, exam.day, exam.end),
+      roomId,
+      ...(teacherId ? { teacherId } : {}),
+    };
+  });
+
+  await prisma.exam.createMany({ data: examRows });
+  summary.exams += examRows.length;
+  summary.semesters += 2;
+}
+
 async function main() {
   const summary: SeedSummary = {
     created: 0,
@@ -787,6 +1421,9 @@ async function main() {
     profiles: 0,
     lessons: 0,
     changes: 0,
+    semesters: 0,
+    grades: 0,
+    exams: 0,
   };
 
   const faculties = new Map<string, string>();
@@ -832,6 +1469,8 @@ async function main() {
     groups.set(record.code, record.id);
   }
 
+  const profiles = new Map<string, string>();
+
   for (const student of DEMO_STUDENTS) {
     const facultyId = faculties.get(student.facultyCode);
     const programId = programs.get(student.programCode);
@@ -843,7 +1482,7 @@ async function main() {
 
     const userId = await ensureDemoStudent(student, summary);
 
-    await prisma.studentProfile.upsert({
+    const profile = await prisma.studentProfile.upsert({
       where: { userId },
       update: {
         studentNumber: student.studentNumber,
@@ -866,7 +1505,9 @@ async function main() {
         subgroup: student.subgroup,
         enrolledAt: student.enrolledAt,
       },
+      select: { id: true },
     });
+    profiles.set(student.email, profile.id);
     summary.profiles += 1;
   }
 
@@ -931,8 +1572,15 @@ async function main() {
 
   await seedSchedule(groups, teachers, disciplines, rooms, summary);
 
+  const demo = getDemoSemesters();
+  const semesters = {
+    current: await ensureDemoSemester(demo.current),
+    past: await ensureDemoSemester(demo.past),
+  };
+  await seedGrades(semesters, profiles, groups, teachers, disciplines, rooms, summary);
+
   console.log(
-    `Seed завершён: пользователей создано ${summary.created}, обновлено ${summary.updated}, профилей обработано ${summary.profiles}, занятий создано ${summary.lessons}, изменений ${summary.changes}.`,
+    `Seed завершён: пользователей создано ${summary.created}, обновлено ${summary.updated}, профилей обработано ${summary.profiles}, занятий создано ${summary.lessons}, изменений ${summary.changes}, семестров ${summary.semesters}, оценок ${summary.grades}, экзаменов ${summary.exams}.`,
   );
 }
 
