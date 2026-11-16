@@ -138,24 +138,26 @@ npm run db:reset
 
 ## Команды
 
-| Команда               | Что делает                                            |
-| --------------------- | ----------------------------------------------------- |
-| `npm run dev`         | Dev-сервер Next.js на `localhost:3000`                |
-| `npm run build`       | Генерация Prisma Client и production-сборка           |
-| `npm run start`       | Запуск production-сборки                              |
-| `npm run lint`        | ESLint без автоисправлений                            |
-| `npm run format`      | Prettier с записью                                    |
-| `npm run typecheck`   | `tsc --noEmit`                                        |
-| `npm run db:generate` | Генерация Prisma Client                               |
-| `npm run db:migrate`  | Новая миграция в dev-режиме                           |
-| `npm run db:deploy`   | Применение миграций без создания новой                |
-| `npm run db:seed`     | Идемпотентный seed демо-данных                        |
-| `npm run db:reset`    | Сброс схемы и повторный seed                          |
-| `npm run test`        | Vitest: юнит и интеграционные тесты                   |
-| `npm run test:watch`  | Vitest в watch-режиме                                 |
-| `npm run test:e2e`    | Playwright: E2E и адаптивность                        |
-| `npm run test:e2e:ui` | Playwright в интерактивном режиме                     |
-| `npm run gate`        | Полный гейт: типы, линтер, Vitest, Playwright, сборка |
+| Команда                    | Что делает                                            |
+| -------------------------- | ----------------------------------------------------- |
+| `npm run dev`              | Dev-сервер Next.js на `localhost:3000`                |
+| `npm run build`            | Генерация Prisma Client и production-сборка           |
+| `npm run start`            | Запуск production-сборки                              |
+| `npm run lint`             | ESLint без автоисправлений                            |
+| `npm run format`           | Prettier с записью                                    |
+| `npm run format:check`     | Prettier без записи                                   |
+| `npm run typecheck`        | `tsc --noEmit`                                        |
+| `npm run db:generate`      | Генерация Prisma Client                               |
+| `npm run db:migrate`       | Новая миграция в dev-режиме                           |
+| `npm run db:deploy`        | Применение миграций без создания новой                |
+| `npm run db:seed`          | Идемпотентный seed демо-данных                        |
+| `npm run db:reset`         | Сброс схемы и повторный seed                          |
+| `npm run test`             | Vitest: юнит и интеграционные тесты                   |
+| `npm run test:watch`       | Vitest в watch-режиме                                 |
+| `npm run test:e2e`         | Playwright: E2E и адаптивность                        |
+| `npm run test:e2e:ui`      | Playwright в интерактивном режиме                     |
+| `npm run test:e2e:install` | Установка Chromium для Playwright                     |
+| `npm run gate`             | Полный гейт: типы, линтер, Vitest, Playwright, сборка |
 
 ## Тесты
 
@@ -184,6 +186,19 @@ E2E-конфигурация (`playwright.config.ts`):
 ```bash
 npm run gate
 ```
+
+## Непрерывная интеграция (CI)
+
+Workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) запускает полный гейт при каждом `pull_request` в `main` и при каждом `push` в `main`.
+
+- Права — только `contents: read`; секреты, доступ на запись и деплой в workflow не используются.
+- Для одной ветки или PR одновременно идёт только один прогон: `concurrency` отменяет предыдущий (`cancel-in-progress: true`).
+- Раннер `ubuntu-latest`, Node.js 22 (метка даёт версию не ниже требуемых 22.13), `npm ci` с кешем npm по `package-lock.json`.
+- Сервис PostgreSQL 16 поднимает отдельную базу `digital_deanery_test`: имя заканчивается на `_test`, поэтому global-setup Vitest и Playwright допускают миграции и seed. `DATABASE_URL` и `DATABASE_URL_TEST` указывают только на неё, dev-базы в CI нет.
+- `BETTER_AUTH_SECRET` и адреса приложения — нейтральные значения, нужные только для тестового прогона; это не секреты и не данные демо-аккаунтов.
+- Порядок шагов: установка Chromium документированной командой `npm run test:e2e:install`, `npx prisma validate`, `npm run format:check`, затем полный `npm run gate` (типы, линтер, Vitest, Playwright, сборка).
+
+CI — это проверка, а не размещение: прототип по-прежнему рассчитан на локальный запуск (см. «Известные ограничения»). Статус задачи — `P7-QA-11` в [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md); первый прогон на GitHub успешен ([run 43970903703](https://github.com/Ananas223/digital-deanery/actions/runs/43970903703)), задача отмечена `[x]`.
 
 ## Как велась работа с ИИ
 
