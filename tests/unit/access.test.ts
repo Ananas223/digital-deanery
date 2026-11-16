@@ -25,8 +25,6 @@ describe("assertOwnership", () => {
 
   it("бросает NOT_FOUND, если владелец не определён", () => {
     expect(() => assertOwnership(null as unknown as string, "user-1")).toThrowError(AppError);
-    expect(() => assertOwnership(undefined as unknown as string, "user-1")).toThrowError(
-      AppError,
-    );
+    expect(() => assertOwnership(undefined as unknown as string, "user-1")).toThrowError(AppError);
   });
 });

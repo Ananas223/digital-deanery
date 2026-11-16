@@ -148,12 +148,8 @@ describe("карточка занятия", () => {
           expect(applied?.newEndsAt).not.toBeNull();
           expect(card?.effective.startsAt).toEqual(applied?.newStartsAt);
           expect(card?.effective.endsAt).toEqual(applied?.newEndsAt);
-          expect(card?.effective.startsAt.getTime()).not.toBe(
-            card?.original.startsAt.getTime(),
-          );
-          expect(card?.effective.endsAt.getTime()).not.toBe(
-            card?.original.endsAt.getTime(),
-          );
+          expect(card?.effective.startsAt.getTime()).not.toBe(card?.original.startsAt.getTime());
+          expect(card?.effective.endsAt.getTime()).not.toBe(card?.original.endsAt.getTime());
           break;
         case "ROOM_CHANGE":
           expect(applied?.newRoom?.id).toBeTruthy();
@@ -167,12 +163,8 @@ describe("карточка занятия", () => {
           break;
         case "LESSON_REPLACEMENT":
           expect(applied?.replacementDiscipline?.id).toBeTruthy();
-          expect(card?.effective.discipline.id).toBe(
-            applied?.replacementDiscipline?.id,
-          );
-          expect(card?.effective.discipline.id).not.toBe(
-            card?.original.discipline.id,
-          );
+          expect(card?.effective.discipline.id).toBe(applied?.replacementDiscipline?.id);
+          expect(card?.effective.discipline.id).not.toBe(card?.original.discipline.id);
           break;
       }
     },

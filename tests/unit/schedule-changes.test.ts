@@ -52,8 +52,7 @@ function makeOriginal(overrides: Partial<LessonSnapshot> = {}): LessonSnapshot {
 }
 
 function makeChange(
-  overrides: Partial<LessonChangeInput> &
-    Pick<LessonChangeInput, "id" | "type" | "createdAt">,
+  overrides: Partial<LessonChangeInput> & Pick<LessonChangeInput, "id" | "type" | "createdAt">,
 ): LessonChangeInput {
   return {
     reason: null,
