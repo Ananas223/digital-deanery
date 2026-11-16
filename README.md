@@ -6,6 +6,9 @@
 
 - [`docs/PRD.md`](docs/PRD.md) — продуктовые требования: функции `Ф-XX`, сценарии `US-XX`, критерии `A-XX`.
 - [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) — план разработки ядра, статусы задач и гейты.
+- [`docs/specs/README.md`](docs/specs/README.md) — процесс спецификаций (SDD), шаблон и правила трассировки.
+- [`docs/specs/TEMPLATE.md`](docs/specs/TEMPLATE.md) — шаблон спецификации фичи.
+- [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md) — матрица «требование → спецификация → задача → код → тест».
 - [`AGENTS.md`](AGENTS.md) — инженерные ограничения, безопасность, качество и процесс для ИИ-агентов.
 - [`docs/SUBMISSION.md`](docs/SUBMISSION.md) — чек-лист сдачи работы по требованиям конкурса.
 - [`docs/ai-log.md`](docs/ai-log.md) — журнал работы ИИ-агентов: инструменты, промпты, этапы.
@@ -14,6 +17,7 @@
 - [`docs/adr/0001-stack.md`](docs/adr/0001-stack.md) — архитектурное решение по стеку и ограничения совместимости.
 - [`docs/adr/0002-schedule-model.md`](docs/adr/0002-schedule-model.md) — модель расписания, изменений и подгрупп.
 - [`docs/adr/0003-grades-model.md`](docs/adr/0003-grades-model.md) — модель успеваемости: семестры, оценки и экзамены сессии.
+- [`docs/adr/0004-requests-model.md`](docs/adr/0004-requests-model.md) — предложение по модели заявок и истории статусов (статус «Предложено»).
 - [`docs/third-party.md`](docs/third-party.md) — реестр сторонних компонентов и лицензий.
 
 ## Стек
