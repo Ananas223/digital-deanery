@@ -28,7 +28,7 @@ export function ErrorState({
     <div
       role="alert"
       className={cn(
-        "flex flex-col items-start gap-3 rounded-card border border-danger/30 bg-danger-muted/70 p-5 sm:p-6",
+        "flex min-w-0 flex-col items-start gap-4 rounded-card border border-danger/30 bg-danger-muted p-5 sm:p-6",
         className,
       )}
     >
@@ -38,9 +38,9 @@ export function ErrorState({
       >
         <TriangleAlert aria-hidden="true" className="size-5" />
       </span>
-      <div className="space-y-1">
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
-        <p className="max-w-prose text-sm text-muted-foreground">{description}</p>
+      <div className="min-w-0 space-y-1.5">
+        <h2 className="text-lg leading-6 font-medium text-foreground">{title}</h2>
+        <p className="max-w-prose text-sm leading-6 text-muted-foreground">{description}</p>
       </div>
       {onRetry ? (
         <Button variant="outline" size="sm" className="mt-1" onClick={onRetry}>

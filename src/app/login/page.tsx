@@ -1,11 +1,11 @@
 import type { Metadata, Route } from "next";
 import { redirect } from "next/navigation";
 
+import { EntranceMark } from "@/components/layout/entrance-mark";
 import { Logo } from "@/components/layout/logo";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
 import { Alert } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
 import { sanitizeNextPath } from "@/lib/auth/redirect";
 import { getCurrentUser } from "@/lib/auth/session";
 
@@ -40,9 +40,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <SkipLink />
+      <EntranceMark />
 
-      <header className="border-b border-border">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center px-4 md:px-6">
+      <header className="border-b border-border bg-card">
+        <div className="mx-auto flex w-full max-w-6xl items-center px-4 py-5 sm:px-6 lg:py-6">
           <Logo linked={false} />
         </div>
       </header>
@@ -50,32 +51,40 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <main
         id="main-content"
         tabIndex={-1}
-        className="flex flex-1 items-center justify-center px-4 py-10"
+        className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 wrap-anywhere sm:px-6 sm:py-12 lg:py-16"
       >
-        <div className="w-full max-w-md space-y-4">
-          {sessionExpired ? (
-            <Alert tone="info" title="Сессия истекла">
-              {nextPath
-                ? "Войдите снова, чтобы вернуться на запрошенную страницу. Введённые данные не сохраняются."
-                : "Войдите снова, чтобы продолжить работу. Введённые данные не сохраняются."}
-            </Alert>
-          ) : null}
-
-          <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Вход в кабинет</h1>
-            <p className="text-sm text-muted-foreground">
-              Введите e-mail и пароль, чтобы открыть свой кабинет.
+        <section
+          aria-labelledby="login-heading"
+          className="grid min-w-0 overflow-hidden rounded-card border border-border bg-card lg:grid-cols-12"
+        >
+          <div className="min-w-0 space-y-4 bg-background/60 p-6 sm:p-8 lg:col-span-5 lg:border-r lg:border-border lg:p-10 lg:pb-6">
+            <h1
+              id="login-heading"
+              className="text-page-title font-semibold tracking-tight text-balance text-foreground"
+            >
+              Вход в кабинет
+            </h1>
+            <p className="max-w-prose text-base leading-relaxed text-pretty text-muted-foreground">
+              Ваше расписание и учебные данные. Введите e-mail и пароль своего аккаунта.
             </p>
           </div>
 
-          <Card>
-            <CardContent className="pt-5">
-              <LoginForm nextPath={nextPath} />
-            </CardContent>
-          </Card>
+          <div className="min-w-0 p-6 sm:p-8 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1 lg:p-10">
+            {sessionExpired ? (
+              <Alert tone="info" title="Сессия истекла" className="mb-6">
+                {nextPath
+                  ? "Войдите снова, чтобы вернуться на запрошенную страницу. Введённые данные не сохраняются."
+                  : "Войдите снова, чтобы продолжить работу. Введённые данные не сохраняются."}
+              </Alert>
+            ) : null}
 
-          <DemoAccess />
-        </div>
+            <LoginForm nextPath={nextPath} />
+          </div>
+
+          <aside className="min-w-0 border-t border-border bg-background/60 p-6 sm:p-8 lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:border-t-0 lg:border-r lg:p-10 lg:pt-0">
+            <DemoAccess />
+          </aside>
+        </section>
       </main>
 
       <SiteFooter />

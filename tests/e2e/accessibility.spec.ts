@@ -24,7 +24,7 @@ test.describe("Доступность каркаса", () => {
     const password = passwordField(page);
 
     await expect(email).toHaveAttribute("type", "email");
-    await expect(email).toHaveAttribute("autocomplete", "email");
+    await expect(email).toHaveAttribute("autocomplete", "username");
     await expect(password).toHaveAttribute("autocomplete", "current-password");
     await expect(email).toHaveAttribute("aria-describedby", /login-email-hint/);
     await expect(password).toHaveAttribute("aria-required", "true");

@@ -1,4 +1,4 @@
-import { GraduationCap } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -9,29 +9,31 @@ type LogoProps = {
   linked?: boolean;
 };
 
-/** Словесный знак кабинета: собственная иконка, не официальная символика вуза. */
+/** Own wordmark and Lucide book; no official university insignia. */
 export function Logo({ className, linked = true }: LogoProps) {
   const content = (
     <>
       <span
         aria-hidden="true"
-        className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
+        className="logo-mark flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary bg-card text-primary"
       >
-        <GraduationCap aria-hidden="true" className="size-5" />
+        <BookOpen aria-hidden="true" className="size-5" strokeWidth={1.6} />
       </span>
-      <span className="text-sm font-semibold tracking-tight text-foreground">Цифровой деканат</span>
+      <span className="logo-wordmark min-w-0 text-lg leading-6 font-semibold tracking-tight wrap-anywhere text-foreground">
+        Цифровой деканат
+      </span>
     </>
   );
 
   if (!linked) {
-    return <div className={cn("flex min-w-0 items-center gap-2", className)}>{content}</div>;
+    return <div className={cn("flex min-w-0 items-center gap-3", className)}>{content}</div>;
   }
 
   return (
     <Link
       href="/"
       className={cn(
-        "flex min-h-11 min-w-0 items-center gap-2 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        "flex min-h-11 min-w-0 items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:shrink-0",
         className,
       )}
     >

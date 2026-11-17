@@ -1,10 +1,10 @@
 import { DEMO_STUDENTS, expect, expectNoHorizontalScroll, SECTIONS, test } from "./fixtures";
 
 /**
- * Каркас разделов и навигация (A-12, P0-FE-03/04).
+ * Главный экран и навигация (A-12, P0-FE-03/04).
  *
- * На этапе 0 разделы — объяснённые пустые состояния без «рыбного» текста;
- * сценарии US-02…US-09 расширяются на этапах 2–5, когда появляются данные.
+ * Разделы проверяются по заголовкам и доступной навигации; содержимое зависит
+ * от готовых серверных модулей, а расписание уже показывает реальные занятия.
  */
 test.describe("Главный экран и навигация", () => {
   test("главный экран приветствует студента по имени и показывает разделы", async ({
@@ -12,13 +12,23 @@ test.describe("Главный экран и навигация", () => {
   }) => {
     await annaPage.goto("/");
 
-    await expect(annaPage.getByRole("heading", { level: 1 })).toContainText("Здравствуйте, Анна");
-    await expect(annaPage.getByRole("heading", { name: "Разделы кабинета" })).toBeVisible();
+    const main = annaPage.getByRole("main");
+    await expect(
+      main.getByRole("heading", { level: 1, name: "Главная", exact: true }),
+    ).toBeVisible();
+    await expect(main.getByText("Здравствуйте, Анна!", { exact: true })).toBeVisible();
+
+    const navigation = annaPage.getByRole("navigation", {
+      name: "Разделы кабинета",
+      exact: true,
+    });
+    await expect(navigation).toHaveCount(1);
+    await expect(navigation).toBeVisible();
 
     for (const section of SECTIONS) {
-      await expect(
-        annaPage.getByRole("link", { name: new RegExp(section.label) }).first(),
-      ).toBeVisible();
+      const link = navigation.getByRole("link", { name: section.label, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute("href", section.path);
     }
 
     // Пометка о конкурсном концепте видна в футере (A-10).
@@ -26,7 +36,7 @@ test.describe("Главный экран и навигация", () => {
     await expectNoHorizontalScroll(annaPage);
   });
 
-  test("все четыре раздела открываются и объясняют пустое состояние", async ({ annaPage }) => {
+  test("все четыре раздела открываются с заголовком и навигацией", async ({ annaPage }) => {
     for (const section of SECTIONS) {
       await annaPage.goto(section.path);
 

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 type PageHeaderProps = {
   title: string;
   description?: string;
-  /** Надзаголовок: дата, раздел или контекст экрана. */
+  /** Необязательный контекст экрана; выводится после заголовка. */
   eyebrow?: string;
   actions?: React.ReactNode;
   className?: string;
@@ -14,22 +14,20 @@ export function PageHeader({ title, description, eyebrow, actions, className }: 
   return (
     <header
       className={cn(
-        "flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between",
+        "flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between",
         className,
       )}
     >
-      <div className="min-w-0 space-y-1">
-        {eyebrow ? (
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {eyebrow}
+      <div className="min-w-0 space-y-2">
+        <h1 className="text-page-title font-semibold tracking-tight text-balance">{title}</h1>
+        {eyebrow ? <p className="text-sm leading-6 text-muted-foreground">{eyebrow}</p> : null}
+        {description ? (
+          <p className="max-w-prose text-sm leading-6 text-muted-foreground sm:text-base">
+            {description}
           </p>
         ) : null}
-        <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{title}</h1>
-        {description ? (
-          <p className="max-w-prose text-sm text-muted-foreground sm:text-base">{description}</p>
-        ) : null}
       </div>
-      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="flex min-w-0 flex-wrap items-center gap-2">{actions}</div> : null}
     </header>
   );
 }

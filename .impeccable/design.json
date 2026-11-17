@@ -1,0 +1,649 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-16T23:49:57.751Z",
+  "title": "Design System: Цифровой деканат будущего",
+  "extensions": {
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "Ледяное рабочее поле",
+        "canonical": "#f0f5fc",
+        "tonalRamp": [
+          "oklch(15% 0.0036 256.69)",
+          "oklch(25% 0.0060 256.69)",
+          "oklch(35% 0.0084 256.69)",
+          "oklch(45% 0.0108 256.69)",
+          "oklch(60% 0.0108 256.69)",
+          "oklch(75% 0.0108 256.69)",
+          "oklch(88% 0.0065 256.69)",
+          "oklch(95% 0.0027 256.69)"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Чернильный синий текст",
+        "canonical": "#142d4a",
+        "tonalRamp": [
+          "oklch(15% 0.0206 253.59)",
+          "oklch(25% 0.0343 253.59)",
+          "oklch(35% 0.0480 253.59)",
+          "oklch(45% 0.0617 253.59)",
+          "oklch(60% 0.0617 253.59)",
+          "oklch(75% 0.0617 253.59)",
+          "oklch(88% 0.0370 253.59)",
+          "oklch(95% 0.0154 253.59)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Белая поверхность",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.00)",
+          "oklch(25% 0.0000 0.00)",
+          "oklch(35% 0.0000 0.00)",
+          "oklch(45% 0.0000 0.00)",
+          "oklch(60% 0.0000 0.00)",
+          "oklch(75% 0.0000 0.00)",
+          "oklch(88% 0.0000 0.00)",
+          "oklch(95% 0.0000 0.00)"
+        ]
+      },
+      "card-foreground": {
+        "role": "neutral",
+        "displayName": "Текст белой поверхности",
+        "canonical": "#142d4a",
+        "tonalRamp": [
+          "oklch(15% 0.0206 253.59)",
+          "oklch(25% 0.0343 253.59)",
+          "oklch(35% 0.0480 253.59)",
+          "oklch(45% 0.0617 253.59)",
+          "oklch(60% 0.0617 253.59)",
+          "oklch(75% 0.0617 253.59)",
+          "oklch(88% 0.0370 253.59)",
+          "oklch(95% 0.0154 253.59)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Тихая голубая подложка",
+        "canonical": "#e8f0fa",
+        "tonalRamp": [
+          "oklch(15% 0.0053 253.90)",
+          "oklch(25% 0.0089 253.90)",
+          "oklch(35% 0.0124 253.90)",
+          "oklch(45% 0.0160 253.90)",
+          "oklch(60% 0.0160 253.90)",
+          "oklch(75% 0.0160 253.90)",
+          "oklch(88% 0.0096 253.90)",
+          "oklch(95% 0.0040 253.90)"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Стальной текст метаданных",
+        "canonical": "#536f91",
+        "tonalRamp": [
+          "oklch(15% 0.0210 253.70)",
+          "oklch(25% 0.0350 253.70)",
+          "oklch(35% 0.0490 253.70)",
+          "oklch(45% 0.0630 253.70)",
+          "oklch(60% 0.0630 253.70)",
+          "oklch(75% 0.0630 253.70)",
+          "oklch(88% 0.0378 253.70)",
+          "oklch(95% 0.0158 253.70)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Голубая граница",
+        "canonical": "#c8d8ed",
+        "tonalRamp": [
+          "oklch(15% 0.0113 255.22)",
+          "oklch(25% 0.0188 255.22)",
+          "oklch(35% 0.0263 255.22)",
+          "oklch(45% 0.0338 255.22)",
+          "oklch(60% 0.0338 255.22)",
+          "oklch(75% 0.0338 255.22)",
+          "oklch(88% 0.0203 255.22)",
+          "oklch(95% 0.0085 255.22)"
+        ]
+      },
+      "input": {
+        "role": "neutral",
+        "displayName": "Стальной контур поля",
+        "canonical": "#708bad",
+        "tonalRamp": [
+          "oklch(15% 0.0200 254.43)",
+          "oklch(25% 0.0334 254.43)",
+          "oklch(35% 0.0468 254.43)",
+          "oklch(45% 0.0601 254.43)",
+          "oklch(60% 0.0601 254.43)",
+          "oklch(75% 0.0601 254.43)",
+          "oklch(88% 0.0361 254.43)",
+          "oklch(95% 0.0150 254.43)"
+        ]
+      },
+      "ring": {
+        "role": "primary",
+        "displayName": "Синий клавиатурный фокус",
+        "canonical": "#245fa6",
+        "tonalRamp": [
+          "oklch(15% 0.0431 255.17)",
+          "oklch(25% 0.0718 255.17)",
+          "oklch(35% 0.1005 255.17)",
+          "oklch(45% 0.1292 255.17)",
+          "oklch(60% 0.1292 255.17)",
+          "oklch(75% 0.1292 255.17)",
+          "oklch(88% 0.0775 255.17)",
+          "oklch(95% 0.0323 255.17)"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Маршрутный синий",
+        "canonical": "#245fa6",
+        "tonalRamp": [
+          "oklch(15% 0.0431 255.17)",
+          "oklch(25% 0.0718 255.17)",
+          "oklch(35% 0.1005 255.17)",
+          "oklch(45% 0.1292 255.17)",
+          "oklch(60% 0.1292 255.17)",
+          "oklch(75% 0.1292 255.17)",
+          "oklch(88% 0.0775 255.17)",
+          "oklch(95% 0.0323 255.17)"
+        ]
+      },
+      "primary-foreground": {
+        "role": "primary",
+        "displayName": "Белый текст акцента",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.00)",
+          "oklch(25% 0.0000 0.00)",
+          "oklch(35% 0.0000 0.00)",
+          "oklch(45% 0.0000 0.00)",
+          "oklch(60% 0.0000 0.00)",
+          "oklch(75% 0.0000 0.00)",
+          "oklch(88% 0.0000 0.00)",
+          "oklch(95% 0.0000 0.00)"
+        ]
+      },
+      "primary-muted": {
+        "role": "primary",
+        "displayName": "Светлая синяя опора",
+        "canonical": "#e1ecfb",
+        "tonalRamp": [
+          "oklch(15% 0.0078 256.10)",
+          "oklch(25% 0.0131 256.10)",
+          "oklch(35% 0.0183 256.10)",
+          "oklch(45% 0.0235 256.10)",
+          "oklch(60% 0.0235 256.10)",
+          "oklch(75% 0.0235 256.10)",
+          "oklch(88% 0.0141 256.10)",
+          "oklch(95% 0.0059 256.10)"
+        ]
+      },
+      "secondary": {
+        "role": "neutral",
+        "displayName": "Вторичное голубое действие",
+        "canonical": "#e8f0fa",
+        "tonalRamp": [
+          "oklch(15% 0.0053 253.90)",
+          "oklch(25% 0.0089 253.90)",
+          "oklch(35% 0.0124 253.90)",
+          "oklch(45% 0.0160 253.90)",
+          "oklch(60% 0.0160 253.90)",
+          "oklch(75% 0.0160 253.90)",
+          "oklch(88% 0.0096 253.90)",
+          "oklch(95% 0.0040 253.90)"
+        ]
+      },
+      "secondary-foreground": {
+        "role": "neutral",
+        "displayName": "Текст вторичного действия",
+        "canonical": "#142d4a",
+        "tonalRamp": [
+          "oklch(15% 0.0206 253.59)",
+          "oklch(25% 0.0343 253.59)",
+          "oklch(35% 0.0480 253.59)",
+          "oklch(45% 0.0617 253.59)",
+          "oklch(60% 0.0617 253.59)",
+          "oklch(75% 0.0617 253.59)",
+          "oklch(88% 0.0370 253.59)",
+          "oklch(95% 0.0154 253.59)"
+        ]
+      },
+      "success": {
+        "role": "success",
+        "displayName": "Зелёный успеха",
+        "canonical": "#23724d",
+        "tonalRamp": [
+          "oklch(15% 0.0323 159.01)",
+          "oklch(25% 0.0539 159.01)",
+          "oklch(35% 0.0754 159.01)",
+          "oklch(45% 0.0970 159.01)",
+          "oklch(60% 0.0970 159.01)",
+          "oklch(75% 0.0970 159.01)",
+          "oklch(88% 0.0582 159.01)",
+          "oklch(95% 0.0242 159.01)"
+        ]
+      },
+      "success-muted": {
+        "role": "success",
+        "displayName": "Светлый успех",
+        "canonical": "#edf7f1",
+        "tonalRamp": [
+          "oklch(15% 0.0044 159.92)",
+          "oklch(25% 0.0073 159.92)",
+          "oklch(35% 0.0103 159.92)",
+          "oklch(45% 0.0132 159.92)",
+          "oklch(60% 0.0132 159.92)",
+          "oklch(75% 0.0132 159.92)",
+          "oklch(88% 0.0079 159.92)",
+          "oklch(95% 0.0033 159.92)"
+        ]
+      },
+      "success-strong": {
+        "role": "success",
+        "displayName": "Текст успеха",
+        "canonical": "#246241",
+        "tonalRamp": [
+          "oklch(15% 0.0281 156.99)",
+          "oklch(25% 0.0468 156.99)",
+          "oklch(35% 0.0655 156.99)",
+          "oklch(45% 0.0842 156.99)",
+          "oklch(60% 0.0842 156.99)",
+          "oklch(75% 0.0842 156.99)",
+          "oklch(88% 0.0505 156.99)",
+          "oklch(95% 0.0211 156.99)"
+        ]
+      },
+      "warning": {
+        "role": "warning",
+        "displayName": "Охра предупреждения",
+        "canonical": "#8b5c13",
+        "tonalRamp": [
+          "oklch(15% 0.0342 71.98)",
+          "oklch(25% 0.0570 71.98)",
+          "oklch(35% 0.0799 71.98)",
+          "oklch(45% 0.1027 71.98)",
+          "oklch(60% 0.1027 71.98)",
+          "oklch(75% 0.1027 71.98)",
+          "oklch(88% 0.0616 71.98)",
+          "oklch(95% 0.0257 71.98)"
+        ]
+      },
+      "warning-muted": {
+        "role": "warning",
+        "displayName": "Светлое предупреждение",
+        "canonical": "#fff6e6",
+        "tonalRamp": [
+          "oklch(15% 0.0077 82.12)",
+          "oklch(25% 0.0129 82.12)",
+          "oklch(35% 0.0180 82.12)",
+          "oklch(45% 0.0232 82.12)",
+          "oklch(60% 0.0232 82.12)",
+          "oklch(75% 0.0232 82.12)",
+          "oklch(88% 0.0139 82.12)",
+          "oklch(95% 0.0058 82.12)"
+        ]
+      },
+      "warning-strong": {
+        "role": "warning",
+        "displayName": "Текст предупреждения",
+        "canonical": "#79500c",
+        "tonalRamp": [
+          "oklch(15% 0.0314 73.11)",
+          "oklch(25% 0.0523 73.11)",
+          "oklch(35% 0.0732 73.11)",
+          "oklch(45% 0.0941 73.11)",
+          "oklch(60% 0.0941 73.11)",
+          "oklch(75% 0.0941 73.11)",
+          "oklch(88% 0.0564 73.11)",
+          "oklch(95% 0.0235 73.11)"
+        ]
+      },
+      "danger": {
+        "role": "danger",
+        "displayName": "Красный ошибки",
+        "canonical": "#b33e35",
+        "tonalRamp": [
+          "oklch(15% 0.0500 27.89)",
+          "oklch(25% 0.0833 27.89)",
+          "oklch(35% 0.1167 27.89)",
+          "oklch(45% 0.1500 27.89)",
+          "oklch(60% 0.1500 27.89)",
+          "oklch(75% 0.1500 27.89)",
+          "oklch(88% 0.0900 27.89)",
+          "oklch(95% 0.0375 27.89)"
+        ]
+      },
+      "danger-foreground": {
+        "role": "danger",
+        "displayName": "Белый текст опасного действия",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.00)",
+          "oklch(25% 0.0000 0.00)",
+          "oklch(35% 0.0000 0.00)",
+          "oklch(45% 0.0000 0.00)",
+          "oklch(60% 0.0000 0.00)",
+          "oklch(75% 0.0000 0.00)",
+          "oklch(88% 0.0000 0.00)",
+          "oklch(95% 0.0000 0.00)"
+        ]
+      },
+      "danger-muted": {
+        "role": "danger",
+        "displayName": "Светлая ошибка",
+        "canonical": "#fdf0ef",
+        "tonalRamp": [
+          "oklch(15% 0.0047 22.76)",
+          "oklch(25% 0.0079 22.76)",
+          "oklch(35% 0.0110 22.76)",
+          "oklch(45% 0.0141 22.76)",
+          "oklch(60% 0.0141 22.76)",
+          "oklch(75% 0.0141 22.76)",
+          "oklch(88% 0.0085 22.76)",
+          "oklch(95% 0.0035 22.76)"
+        ]
+      },
+      "danger-strong": {
+        "role": "danger",
+        "displayName": "Текст ошибки",
+        "canonical": "#a0322b",
+        "tonalRamp": [
+          "oklch(15% 0.0489 27.63)",
+          "oklch(25% 0.0815 27.63)",
+          "oklch(35% 0.1141 27.63)",
+          "oklch(45% 0.1467 27.63)",
+          "oklch(60% 0.1467 27.63)",
+          "oklch(75% 0.1467 27.63)",
+          "oklch(88% 0.0880 27.63)",
+          "oklch(95% 0.0367 27.63)"
+        ]
+      },
+      "info": {
+        "role": "info",
+        "displayName": "Синий пояснения",
+        "canonical": "#245fa6",
+        "tonalRamp": [
+          "oklch(15% 0.0431 255.17)",
+          "oklch(25% 0.0718 255.17)",
+          "oklch(35% 0.1005 255.17)",
+          "oklch(45% 0.1292 255.17)",
+          "oklch(60% 0.1292 255.17)",
+          "oklch(75% 0.1292 255.17)",
+          "oklch(88% 0.0775 255.17)",
+          "oklch(95% 0.0323 255.17)"
+        ]
+      },
+      "info-muted": {
+        "role": "info",
+        "displayName": "Светлое пояснение",
+        "canonical": "#e8f0fb",
+        "tonalRamp": [
+          "oklch(15% 0.0057 256.28)",
+          "oklch(25% 0.0095 256.28)",
+          "oklch(35% 0.0133 256.28)",
+          "oklch(45% 0.0171 256.28)",
+          "oklch(60% 0.0171 256.28)",
+          "oklch(75% 0.0171 256.28)",
+          "oklch(88% 0.0103 256.28)",
+          "oklch(95% 0.0043 256.28)"
+        ]
+      },
+      "info-strong": {
+        "role": "info",
+        "displayName": "Текст пояснения",
+        "canonical": "#24558f",
+        "tonalRamp": [
+          "oklch(15% 0.0364 254.49)",
+          "oklch(25% 0.0606 254.49)",
+          "oklch(35% 0.0848 254.49)",
+          "oklch(45% 0.1091 254.49)",
+          "oklch(60% 0.1091 254.49)",
+          "oklch(75% 0.1091 254.49)",
+          "oklch(88% 0.0655 254.49)",
+          "oklch(95% 0.0273 254.49)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Заголовок страницы",
+        "purpose": "Основной h1, непрерывная шкала от 28 до 36 px."
+      },
+      "title-lesson-current": {
+        "displayName": "Акцентированное занятие, широкий экран",
+        "purpose": "Текущее и следующее занятие от sm: 28 px; до sm сохраняется размер title-lesson-mobile и насыщенность 600."
+      },
+      "title-lesson": {
+        "displayName": "Занятие, широкий экран",
+        "purpose": "Обычный заголовок занятия от sm."
+      },
+      "title-lesson-mobile": {
+        "displayName": "Занятие, узкий экран",
+        "purpose": "Основной заголовок занятия до sm."
+      },
+      "title": {
+        "displayName": "Заголовок раздела",
+        "purpose": "Заголовки успеваемости; в профиле тот же размер используется с насыщенностью 600. Обычный line-height размера text-xl."
+      },
+      "title-small": {
+        "displayName": "Заголовок карточки",
+        "purpose": "Общий CardTitle; недельная строка использует отдельный размер 20 px и line-height 24 px."
+      },
+      "body": {
+        "displayName": "Основной текст",
+        "purpose": "Значения полей и ввод."
+      },
+      "body-small": {
+        "displayName": "Пояснение",
+        "purpose": "Описание карточек, полей и поясняющий текст."
+      },
+      "label": {
+        "displayName": "Управление и статус",
+        "purpose": "Средняя кнопка и бейдж; подпись поля наследует обычный межстрочный интервал text-sm."
+      },
+      "label-mobile": {
+        "displayName": "Нижняя навигация",
+        "purpose": "Короткая видимая подпись; активное состояние имеет насыщенность 600."
+      }
+    },
+    "shadows": [
+      {
+        "name": "popover",
+        "value": "0 12px 36px rgb(20 45 74 / 0.16)",
+        "purpose": "Диалог и всплывающее уведомление над рабочим слоем."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Реализованный переход цвета у управления; стандарт Tailwind. Не добавляет пространственного перемещения."
+      },
+      {
+        "name": "overlay-opacity",
+        "value": "150ms",
+        "purpose": "Появление и скрытие dialog/toast только при motion-safe."
+      },
+      {
+        "name": "entrance-route",
+        "value": "440ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Однократный декоративный штрих при первом посещении вкладки; готовое содержимое остаётся доступным. Без движения при prefers-reduced-motion: reduce."
+      },
+      {
+        "name": "loading-pulse",
+        "value": "2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "purpose": "Общий Skeleton, только motion-safe."
+      },
+      {
+        "name": "loading-spin",
+        "value": "1s linear infinite",
+        "purpose": "Общий Spinner, только motion-safe."
+      },
+      {
+        "name": "lesson-details-transform",
+        "value": "200ms cubic-bezier(0, 0, 0.2, 1)",
+        "purpose": "Вход и выход панели целиком от нижнего края до md, от правого края от md. Только motion-safe; выбранное содержание удерживается до close completion."
+      },
+      {
+        "name": "lesson-details-backdrop",
+        "value": "200ms cubic-bezier(0, 0, 0.2, 1)",
+        "purpose": "Синхронное изменение прозрачности затемнения панели. При reduced motion слой статичен."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "40rem"
+      },
+      {
+        "name": "md",
+        "value": "48rem"
+      },
+      {
+        "name": "lg",
+        "value": "64rem"
+      },
+      {
+        "name": "xl",
+        "value": "80rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Основная кнопка",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Основное действие, насыщенный синий.",
+      "html": "<div class=\"ds-button-set\"><button type=\"button\" class=\"ds-btn-primary\">Открыть расписание<svg class=\"ds-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"></path><path d=\"m12 5 7 7-7 7\"></path></svg></button><button type=\"button\" class=\"ds-btn-primary\" disabled>Недоступно</button></div>",
+      "css": ".ds-button-set{display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem}.ds-btn-primary{display:inline-flex;min-width:0;min-height:2.75rem;align-items:center;justify-content:center;gap:0.5rem;border:0;border-radius:var(--radius-md, 0.625rem);padding:0.625rem 1rem;font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif);font-size:0.875rem;line-height:1.25rem;font-weight:500;text-align:center;white-space:normal;cursor:pointer;user-select:none;transition:color 150ms cubic-bezier(0.4,0,0.2,1), background-color 150ms cubic-bezier(0.4,0,0.2,1), border-color 150ms cubic-bezier(0.4,0,0.2,1);background:var(--color-primary, #245fa6);color:var(--color-primary-foreground, #ffffff);}.ds-btn-primary:hover{background:color-mix(in oklab, var(--color-primary, #245fa6) 90%, transparent);}.ds-btn-primary:focus-visible{outline:2px solid var(--color-ring, #245fa6);outline-offset:2px}.ds-btn-primary:active{background:var(--color-primary, #245fa6);}.ds-btn-primary:disabled,.ds-btn-primary[aria-disabled=\"true\"]{pointer-events:none;opacity:0.6}.ds-icon{width:1rem;height:1rem;flex-shrink:0}@media(forced-colors:active){.ds-btn-primary{border:1px solid ButtonText}.ds-btn-primary:focus-visible{outline-color:Highlight}}"
+    },
+    {
+      "name": "Вторичная кнопка",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Спокойное дополнительное действие с голубой подложкой.",
+      "html": "<div class=\"ds-button-set\"><button type=\"button\" class=\"ds-btn-secondary\">Выбрать семестр</button><button type=\"button\" class=\"ds-btn-secondary\" disabled>Недоступно</button></div>",
+      "css": ".ds-button-set{display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem}.ds-btn-secondary{display:inline-flex;min-width:0;min-height:2.75rem;align-items:center;justify-content:center;gap:0.5rem;border:0;border-radius:var(--radius-md, 0.625rem);padding:0.625rem 1rem;font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif);font-size:0.875rem;line-height:1.25rem;font-weight:500;text-align:center;white-space:normal;cursor:pointer;user-select:none;transition:color 150ms cubic-bezier(0.4,0,0.2,1), background-color 150ms cubic-bezier(0.4,0,0.2,1), border-color 150ms cubic-bezier(0.4,0,0.2,1);background:var(--color-secondary, #e8f0fa);color:var(--color-secondary-foreground, #142d4a);}.ds-btn-secondary:hover{background:color-mix(in oklab, var(--color-secondary, #e8f0fa) 70%, transparent);}.ds-btn-secondary:focus-visible{outline:2px solid var(--color-ring, #245fa6);outline-offset:2px}.ds-btn-secondary:active{background:color-mix(in oklab, var(--color-secondary, #e8f0fa) 60%, transparent);}.ds-btn-secondary:disabled,.ds-btn-secondary[aria-disabled=\"true\"]{pointer-events:none;opacity:0.6}.ds-icon{width:1rem;height:1rem;flex-shrink:0}@media(forced-colors:active){.ds-btn-secondary{border:1px solid ButtonText}.ds-btn-secondary:focus-visible{outline-color:Highlight}}"
+    },
+    {
+      "name": "Контурная кнопка",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Вспомогательное действие с видимой границей.",
+      "html": "<div class=\"ds-button-set\"><button type=\"button\" class=\"ds-btn-outline\">К текущей неделе</button><button type=\"button\" class=\"ds-btn-outline\" disabled>Недоступно</button></div>",
+      "css": ".ds-button-set{display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem}.ds-btn-outline{display:inline-flex;min-width:0;min-height:2.75rem;align-items:center;justify-content:center;gap:0.5rem;border:0;border-radius:var(--radius-md, 0.625rem);padding:0.625rem 1rem;font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif);font-size:0.875rem;line-height:1.25rem;font-weight:500;text-align:center;white-space:normal;cursor:pointer;user-select:none;transition:color 150ms cubic-bezier(0.4,0,0.2,1), background-color 150ms cubic-bezier(0.4,0,0.2,1), border-color 150ms cubic-bezier(0.4,0,0.2,1);border:1px solid var(--color-input, #708bad);background:var(--color-card, #ffffff);color:var(--color-foreground, #142d4a);}.ds-btn-outline:hover{background:var(--color-muted, #e8f0fa);}.ds-btn-outline:focus-visible{outline:2px solid var(--color-ring, #245fa6);outline-offset:2px}.ds-btn-outline:active{background:color-mix(in oklab, var(--color-muted, #e8f0fa) 80%, transparent);}.ds-btn-outline:disabled,.ds-btn-outline[aria-disabled=\"true\"]{pointer-events:none;opacity:0.6}.ds-icon{width:1rem;height:1rem;flex-shrink:0}@media(forced-colors:active){.ds-btn-outline{border:1px solid ButtonText}.ds-btn-outline:focus-visible{outline-color:Highlight}}"
+    },
+    {
+      "name": "Панель подробностей занятия",
+      "kind": "custom",
+      "refersTo": "lesson-details-panel",
+      "description": "Иллюстративный статический образец открытой панели на условном учебном содержимом. Показывает визуальную иерархию; не является mock приложения и не реализует Base UI modal/focus trap.",
+      "html": "<div class=\"ds-details-stage\"><div class=\"ds-details-backdrop\" aria-hidden=\"true\"></div><section class=\"ds-details-panel\" aria-labelledby=\"ds-details-title\"><header class=\"ds-details-header\"><div class=\"ds-details-heading\"><h2 class=\"ds-details-title\" id=\"ds-details-title\">Международное право</h2><button class=\"ds-details-close\" type=\"button\" aria-label=\"Закрыть подробности\"><svg class=\"ds-details-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M18 6 6 18\"></path><path d=\"m6 6 12 12\"></path></svg></button></div><div class=\"ds-details-subtitle\"><p class=\"ds-details-date\">15 сентября · Учебный пример</p><span class=\"ds-details-badge\">Семинар</span></div></header><div class=\"ds-details-body\" role=\"region\" tabindex=\"0\" aria-label=\"Сведения о занятии\"><p class=\"ds-details-time\"><span>10:45 –</span><span>12:15</span><small>МСК</small></p><section class=\"ds-details-changes\"><h3>Изменения занятия</h3><p class=\"ds-details-change-label\">Аудитория изменена</p><p><s>Аудитория 204</s> → <strong>Аудитория 307</strong></p><p>Занятие проходит в другом корпусе.</p></section><dl class=\"ds-details-fields\"><div><dt>Аудитория и корпус</dt><dd>Аудитория 307, учебный корпус</dd></div><div><dt>Преподаватель</dt><dd>Преподаватель курса</dd></div><div><dt>Тип занятия</dt><dd>Семинар</dd></div><div><dt>Группа и подгруппа</dt><dd>Учебная группа · Вся группа</dd></div></dl><section class=\"ds-details-original\"><h3>Первоначально в расписании</h3><p>10:45–12:15 · Аудитория 204</p></section></div><footer class=\"ds-details-footer\"><a class=\"ds-details-action\" href=\"/grades\">Успеваемость по дисциплине</a></footer></section></div>",
+      "css": ".ds-details-stage{position:relative;display:flex;min-width:0;overflow:clip;justify-content:flex-end;align-items:flex-end;font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, sans-serif)}.ds-details-backdrop{position:absolute;inset:0;background:color-mix(in oklab,var(--color-foreground, #142d4a) 40%,transparent)}.ds-details-panel{position:relative;display:flex;max-height:92dvh;width:100%;max-width:100%;min-width:0;flex-direction:column;overflow:hidden;overscroll-behavior:contain;border-radius:var(--radius-xl, 1rem) var(--radius-xl, 1rem) 0 0;background:var(--color-card, #ffffff);color:var(--color-card-foreground, #142d4a);box-shadow:var(--shadow-popover,0 12px 36px rgb(20 45 74 / .16))}.ds-details-header{position:sticky;top:0;z-index:1;flex-shrink:0;border-bottom:1px solid var(--color-border, #c8d8ed);background:var(--color-card, #ffffff);padding:1.25rem}.ds-details-heading{display:flex;align-items:flex-start;gap:1rem}.ds-details-title{flex:1;min-width:0;margin:0;font-size:1.5rem;line-height:1.375;font-weight:600;letter-spacing:-.025em;overflow-wrap:anywhere}.ds-details-close{display:inline-flex;flex-shrink:0;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;border:0;border-radius:var(--radius-md, 0.625rem);background:transparent;color:var(--color-foreground, #142d4a);cursor:pointer}.ds-details-close:hover{background:var(--color-muted, #e8f0fa)}.ds-details-close:active{background:color-mix(in oklab,var(--color-muted, #e8f0fa) 80%,transparent)}.ds-details-close:focus-visible,.ds-details-action:focus-visible{outline:2px solid var(--color-ring, #245fa6);outline-offset:2px}.ds-details-icon{width:1.25rem;height:1.25rem;flex-shrink:0}.ds-details-subtitle{display:flex;flex-wrap:wrap;align-items:center;column-gap:.75rem;row-gap:.5rem;margin-top:.75rem}.ds-details-date{margin:0;font-size:.875rem;line-height:1.625;color:var(--color-muted-foreground, #536f91)}.ds-details-badge{border-radius:var(--radius-sm, 0.375rem);padding:.125rem .5rem;background:var(--color-muted, #e8f0fa);color:var(--color-muted-foreground, #536f91);font-size:.875rem;line-height:1.25rem;font-weight:500}.ds-details-body{min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain;padding:1.5rem 1.25rem;overflow-wrap:anywhere;font-size:1rem;line-height:1.625}.ds-details-body:focus-visible{outline:2px solid var(--color-ring, #245fa6);outline-offset:-2px}.ds-details-time{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:.5rem;row-gap:.25rem;margin:0 0 1.75rem;font-size:1.875rem;line-height:1.25;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums}.ds-details-time>span{white-space:nowrap}.ds-details-time>small{font-size:.875rem;line-height:1.625;font-weight:400;letter-spacing:0;color:var(--color-muted-foreground, #536f91)}.ds-details-changes{border-block:1px solid var(--color-border, #c8d8ed);padding:1.25rem 0;margin-bottom:1.75rem}.ds-details-changes h3,.ds-details-original h3{margin:0 0 1rem;font-size:1.125rem;line-height:1.75rem;font-weight:500}.ds-details-changes p,.ds-details-original p{margin:.375rem 0 0;font-size:.875rem;line-height:1.625}.ds-details-change-label{color:var(--color-primary, #245fa6);font-weight:500}.ds-details-changes s{color:var(--color-muted-foreground, #536f91)}.ds-details-changes strong{font-weight:500}.ds-details-fields{display:flex;flex-direction:column;gap:1.25rem;margin:0}.ds-details-fields dt{font-size:.875rem;line-height:1.625;color:var(--color-muted-foreground, #536f91)}.ds-details-fields dd{margin:.25rem 0 0;line-height:1.625}.ds-details-original{margin-top:1.75rem;border-top:1px solid var(--color-border, #c8d8ed);padding-top:1.5rem}.ds-details-footer{position:sticky;bottom:0;flex-shrink:0;border-top:1px solid var(--color-border, #c8d8ed);background:var(--color-card, #ffffff);padding:1rem 1.25rem max(1rem,env(safe-area-inset-bottom))}.ds-details-action{display:inline-flex;box-sizing:border-box;width:100%;min-height:2.75rem;align-items:center;justify-content:center;border-radius:var(--radius-md, 0.625rem);padding:.625rem 1rem;background:var(--color-primary, #245fa6);color:var(--color-primary-foreground, #ffffff);font-size:.875rem;line-height:1.25rem;font-weight:500;text-align:center;text-decoration:none;overflow-wrap:anywhere}.ds-details-action:hover{background:color-mix(in oklab,var(--color-primary, #245fa6) 90%,transparent)}.ds-details-action:active{background:var(--color-primary, #245fa6)}@media(min-width:48rem){.ds-details-panel{width:36rem;height:100dvh;max-height:100dvh;border-radius:0}.ds-details-header{padding:1.75rem 2rem 1.5rem}.ds-details-title{font-size:1.875rem}.ds-details-body{padding:1.75rem 2rem}.ds-details-time{font-size:2.25rem}.ds-details-footer{padding-inline:2rem;padding-bottom:1.5rem}}@media(prefers-reduced-motion:no-preference){.ds-details-panel{transition:transform 200ms cubic-bezier(0,0,.2,1)}.ds-details-backdrop{transition:opacity 200ms cubic-bezier(0,0,.2,1)}.ds-details-panel[data-starting-style],.ds-details-panel[data-ending-style]{transform:translateY(100%)}.ds-details-backdrop[data-starting-style],.ds-details-backdrop[data-ending-style]{opacity:0}}@media(min-width:48rem) and (prefers-reduced-motion:no-preference){.ds-details-panel[data-starting-style],.ds-details-panel[data-ending-style]{transform:translateX(100%)}}@media(forced-colors:active){.ds-details-close:focus-visible,.ds-details-action:focus-visible,.ds-details-body:focus-visible{outline-color:Highlight}}"
+    },
+    {
+      "name": "Опасное действие",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Визуальный вариант действия с последствиями; подтверждение относится к сценарию.",
+      "html": "<div class=\"ds-button-set\"><button type=\"button\" class=\"ds-btn-danger\">Отменить заявку</button><button type=\"button\" class=\"ds-btn-danger\" disabled>Недоступно</button></div>",
+      "css": ".ds-button-set{display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem}.ds-btn-danger{display:inline-flex;min-width:0;min-height:2.75rem;align-items:center;justify-content:center;gap:0.5rem;border:0;border-radius:var(--radius-md, 0.625rem);padding:0.625rem 1rem;font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif);font-size:0.875rem;line-height:1.25rem;font-weight:500;text-align:center;white-space:normal;cursor:pointer;user-select:none;transition:color 150ms cubic-bezier(0.4,0,0.2,1), background-color 150ms cubic-bezier(0.4,0,0.2,1), border-color 150ms cubic-bezier(0.4,0,0.2,1);background:var(--color-danger, #b33e35);color:var(--color-danger-foreground, #ffffff);}.ds-btn-danger:hover{background:color-mix(in oklab, var(--color-danger, #b33e35) 90%, transparent);}.ds-btn-danger:focus-visible{outline:2px solid var(--color-ring, #245fa6);outline-offset:2px}.ds-btn-danger:active{background:var(--color-danger-strong, #a0322b);}.ds-btn-danger:disabled,.ds-btn-danger[aria-disabled=\"true\"]{pointer-events:none;opacity:0.6}.ds-icon{width:1rem;height:1rem;flex-shrink:0}@media(forced-colors:active){.ds-btn-danger{border:1px solid ButtonText}.ds-btn-danger:focus-visible{outline-color:Highlight}}"
+    },
+    {
+      "name": "Текстовое поле",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Подпись, подсказка, видимые фокус и ошибка; базовое поле не содержит персональных данных.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\" for=\"ds-course\">Дисциплина</label><input class=\"ds-input\" id=\"ds-course\" type=\"text\" placeholder=\"Название дисциплины\" aria-describedby=\"ds-course-hint\"><p class=\"ds-field-hint\" id=\"ds-course-hint\">Укажите учебное название целиком.</p></div>",
+      "css": ".ds-field{min-width:0;font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif)}.ds-field-label{display:block;margin-bottom:0.5rem;color:var(--color-foreground, #142d4a);font-size:0.875rem;line-height:1.25rem;font-weight:500}.ds-input{display:flex;min-height:2.75rem;width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--color-input, #708bad);border-radius:var(--radius-md, 0.625rem);background:var(--color-card, #ffffff);color:var(--color-foreground, #142d4a);padding:0.5rem 0.75rem;font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif);font-size:1rem;line-height:1.5rem;caret-color:var(--color-primary, #245fa6);transition:color 150ms cubic-bezier(0.4,0,0.2,1), background-color 150ms cubic-bezier(0.4,0,0.2,1), border-color 150ms cubic-bezier(0.4,0,0.2,1)}.ds-input::placeholder{color:var(--color-muted-foreground, #536f91)}.ds-input:hover{border-color:var(--color-ring, #245fa6)}.ds-input:focus-visible{border-color:var(--color-ring, #245fa6);outline:2px solid var(--color-ring, #245fa6);outline-offset:0}.ds-input[aria-invalid=\"true\"]{border-color:var(--color-danger, #b33e35)}.ds-input:disabled{cursor:not-allowed;background:var(--color-muted, #e8f0fa);opacity:0.7}.ds-field-hint{margin:0.5rem 0 0;font-size:0.875rem;line-height:1.5rem;color:var(--color-muted-foreground, #536f91)}@media(forced-colors:active){.ds-input{border-color:ButtonText}.ds-input:focus-visible{outline-color:Highlight}}"
+    },
+    {
+      "name": "Боковая навигация",
+      "kind": "nav",
+      "refersTo": "navigation-sidebar",
+      "description": "Пять постоянных направлений; активный маршрут обозначен заливкой, насыщенностью и aria-current.",
+      "html": "<nav class=\"ds-sidebar-nav\" aria-label=\"Разделы кабинета\"><ul class=\"ds-nav-list\"><li class=\"ds-nav-item\"><a class=\"ds-nav-link\" href=\"/\"><svg class=\"ds-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\"></path><path d=\"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"></path></svg><span class=\"ds-nav-label\">Главная</span></a></li><li class=\"ds-nav-item\"><a class=\"ds-nav-link\" href=\"/schedule\" aria-current=\"page\"><svg class=\"ds-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M8 2v3\"></path><path d=\"M16 2v3\"></path><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"></rect><path d=\"M3 9h18\"></path><path d=\"M8 13h.01\"></path><path d=\"M12 13h.01\"></path><path d=\"M16 13h.01\"></path><path d=\"M8 17h.01\"></path><path d=\"M12 17h.01\"></path><path d=\"M16 17h.01\"></path></svg><span class=\"ds-nav-label\">Расписание</span></a></li><li class=\"ds-nav-item\"><a class=\"ds-nav-link\" href=\"/grades\"><svg class=\"ds-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M13 17V9\"></path><path d=\"M18 17V5\"></path><path d=\"M3 3v16a2 2 0 0 0 2 2h16\"></path><path d=\"M8 17v-3\"></path></svg><span class=\"ds-nav-label\">Успеваемость</span></a></li><li class=\"ds-nav-item\"><a class=\"ds-nav-link\" href=\"/requests\"><svg class=\"ds-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z\"></path><path d=\"M14 2v5a1 1 0 0 0 1 1h5\"></path><path d=\"M10 9H8\"></path><path d=\"M16 13H8\"></path><path d=\"M16 17H8\"></path></svg><span class=\"ds-nav-label\">Заявки</span></a></li><li class=\"ds-nav-item\"><a class=\"ds-nav-link\" href=\"/notifications\"><svg class=\"ds-icon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M10.268 21a2 2 0 0 0 3.464 0\"></path><path d=\"M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326\"></path></svg><span class=\"ds-nav-label\">Уведомления</span></a></li></ul></nav>",
+      "css": ".ds-sidebar-nav{min-width:0;max-width:14.5rem;font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif)}.ds-nav-list{display:flex;flex-direction:column;gap:0.5rem;list-style:none;margin:0;padding:0}.ds-nav-item,.ds-nav-label{min-width:0}.ds-nav-label{overflow-wrap:anywhere}.ds-nav-link{display:flex;min-height:3rem;min-width:0;align-items:center;gap:0.75rem;box-sizing:border-box;border-radius:var(--radius-lg, 0.75rem);padding:0.75rem 1rem;color:var(--color-muted-foreground, #536f91);font-size:0.875rem;line-height:1.25rem;text-decoration:none;transition:color 150ms cubic-bezier(0.4,0,0.2,1), background-color 150ms cubic-bezier(0.4,0,0.2,1), border-color 150ms cubic-bezier(0.4,0,0.2,1)}.ds-nav-link:hover{background:var(--color-primary-muted, #e1ecfb);color:var(--color-foreground, #142d4a)}.ds-nav-link[aria-current=\"page\"]{background:var(--color-primary, #245fa6);color:var(--color-primary-foreground, #ffffff);font-weight:600}.ds-nav-link:focus-visible{outline:2px solid var(--color-ring, #245fa6);outline-offset:2px}.ds-icon{width:1rem;height:1rem;flex-shrink:0}@media(forced-colors:active){.ds-nav-link:focus-visible{outline-color:Highlight}.ds-nav-link[aria-current=\"page\"]{outline:1px solid Highlight;outline-offset:-1px}}"
+    },
+    {
+      "name": "Текстовые статусы",
+      "kind": "chip",
+      "refersTo": "badge-neutral",
+      "description": "Пассивные бейджи: текст переносится, а цвет уточняет значение.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-badge ds-badge-neutral\">По плану</span><span class=\"ds-badge ds-badge-success\">Зачёт</span><span class=\"ds-badge ds-badge-warning\">Ожидается</span><span class=\"ds-badge ds-badge-danger\">Отменено</span><span class=\"ds-badge ds-badge-info\">Изменение</span></div>",
+      "css": ".ds-badges{display:flex;flex-wrap:wrap;gap:0.5rem}.ds-badge{display:inline-flex;max-width:100%;min-width:0;align-items:center;gap:0.25rem;border-radius:var(--radius-sm, 0.375rem);padding:0.125rem 0.5rem;font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif);font-size:0.875rem;line-height:1.25rem;font-weight:500;white-space:normal}.ds-badge-neutral{background:var(--color-muted, #e8f0fa);color:var(--color-muted-foreground, #536f91)}.ds-badge-success{background:var(--color-success-muted, #edf7f1);color:var(--color-success-strong, #246241)}.ds-badge-warning{background:var(--color-warning-muted, #fff6e6);color:var(--color-warning-strong, #79500c)}.ds-badge-danger{background:var(--color-danger-muted, #fdf0ef);color:var(--color-danger-strong, #a0322b)}.ds-badge-info{background:var(--color-info-muted, #e8f0fb);color:var(--color-info-strong, #24558f)}"
+    },
+    {
+      "name": "Белая карточка",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Плоский контейнер сведений: граница, общий радиус и адаптивные внутренние отступы.",
+      "html": "<section class=\"ds-card\" aria-labelledby=\"ds-card-heading\"><div class=\"ds-card-header\"><h2 class=\"ds-card-title\" id=\"ds-card-heading\">Учебные сведения</h2><p class=\"ds-card-description\">Актуальная информация о выбранном семестре.</p></div><div class=\"ds-card-content\"><p class=\"ds-card-value\">Осенний семестр</p></div></section>",
+      "css": ".ds-card{min-width:0;border:1px solid var(--color-border, #c8d8ed);border-radius:var(--radius-card, 0.875rem);background:var(--color-card, #ffffff);color:var(--color-card-foreground, #142d4a);font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", sans-serif)}.ds-card-header{display:flex;min-width:0;flex-direction:column;gap:0.375rem;padding:1.25rem}.ds-card-title{margin:0;font-size:1.125rem;line-height:1.5rem;font-weight:500;letter-spacing:-0.025em}.ds-card-description{margin:0;font-size:0.875rem;line-height:1.5rem;color:var(--color-muted-foreground, #536f91)}.ds-card-content{min-width:0;padding:0 1.25rem 1.25rem}.ds-card-value{margin:0;font-size:1rem;line-height:1.5rem}@media(min-width:40rem){.ds-card-header{padding:1.5rem}.ds-card-content{padding:0 1.5rem 1.5rem}}"
+    },
+    {
+      "name": "Маршрут занятия",
+      "kind": "custom",
+      "refersTo": "lesson-current",
+      "description": "Иллюстративный фрагмент дневного маршрута: отдельная колонка времени, вся строка как триггер, текущее/следующее и лёгкая последующая строка.",
+      "html": "<ol class=\"ds-route-list\" aria-label=\"Учебный пример занятий\"><li class=\"ds-route-stop\"><div class=\"ds-route-time ds-route-time-current\"><p>09:00</p><small>10:30</small></div><div class=\"ds-route-rail\" aria-hidden=\"true\"><span class=\"ds-route-point ds-route-point-current\"></span></div><article class=\"ds-route-article\"><a class=\"ds-route-lesson ds-route-current\" href=\"/schedule\" aria-haspopup=\"dialog\"><p class=\"ds-route-status\">Сейчас · Семинар</p><h3>Международное право</h3><div class=\"ds-route-meta\"><span>Преподаватель курса</span><span>Аудитория 204</span></div></a></article></li><li class=\"ds-route-stop\"><div class=\"ds-route-time ds-route-time-next\"><p>10:45</p><small>12:15</small></div><div class=\"ds-route-rail\" aria-hidden=\"true\"><span class=\"ds-route-point ds-route-point-next\"></span></div><article class=\"ds-route-article\"><a class=\"ds-route-lesson ds-route-next\" href=\"/schedule\" aria-haspopup=\"dialog\"><p class=\"ds-route-status\">Следующая · Семинар</p><h3>История международных отношений</h3><div class=\"ds-route-change\"><p>Аудитория изменена</p><span><s>Аудитория 204</s> → Аудитория 307</span></div><div class=\"ds-route-meta\"><span>Преподаватель курса</span><span>Аудитория 307</span></div></a></article></li><li class=\"ds-route-stop\"><div class=\"ds-route-time ds-route-time-later\"><p>13:00</p><small>14:30</small></div><div class=\"ds-route-rail\" aria-hidden=\"true\"><span class=\"ds-route-point ds-route-point-later\"></span></div><article class=\"ds-route-article\"><a class=\"ds-route-lesson ds-route-later\" href=\"/schedule\" aria-haspopup=\"dialog\"><p class=\"ds-route-status\">Затем · Семинар</p><h3>Иностранный язык</h3><div class=\"ds-route-meta\"><span>Преподаватель курса</span><span>Аудитория 204</span></div></a></article></li></ol>",
+      "css": ".ds-route-list{list-style:none;margin:0;padding:0;min-width:0;font-family:var(--font-sans, \"Onest\", ui-sans-serif, system-ui, sans-serif);color:var(--color-foreground, #142d4a)}.ds-route-stop{display:grid;min-width:0;grid-template-columns:auto auto minmax(0,1fr);column-gap:.5rem;padding-bottom:1rem}.ds-route-stop:last-child{padding-bottom:0}.ds-route-time{width:3rem;min-width:max-content;padding-top:1rem;text-align:end;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--color-muted-foreground, #536f91)}.ds-route-time p{margin:0;font-size:1rem;line-height:1.5rem}.ds-route-time small{display:block;margin-top:.125rem;font-size:.875rem;line-height:1.25rem}.ds-route-time-current,.ds-route-time-next{color:var(--color-primary, #245fa6)}.ds-route-time-current p,.ds-route-time-next p{font-weight:600}.ds-route-rail{position:relative;width:1rem}.ds-route-rail::before{position:absolute;content:\"\";inset-inline-start:50%;top:0;bottom:0;width:1px;transform:translateX(-50%);background:var(--color-border, #c8d8ed)}.ds-route-stop:first-child .ds-route-rail::before{top:1.5rem}.ds-route-stop:last-child .ds-route-rail::before{bottom:auto;height:1.5rem}.ds-route-point{position:absolute;inset-inline-start:50%;top:1.5rem;width:.625rem;height:.625rem;box-sizing:border-box;transform:translate(-50%,-50%);border:1px solid var(--color-primary, #245fa6);border-radius:50%;background:var(--color-background, #f0f5fc)}.ds-route-point-current,.ds-route-point-next{width:.75rem;height:.75rem}.ds-route-point-current{background:var(--color-primary, #245fa6)}.ds-route-article{min-width:0}.ds-route-lesson{display:block;min-height:2.75rem;min-width:0;padding:1rem;color:var(--color-foreground, #142d4a);text-decoration:none;text-align:start;overflow-wrap:anywhere;text-underline-offset:.25rem}.ds-route-current{border-radius:var(--radius-card, 0.875rem);background:var(--color-primary, #245fa6);color:var(--color-primary-foreground, #ffffff)}.ds-route-next{border-radius:var(--radius-card, 0.875rem);background:var(--color-card, #ffffff)}.ds-route-later{border-bottom:1px solid var(--color-border, #c8d8ed)}.ds-route-lesson:focus-visible{outline:2px solid var(--color-ring, #245fa6);outline-offset:4px}.ds-route-status{margin:0;font-size:.875rem;line-height:1.25rem;font-weight:500}.ds-route-next .ds-route-status{color:var(--color-primary, #245fa6)}.ds-route-later .ds-route-status{color:var(--color-muted-foreground, #536f91)}.ds-route-lesson h3{margin:.5rem 0 0;font-size:1.25rem;line-height:1.375;font-weight:500;letter-spacing:-.025em}.ds-route-current h3,.ds-route-next h3{font-weight:600}.ds-route-lesson:hover h3,.ds-route-lesson:active h3{text-decoration:underline}.ds-route-meta{display:flex;flex-direction:column;column-gap:1.25rem;row-gap:.5rem;margin-top:1rem;font-size:.875rem;line-height:1.625;color:var(--color-muted-foreground, #536f91)}.ds-route-current .ds-route-meta{color:color-mix(in oklab,var(--color-primary-foreground, #ffffff) 95%,transparent)}.ds-route-change{margin-top:1rem;border-top:1px solid var(--color-border, #c8d8ed);padding-top:.75rem;font-size:.875rem;line-height:1.625}.ds-route-change p{margin:0;color:var(--color-primary, #245fa6);font-weight:500}.ds-route-change s{color:var(--color-muted-foreground, #536f91)}@media(min-width:40rem){.ds-route-stop{column-gap:.75rem;padding-bottom:1.25rem}.ds-route-time{width:4rem;padding-top:1.25rem}.ds-route-time p{font-size:1.125rem;line-height:1.75rem}.ds-route-lesson{padding:1.25rem}.ds-route-lesson h3{font-size:1.5rem}.ds-route-current h3,.ds-route-next h3{font-size:1.75rem}.ds-route-meta{flex-direction:row;flex-wrap:wrap;align-items:flex-start}}@media(forced-colors:active){.ds-route-point{border-color:currentColor}.ds-route-rail::before{background:currentColor}.ds-route-lesson:focus-visible{outline-color:Highlight}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Маршрут дня",
+    "overview": "«Маршрут дня» — спокойный и точный учебный кабинет. Синие опоры помогают найти текущее действие, белые поверхности собирают сведения, а светлый фон сохраняет непрерывное рабочее поле. В расписании эта логика становится последовательностью «Сейчас → Следующая → Затем» с тонкой временной линией. Подробности раскрываются рядом с выбранным занятием, сохраняя ориентацию в расписании.\n\nПлотность определяется задачей: день показывает занятия с контекстом изменений, неделя использует компактные строки, профиль и результаты — подписи и разделители. Onest объединяет заголовки, данные и управление; иерархия строится размером, насыщенностью и пространством. Это собственный конкурсный концепт с самостоятельным знаком, а не официальный стиль вуза.\n\nДвижение — краткая обратная связь. Однократный маршрутный штрих не задерживает готовый интерфейс; при уменьшении движения декоративная анимация отсутствует. Цвет всегда сопровождается смыслом в тексте.",
+    "keyCharacteristics": [
+      "Один синий акцент для действий, текущего положения и фокуса.",
+      "Светлый фон, белые рабочие поверхности и сдержанные границы.",
+      "Onest без смены гарнитуры между учебными данными и управлением.",
+      "Текстовые статусы, переносимые названия и компактная неделя.",
+      "Готовое содержимое доступно независимо от декоративного движения."
+    ],
+    "rules": [
+      {
+        "name": "The Semantic Blue Rule",
+        "body": "Основной синий связывает действие, активную навигацию и текущее занятие. Семантические зелёный, охра и красный сообщают результат или проблему и не становятся дополнительными брендовыми акцентами.",
+        "section": "colors"
+      },
+      {
+        "name": "The Text Carries Status Rule",
+        "body": "Статус и изменение называются словами. Цвет, иконка и зачёркивание усиливают сообщение, но не заменяют «Сейчас», «Отменено», «Было» и «Стало».",
+        "section": "colors"
+      },
+      {
+        "name": "The Quiet Depth Rule",
+        "body": "Рабочие поверхности разделяются тоном, границей и отступом. Тень popover используется для всплывающего слоя; обычная карточка остаётся плоской.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Anchored Detail Rule",
+        "body": "Обычное открытие занятия показывает общую модальную панель на текущем экране Home или расписания. Подробности входят с края: справа на desktop и снизу на mobile. Внешний fixed viewport обрезает выходящее содержимое (`overflow: clip`) и никогда не прокручивается, в том числе при установке начального фокуса: прокрутка не должна компенсировать CSS translate и нарушать анимацию. Прокручивается только внутренний body; шапка и нижнее действие остаются на месте. Содержимое сохраняется до окончания закрытия. Reduced motion оставляет статическую панель.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do Используйте утверждённые роли основного синего, светлого фона, белой поверхности и тёмного текста через общие токены.",
+      "Do Набирайте интерфейс Onest с локальными начертаниями 400, 500, 600 и 700; для времени и сравнимых чисел используйте табличные цифры.",
+      "Do Сохраняйте видимый фокус: базовая обводка 2 px, цвет ring; у строки занятия отступ обводки составляет 4 px.",
+      "Do Показывайте изменение занятия до вторичных метаданных; сохраняйте текстовую связь «Было → Стало» и причину при её наличии.",
+      "Do Переносите длинные названия и раскладывайте данные в один поток на узком экране; сохраняйте безопасный отступ над нижней навигацией.",
+      "Do Оставляйте готовое содержимое доступным во время входного штриха и учитывайте уменьшение движения в анимированных компонентах.",
+      "Do При обычном открытии подробностей на Home или в расписании сохраняйте контекст страницы и возвращайте фокус к исходному занятию после закрытия."
+    ],
+    "donts": [
+      "Don't Заменяйте текст статуса одной цветной точкой, иконкой или цветом результата.",
+      "Don't Придавайте обычным карточкам тень всплывающего слоя или добавляйте стеклянные поверхности и градиенты в этот визуальный язык.",
+      "Don't Сжимайте неделю в семиколоночную таблицу: реализованная неделя читается последовательностью компактных дневных списков.",
+      "Don't Фиксируйте учебное время или образцовый контент ради внешнего совпадения: визуальная иерархия должна выдерживать реальные пустые данные и изменения.",
+      "Don't Используйте официальный логотип вуза или описывайте выбранную палитру как официальные фирменные цвета."
+    ]
+  }
+}

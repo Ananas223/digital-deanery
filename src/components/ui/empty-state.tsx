@@ -21,21 +21,21 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-start gap-3 rounded-card border border-dashed border-border bg-card/60 p-5 sm:p-6",
+        "flex min-w-0 flex-col items-start gap-4 rounded-card border border-border bg-card p-5 sm:p-6",
         className,
       )}
     >
       <span
         aria-hidden="true"
-        className="flex size-10 items-center justify-center rounded-md bg-muted text-muted-foreground"
+        className="flex size-10 items-center justify-center rounded-lg bg-primary-muted text-primary"
       >
         <Icon aria-hidden="true" className="size-5" />
       </span>
-      <div className="space-y-1">
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
-        <p className="max-w-prose text-sm text-muted-foreground">{description}</p>
+      <div className="min-w-0 space-y-1.5">
+        <h2 className="text-lg leading-6 font-medium text-foreground">{title}</h2>
+        <p className="max-w-prose text-sm leading-6 text-muted-foreground">{description}</p>
       </div>
-      {action ? <div className="pt-1">{action}</div> : null}
+      {action ? <div className="min-w-0 pt-1">{action}</div> : null}
     </div>
   );
 }

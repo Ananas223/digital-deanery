@@ -1,32 +1,33 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Download } from "lucide-react";
 
-const README_DEMO_URL =
-  "https://github.com/Ananas223/digital-deanery/blob/main/README.md#демо-аккаунты";
-
-/**
- * Компактный демонстрационный доступ для жюри (PRD Ф-01.7).
- *
- * Логины и пароль намеренно не дублируются в коде: они описаны в README
- * (`AGENTS.md` § 4.2), поэтому блок ведёт к разделу с демо-аккаунтами.
- */
+/** Демо-доступ скачивает копию существующей инструкции; учётные данные не входят в JSX. */
 export function DemoAccess() {
   return (
-    <Card>
-      <CardContent className="space-y-2 pt-5">
-        <p className="text-sm font-medium text-foreground">Демонстрационный доступ</p>
-        <p className="text-sm text-pretty text-muted-foreground">
-          Для жюри доступны два студенческих аккаунта. Логины и пароль опубликованы в{" "}
-          <a
-            href={README_DEMO_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-primary underline underline-offset-4 hover:text-primary/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            README, раздел «Демо-аккаунты»
-          </a>
-          .
-        </p>
-      </CardContent>
-    </Card>
+    <section
+      aria-labelledby="demo-access-heading"
+      className="space-y-4 lg:border-t lg:border-border lg:pt-6"
+    >
+      <h2
+        id="demo-access-heading"
+        className="text-lg font-semibold tracking-tight wrap-anywhere text-foreground"
+      >
+        Демонстрационный доступ
+      </h2>
+      <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
+        Для знакомства с кабинетом доступны два студенческих аккаунта. Скачайте данные для входа и
+        выберите аккаунт.
+      </p>
+      <a
+        href="/demo/README.txt"
+        download="demo-access.txt"
+        className="inline-flex min-h-11 items-center gap-3 rounded-md py-2 text-sm font-medium text-primary underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+      >
+        <Download aria-hidden="true" className="size-4 shrink-0" />
+        Скачать данные для входа
+      </a>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        Учебный концепт для конкурса. Все данные вымышлены.
+      </p>
+    </section>
   );
 }

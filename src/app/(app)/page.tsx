@@ -1,9 +1,11 @@
-import { ArrowRight, User, type LucideIcon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
-import { primaryNav } from "@/components/layout/nav-items";
+import { StudentOverview, StudentOverviewSkeleton } from "@/components/dashboard/student-overview";
+import { TodayOverview, TodayOverviewSkeleton } from "@/components/dashboard/today-overview";
 import { Alert } from "@/components/ui/alert";
 import { PageHeader } from "@/components/ui/page-header";
 import { getCurrentUser } from "@/lib/auth/session";
@@ -13,24 +15,7 @@ export const metadata: Metadata = {
   title: "Главная",
 };
 
-type SectionLink = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  description: string;
-};
-
-const sections = [
-  ...primaryNav.filter((item) => item.href !== "/"),
-  {
-    href: "/profile",
-    label: "Профиль",
-    icon: User,
-    description: "Личные и академические данные: ФИО, группа, направление и форма обучения.",
-  },
-] as const satisfies readonly SectionLink[];
-
-/** Главный экран: приветствие и переходы во все разделы кабинета (PRD Ф-00). */
+/** Начальная главная: личный учебный день и профиль на существующих серверных источниках. */
 export default async function HomePage() {
   const user = await getCurrentUser();
 
@@ -38,56 +23,72 @@ export default async function HomePage() {
     redirect("/login");
   }
 
-  const today = new Date();
+  const now = new Date();
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6 wrap-anywhere sm:space-y-8">
       <PageHeader
-        eyebrow={`Сегодня, ${formatDate(today)}`}
-        title={`Здравствуйте, ${getFirstName(user.name)}!`}
-        description="Это ваш кабинет: расписание, успеваемость, заявки и уведомления собраны в одном месте."
+        title="Главная"
+        description={`Здравствуйте, ${getFirstName(user.name)}!`}
+        className="border-b border-border pb-5 sm:pb-6"
+        actions={
+          <div className="space-y-1 text-sm sm:text-right">
+            <p className="font-medium text-foreground">Сегодня, {formatDate(now)}</p>
+            <p className="text-muted-foreground">Московское время</p>
+          </div>
+        }
       />
 
-      <Alert tone="info" title="Кабинет наполняется">
-        Вход, навигация и профиль уже работают. Расписание, оценки, заявки и уведомления появятся
-        здесь, когда демонстрационная база деканата будет подключена.
-      </Alert>
+      {user.role === "STUDENT" ? (
+        <div className="grid min-w-0 items-start gap-8 xl:grid-cols-3">
+          <section aria-labelledby="today-heading" className="min-w-0 space-y-5 xl:col-span-2">
+            <h2 id="today-heading" className="sr-only">
+              Занятия сегодня
+            </h2>
 
-      <section aria-labelledby="sections-heading" className="space-y-3">
-        <h2 id="sections-heading" className="text-lg font-semibold tracking-tight">
-          Разделы кабинета
-        </h2>
+            <Suspense fallback={<TodayOverviewSkeleton />}>
+              <TodayOverview userId={user.id} now={now} />
+            </Suspense>
 
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {sections.map((section) => {
-            const Icon = section.icon;
+            <Link
+              href="/schedule"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-primary underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+            >
+              Всё расписание
+              <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
+            </Link>
+          </section>
 
-            return (
-              <li key={section.label} className="min-w-0">
-                <Link
-                  href={section.href}
-                  className="group flex h-full flex-col gap-2 rounded-card border border-border bg-card p-4 shadow-card transition-colors hover:border-ring/40 hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="flex size-10 items-center justify-center rounded-md bg-primary-muted text-primary"
-                  >
-                    <Icon aria-hidden="true" className="size-5" />
-                  </span>
-                  <span className="flex items-center gap-1.5 text-base font-semibold text-foreground">
-                    {section.label}
-                    <ArrowRight
-                      aria-hidden="true"
-                      className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 motion-reduce:transform-none"
-                    />
-                  </span>
-                  <span className="text-sm text-muted-foreground">{section.description}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
+          <aside
+            aria-labelledby="student-overview-heading"
+            className="min-w-0 space-y-5 border-t border-border pt-6 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-7"
+          >
+            <h2
+              id="student-overview-heading"
+              className="text-lg font-semibold tracking-tight text-foreground"
+            >
+              Учебные сведения
+            </h2>
+            <Suspense fallback={<StudentOverviewSkeleton />}>
+              <StudentOverview userId={user.id} />
+            </Suspense>
+          </aside>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <Alert tone="info" title="Кабинет сотрудника">
+            Учебное расписание на главной отображается для студентов. Личные сведения доступны в
+            вашем профиле.
+          </Alert>
+          <Link
+            href="/profile"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          >
+            Открыть профиль
+            <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
