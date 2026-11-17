@@ -1,11 +1,7 @@
 "use server";
 
 import { requireUser } from "@/lib/auth/session";
-import type {
-  RequestCreated,
-  RequestDetail,
-  RequestSummary,
-} from "@/lib/domain/requests";
+import type { RequestCreated, RequestDetail, RequestSummary } from "@/lib/domain/requests";
 import {
   cancelRequestForUser,
   createRequestForUser,
@@ -16,6 +12,7 @@ import {
 import { AppError } from "@/lib/errors";
 import { parseInput } from "@/lib/validation/parse";
 import {
+  cancelRequestSchema,
   createRequestSchema,
   requestIdSchema,
   requestListQuerySchema,
@@ -55,8 +52,14 @@ export async function cancelRequest(requestId: string): Promise<ActionResult<voi
       throw new AppError("FORBIDDEN");
     }
 
-    const parsed = parseInput(requestIdSchema, requestId);
-    await cancelRequestForUser(user.id, parsed);
+    // Некорректный идентификатор неотличим от чужого: ответ нейтрален (§ 4.4).
+    const parsed = cancelRequestSchema.safeParse({ requestId });
+
+    if (!parsed.success) {
+      throw new AppError("NOT_FOUND", { userMessage: "Заявка не найдена." });
+    }
+
+    await cancelRequestForUser(user.id, parsed.data.requestId);
 
     return { ok: true, data: undefined };
   } catch (error) {
@@ -64,9 +67,7 @@ export async function cancelRequest(requestId: string): Promise<ActionResult<voi
   }
 }
 
-export async function transitionRequestStatus(
-  input: unknown,
-): Promise<ActionResult<void>> {
+export async function transitionRequestStatus(input: unknown): Promise<ActionResult<void>> {
   try {
     const user = await requireUser();
     const parsed = parseInput(requestStatusTransitionSchema, input);
@@ -82,18 +83,31 @@ export async function transitionRequestStatus(
 export async function getMyRequests(filter?: RequestListQuery): Promise<RequestSummary[]> {
   const user = await requireUser();
 
+  // Список «мои заявки» есть только у студента; сотруднику отдаём пустой
+  // результат без раскрытия чужих данных и без ошибки (§ 4.4 не объявляет кодов).
   if (user.role !== "STUDENT") {
-    throw new AppError("FORBIDDEN");
+    return [];
   }
 
-  const parsed = filter ? parseInput(requestListQuerySchema, filter) : {};
+  const parsed = requestListQuerySchema.safeParse(filter ?? {});
 
-  return getMyRequestsForUser(user.id, parsed);
+  // Контракт действия не объявляет кодов ошибок: некорректный фильтр
+  // деградирует в пустой список, не раскрывая данных и не бросая AppError.
+  if (!parsed.success) {
+    return [];
+  }
+
+  return getMyRequestsForUser(user.id, parsed.data);
 }
 
 export async function getRequest(requestId: string): Promise<RequestDetail | null> {
   const user = await requireUser();
-  const parsed = parseInput(requestIdSchema, requestId);
+  const parsed = requestIdSchema.safeParse(requestId);
 
-  return getRequestForActor({ userId: user.id, role: user.role }, parsed);
+  // Некорректный идентификатор — тот же нейтральный ответ, что и чужой (§ 4.5).
+  if (!parsed.success) {
+    return null;
+  }
+
+  return getRequestForActor({ userId: user.id, role: user.role }, parsed.data);
 }

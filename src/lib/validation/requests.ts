@@ -14,13 +14,7 @@ export const REQUEST_TYPE_CODES = [
   "RETAKE",
 ] as const;
 
-export const REQUEST_STATUSES = [
-  "NEW",
-  "IN_PROGRESS",
-  "READY",
-  "REJECTED",
-  "CANCELLED",
-] as const;
+export const REQUEST_STATUSES = ["NEW", "IN_PROGRESS", "READY", "REJECTED", "CANCELLED"] as const;
 
 export type RequestTypeCode = (typeof REQUEST_TYPE_CODES)[number];
 export type RequestStatusValue = (typeof REQUEST_STATUSES)[number];

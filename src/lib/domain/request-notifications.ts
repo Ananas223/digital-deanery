@@ -13,17 +13,25 @@ export type RequestNotificationContent = {
   priority: "NORMAL" | "IMPORTANT";
 };
 
+/**
+ * Уведомление о создании заявки. Отдельная функция нужна и созданию в рантайме,
+ * и seed-скрипту: текст не должен расходиться между демо-данными и приложением.
+ */
+export function buildRequestCreatedNotification(number: string): RequestNotificationContent {
+  return {
+    title: "Заявка создана",
+    body: `Заявка ${number} создана и ожидает рассмотрения. Следите за статусом в карточке заявки.`,
+    priority: "NORMAL",
+  };
+}
+
 export function buildRequestStatusNotification(
   status: RequestStatus,
   number: string,
 ): RequestNotificationContent {
   switch (status) {
     case "NEW":
-      return {
-        title: "Заявка создана",
-        body: `Заявка ${number} создана и ожидает рассмотрения. Следите за статусом в карточке заявки.`,
-        priority: "NORMAL",
-      };
+      return buildRequestCreatedNotification(number);
     case "IN_PROGRESS":
       return {
         title: "Заявка принята в работу",

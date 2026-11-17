@@ -2,6 +2,12 @@ import "dotenv/config";
 
 import { createAuth } from "../src/lib/auth/create-auth";
 import { createPrismaClient } from "../src/lib/db/client";
+import {
+  buildRequestCreatedNotification,
+  buildRequestStatusNotification,
+  getRequestStatusDedupeKey,
+} from "../src/lib/domain/request-notifications";
+import { addMoscowWorkingDays, getMoscowYear } from "../src/lib/domain/request-time";
 
 const prisma = createPrismaClient();
 const auth = createAuth(prisma);
@@ -147,7 +153,8 @@ type DemoRequestTransition = {
 };
 
 type DemoRequest = {
-  number: string;
+  /** Шесть цифр номера заявки: 900001–900006, вне диапазона реальной выдачи. */
+  numberSuffix: number;
   studentEmail: string;
   typeCode: RequestTypeCodeValue;
   status: RequestStatusValue;
@@ -1125,11 +1132,12 @@ const REQUEST_TYPES: DemoRequestType[] = [
  * Демо-заявки двух студентов. Вместе они покрывают все пять статусов:
  * `NEW`, `IN_PROGRESS`, `READY`, `REJECTED` и `CANCELLED`.
  * Даты лежат в прошлом и вне окна лимита создания (10 заявок за 10 минут).
+ * Номера собираются из московского года и суффикса 900001–900006.
  */
 const DEMO_REQUESTS: DemoRequest[] = [
   // Анна Петрова: готовая справка об обучении.
   {
-    number: "З-2026-900001",
+    numberSuffix: 900001,
     studentEmail: "anna.petrova@example.com",
     typeCode: "STUDY_CERTIFICATE",
     status: "READY",
@@ -1158,7 +1166,7 @@ const DEMO_REQUESTS: DemoRequest[] = [
   },
   // Анна Петрова: отклонённая справка по месту требования.
   {
-    number: "З-2026-900002",
+    numberSuffix: 900002,
     studentEmail: "anna.petrova@example.com",
     typeCode: "PLACE_REQUIREMENT",
     status: "REJECTED",
@@ -1191,7 +1199,7 @@ const DEMO_REQUESTS: DemoRequest[] = [
   },
   // Анна Петрова: новая заявка на академический отпуск.
   {
-    number: "З-2026-900003",
+    numberSuffix: 900003,
     studentEmail: "anna.petrova@example.com",
     typeCode: "ACADEMIC_LEAVE",
     status: "NEW",
@@ -1208,7 +1216,7 @@ const DEMO_REQUESTS: DemoRequest[] = [
   },
   // Марк Соколов: пересдача экзамена, заявка в работе.
   {
-    number: "З-2026-900004",
+    numberSuffix: 900004,
     studentEmail: "mark.sokolov@example.com",
     typeCode: "RETAKE",
     status: "IN_PROGRESS",
@@ -1237,7 +1245,7 @@ const DEMO_REQUESTS: DemoRequest[] = [
   },
   // Марк Соколов: справка об обучении, отменена студентом.
   {
-    number: "З-2026-900005",
+    numberSuffix: 900005,
     studentEmail: "mark.sokolov@example.com",
     typeCode: "STUDY_CERTIFICATE",
     status: "CANCELLED",
@@ -1260,7 +1268,7 @@ const DEMO_REQUESTS: DemoRequest[] = [
   },
   // Марк Соколов: новая справка по месту требования.
   {
-    number: "З-2026-900006",
+    numberSuffix: 900006,
     studentEmail: "mark.sokolov@example.com",
     typeCode: "PLACE_REQUIREMENT",
     status: "NEW",
@@ -1274,6 +1282,12 @@ const DEMO_REQUESTS: DemoRequest[] = [
     transitions: [],
   },
 ];
+
+/**
+ * Последний демо-номер. Счётчик года поднимается до него (заведомо выше 900000),
+ * поэтому первая реальная заявка получает 900007 и не пересекается с демо.
+ */
+const DEMO_REQUEST_LAST_NUMBER = Math.max(...DEMO_REQUESTS.map((request) => request.numberSuffix));
 
 type SeedSummary = {
   created: number;
@@ -1503,51 +1517,6 @@ function moscowDaysAgo(daysAgo: number, [hour, minute]: [number, number]): Date 
   );
 }
 
-/** Срок подготовки заявки: прибавляет рабочие дни (Пн–Пт), пропуская выходные. */
-function addWorkingDays(from: Date, workingDays: number): Date {
-  const result = new Date(from);
-  let added = 0;
-
-  while (added < workingDays) {
-    result.setUTCDate(result.getUTCDate() + 1);
-    const weekday = result.getUTCDay();
-    if (weekday !== 0 && weekday !== 6) {
-      added += 1;
-    }
-  }
-
-  return result;
-}
-
-/** Заголовок и текст уведомления о смене статуса заявки по контракту `P5-BE-02`. */
-function requestStatusNotification(
-  status: RequestTransitionStatusValue,
-  number: string,
-): { title: string; body: string } {
-  switch (status) {
-    case "IN_PROGRESS":
-      return {
-        title: "Заявка принята в работу",
-        body: `Заявка ${number} принята в работу деканатом. Следите за статусом в карточке заявки.`,
-      };
-    case "READY":
-      return {
-        title: "Заявка готова",
-        body: `По заявке ${number} подготовлен документ. Откройте карточку заявки, чтобы узнать порядок получения.`,
-      };
-    case "REJECTED":
-      return {
-        title: "Заявка отклонена",
-        body: `Заявка ${number} отклонена. Причина указана в карточке заявки.`,
-      };
-    case "CANCELLED":
-      return {
-        title: "Заявка отменена",
-        body: `Заявка ${number} отменена по инициативе студента.`,
-      };
-  }
-}
-
 function autumnSemester(startYear: number): DemoSemester {
   return {
     academicYear: `${startYear}/${startYear + 1}`,
@@ -1756,6 +1725,17 @@ async function seedRequests(
   });
   await prisma.request.deleteMany({ where: { studentId: { in: profileIds } } });
 
+  // Счётчик года поднимается до демо-диапазона, но не откатывает уже выданные
+  // номера: повторный seed идемпотентен, а реальная выдача продолжается выше.
+  const year = getMoscowYear(new Date());
+
+  await prisma.$executeRaw`
+    INSERT INTO "request_number_sequence" ("year", "lastNumber")
+    VALUES (${year}, ${DEMO_REQUEST_LAST_NUMBER})
+    ON CONFLICT ("year")
+    DO UPDATE SET "lastNumber" = GREATEST("request_number_sequence"."lastNumber", ${DEMO_REQUEST_LAST_NUMBER})
+  `;
+
   for (const demo of DEMO_REQUESTS) {
     const studentId = profiles.get(demo.studentEmail);
     const typeId = types.get(demo.typeCode);
@@ -1768,6 +1748,7 @@ async function seedRequests(
       throw new Error(`Не найден тип заявки ${demo.typeCode}`);
     }
 
+    const number = `З-${year}-${String(demo.numberSuffix).padStart(6, "0")}`;
     const createdAt = moscowDaysAgo(demo.daysAgo, demo.time);
     const lastTransition = demo.transitions[demo.transitions.length - 1];
     const updatedAt = lastTransition
@@ -1776,12 +1757,12 @@ async function seedRequests(
 
     const request = await prisma.request.create({
       data: {
-        number: demo.number,
+        number,
         studentId,
         typeId,
         status: demo.status,
         payload: demo.payload(disciplines),
-        dueAt: addWorkingDays(createdAt, type.processingDays),
+        dueAt: addMoscowWorkingDays(createdAt, type.processingDays),
         createdAt,
         updatedAt,
         ...(demo.rejectionReason ? { rejectionReason: demo.rejectionReason } : {}),
@@ -1790,10 +1771,29 @@ async function seedRequests(
     });
     summary.requests += 1;
 
-    await prisma.requestStatusHistory.create({
+    const creation = await prisma.requestStatusHistory.create({
       data: { requestId: request.id, toStatus: "NEW", createdAt },
+      select: { id: true },
     });
     summary.requestHistory += 1;
+
+    // Создание заявки сопровождается тем же уведомлением, что и в рантайме.
+    const createdContent = buildRequestCreatedNotification(request.number);
+    await prisma.notification.create({
+      data: {
+        category: "REQUESTS",
+        priority: createdContent.priority,
+        title: createdContent.title,
+        body: createdContent.body,
+        audienceType: "STUDENT",
+        audienceStudentId: studentId,
+        targetType: "REQUEST",
+        targetId: request.id,
+        dedupeKey: getRequestStatusDedupeKey(request.id, creation.id),
+        publishedAt: createdAt,
+      },
+    });
+    summary.notifications += 1;
 
     for (const transition of demo.transitions) {
       const changedAt = moscowDaysAgo(transition.daysAgo, transition.time);
@@ -1810,17 +1810,18 @@ async function seedRequests(
       });
       summary.requestHistory += 1;
 
-      const notification = requestStatusNotification(transition.toStatus, request.number);
+      const notification = buildRequestStatusNotification(transition.toStatus, request.number);
       await prisma.notification.create({
         data: {
           category: "REQUESTS",
+          priority: notification.priority,
           title: notification.title,
           body: notification.body,
           audienceType: "STUDENT",
           audienceStudentId: studentId,
           targetType: "REQUEST",
           targetId: request.id,
-          dedupeKey: `request:${request.id}:status:${entry.id}`,
+          dedupeKey: getRequestStatusDedupeKey(request.id, entry.id),
           publishedAt: changedAt,
         },
       });

@@ -230,9 +230,9 @@ describe("requestListQuerySchema", () => {
 describe("cancelRequestSchema", () => {
   it("требует cuid заявки", () => {
     expect(cancelRequestSchema.safeParse({ requestId: "abc" }).success).toBe(false);
-    expect(
-      cancelRequestSchema.safeParse({ requestId: "cm5z8x2q10000abcd1234efgh" }).success,
-    ).toBe(true);
+    expect(cancelRequestSchema.safeParse({ requestId: "cm5z8x2q10000abcd1234efgh" }).success).toBe(
+      true,
+    );
   });
 });
 
@@ -240,9 +240,10 @@ describe("requestStatusTransitionSchema", () => {
   const requestId = "cm5z8x2q10000abcd1234efgh";
 
   it("принимает переход в работу", () => {
-    expect(
-      requestStatusTransitionSchema.parse({ requestId, toStatus: "IN_PROGRESS" }),
-    ).toEqual({ requestId, toStatus: "IN_PROGRESS" });
+    expect(requestStatusTransitionSchema.parse({ requestId, toStatus: "IN_PROGRESS" })).toEqual({
+      requestId,
+      toStatus: "IN_PROGRESS",
+    });
   });
 
   it("требует причину при отклонении", () => {
@@ -269,8 +270,8 @@ describe("requestStatusTransitionSchema", () => {
   });
 
   it("не принимает неизвестный статус", () => {
-    expect(
-      requestStatusTransitionSchema.safeParse({ requestId, toStatus: "DONE" }).success,
-    ).toBe(false);
+    expect(requestStatusTransitionSchema.safeParse({ requestId, toStatus: "DONE" }).success).toBe(
+      false,
+    );
   });
 });

@@ -1,8 +1,16 @@
 import { randomUUID } from "node:crypto";
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  cancelRequest as cancelRequestAction,
+  createRequest as createRequestAction,
+  getMyRequests as getMyRequestsAction,
+  getRequest as getRequestAction,
+  transitionRequestStatus as transitionRequestStatusAction,
+} from "@/lib/actions/requests";
 import { createPrismaClient } from "@/lib/db/client";
+import { prisma as appPrisma } from "@/lib/db/prisma";
 import {
   cancelRequestForUser,
   createRequestForUser,
@@ -10,7 +18,11 @@ import {
   getRequest,
   transitionRequestStatusForActor,
 } from "@/lib/domain/requests";
-import type { CreateRequestInput } from "@/lib/validation/requests";
+import type { CreateRequestInput, RequestListQuery } from "@/lib/validation/requests";
+
+const sessionMock = vi.hoisted(() => ({ requireUser: vi.fn() }));
+
+vi.mock("@/lib/auth/session", () => ({ requireUser: sessionMock.requireUser }));
 
 const prisma = createPrismaClient();
 
@@ -152,9 +164,7 @@ describe("создание заявки", () => {
       where: { requestId: created.id },
       select: { fromStatus: true, toStatus: true, changedById: true },
     });
-    expect(history).toEqual([
-      { fromStatus: null, toStatus: "NEW", changedById: fixture.annaId },
-    ]);
+    expect(history).toEqual([{ fromStatus: null, toStatus: "NEW", changedById: fixture.annaId }]);
 
     const notifications = await prisma.notification.findMany({
       where: { targetId: created.id },
@@ -181,11 +191,7 @@ describe("создание заявки", () => {
   it("не создаёт вторую заявку при повторе clientRequestId", async () => {
     const clientRequestId = randomUUID();
     const first = await createStudy(fixture.annaId, NOW, clientRequestId);
-    const second = await createRequestForUser(
-      fixture.annaId,
-      studyInput(clientRequestId),
-      NOW,
-    );
+    const second = await createRequestForUser(fixture.annaId, studyInput(clientRequestId), NOW);
 
     expect(second.id).toBe(first.id);
     expect(second.number).toBe(first.number);
@@ -214,6 +220,117 @@ describe("создание заявки", () => {
         NOW,
       ),
     ).rejects.toMatchObject({ name: "AppError", code: "CONFLICT" });
+  });
+
+  it("возвращает существующую заявку при параллельной отправке (P2002)", async () => {
+    const clientRequestId = randomUUID();
+    const originalFindUnique = appPrisma.request.findUnique.bind(appPrisma.request);
+    let lookups = 0;
+
+    // Пропускаем предварительные проверки обоих параллельных вызовов,
+    // чтобы второй гарантированно упёрся в уникальный индекс. Восстановление
+    // после P2002 идёт третьим запросом и использует настоящую БД.
+    const spy = vi.spyOn(appPrisma.request, "findUnique").mockImplementation(((
+      args: Parameters<typeof originalFindUnique>[0],
+    ) => {
+      lookups += 1;
+
+      return lookups <= 2 ? Promise.resolve(null) : originalFindUnique(args);
+    }) as unknown as typeof originalFindUnique);
+
+    try {
+      const now = nextCreationTime();
+      const [first, second] = await Promise.all([
+        createRequestForUser(fixture.annaId, studyInput(clientRequestId), now),
+        createRequestForUser(fixture.annaId, studyInput(clientRequestId), now),
+      ]);
+      track(first.id);
+
+      expect(second.id).toBe(first.id);
+      expect(second.number).toBe(first.number);
+      expect(
+        await prisma.request.count({
+          where: { studentId: fixture.annaProfileId, clientRequestId },
+        }),
+      ).toBe(1);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("откатывает создание заявки, если уведомление не сохранилось", async () => {
+    const clientRequestId = randomUUID();
+    const counts = async () => ({
+      requests: await prisma.request.count({ where: { studentId: fixture.annaProfileId } }),
+      history: await prisma.requestStatusHistory.count(),
+      notifications: await prisma.notification.count({ where: { category: "REQUESTS" } }),
+    });
+    const before = await counts();
+
+    const originalTransaction = appPrisma.$transaction.bind(appPrisma) as unknown as (
+      arg: unknown,
+      ...rest: unknown[]
+    ) => Promise<unknown>;
+    const failure = new Error("notification failure");
+
+    // Подменяем только уведомление внутри транзакции: остальные запросы идут
+    // в настоящую БД, поэтому проверяется реальный откат Prisma.
+    const spy = vi.spyOn(appPrisma, "$transaction").mockImplementation(((
+      arg: unknown,
+      ...rest: unknown[]
+    ): Promise<unknown> => {
+      if (typeof arg !== "function") {
+        return originalTransaction(arg, ...rest);
+      }
+
+      const callback = arg as (tx: unknown) => Promise<unknown>;
+      const wrapped = (tx: unknown) => {
+        const notification = (tx as { notification: object }).notification;
+        const failingNotification = new Proxy(notification, {
+          get(target, property) {
+            if (property === "create") {
+              return async () => {
+                throw failure;
+              };
+            }
+
+            const value = Reflect.get(target, property) as unknown;
+
+            return typeof value === "function" ? value.bind(target) : value;
+          },
+        });
+        const proxy = new Proxy(tx as object, {
+          get(target, property) {
+            if (property === "notification") {
+              return failingNotification;
+            }
+
+            const value = Reflect.get(target, property) as unknown;
+
+            return typeof value === "function" ? value.bind(target) : value;
+          },
+        });
+
+        return callback(proxy);
+      };
+
+      return originalTransaction(wrapped, ...rest);
+    }) as never);
+
+    try {
+      await expect(
+        createRequestForUser(fixture.annaId, studyInput(clientRequestId), nextCreationTime()),
+      ).rejects.toThrow(failure);
+    } finally {
+      spy.mockRestore();
+    }
+
+    expect(await counts()).toEqual(before);
+    expect(
+      await prisma.request.count({
+        where: { studentId: fixture.annaProfileId, clientRequestId },
+      }),
+    ).toBe(0);
   });
 
   it("ограничивает создание десятью заявками за десять минут", async () => {
@@ -245,9 +362,9 @@ describe("создание заявки", () => {
   });
 
   it("запрещает создание сотруднику без студенческого профиля", async () => {
-    await expect(
-      createRequestForUser(fixture.employeeId, studyInput(), NOW),
-    ).rejects.toMatchObject({ name: "AppError", code: "FORBIDDEN" });
+    await expect(createRequestForUser(fixture.employeeId, studyInput(), NOW)).rejects.toMatchObject(
+      { name: "AppError", code: "FORBIDDEN" },
+    );
   });
 });
 
@@ -276,10 +393,7 @@ describe("список и карточка заявки", () => {
   it("возвращает владельцу данные, историю и возможность отмены", async () => {
     const created = await createStudy(fixture.annaId);
 
-    const detail = await getRequest(
-      { userId: fixture.annaId, role: "STUDENT" },
-      created.id,
-    );
+    const detail = await getRequest({ userId: fixture.annaId, role: "STUDENT" }, created.id);
 
     expect(detail).not.toBeNull();
     expect(detail?.number).toBe(created.number);
@@ -341,10 +455,7 @@ describe("отмена заявки", () => {
       "Заявка отменена",
     ]);
 
-    const detail = await getRequest(
-      { userId: fixture.annaId, role: "STUDENT" },
-      created.id,
-    );
+    const detail = await getRequest({ userId: fixture.annaId, role: "STUDENT" }, created.id);
     expect(detail?.canCancel).toBe(false);
   });
 
@@ -383,6 +494,13 @@ describe("отмена заявки", () => {
       select: { status: true },
     });
     expect(stored?.status).toBe("NEW");
+  });
+
+  it("считает некорректный идентификатор отсутствующей заявкой", async () => {
+    await expect(cancelRequestForUser(fixture.annaId, "not-a-cuid", NOW)).rejects.toMatchObject({
+      name: "AppError",
+      code: "NOT_FOUND",
+    });
   });
 });
 
@@ -483,6 +601,23 @@ describe("переходы статусов", () => {
     });
   });
 
+  it("не принимает причину отклонения из пробелов", async () => {
+    const created = await createStudy(fixture.annaId);
+    await transitionRequestStatusForActor(
+      employee(),
+      { requestId: created.id, toStatus: "IN_PROGRESS" },
+      later(created),
+    );
+
+    await expect(
+      transitionRequestStatusForActor(
+        employee(),
+        { requestId: created.id, toStatus: "REJECTED", comment: "   " },
+        later(created, 2),
+      ),
+    ).rejects.toMatchObject({ name: "AppError", code: "VALIDATION" });
+  });
+
   it("запрещает завершить новую заявку без работы", async () => {
     const created = await createStudy(fixture.annaId);
 
@@ -537,5 +672,104 @@ describe("переходы статусов", () => {
         NOW,
       ),
     ).rejects.toMatchObject({ name: "AppError", code: "NOT_FOUND" });
+  });
+});
+
+describe("контракт Server Actions", () => {
+  const studentSession = () => ({
+    id: fixture.annaId,
+    email: "anna.petrova@example.com",
+    name: "Анна Петрова",
+    role: "STUDENT" as const,
+  });
+  const employeeSession = () => ({
+    id: fixture.employeeId,
+    email: "dean.employee@example.com",
+    name: "Сотрудник деканата",
+    role: "DEAN_EMPLOYEE" as const,
+  });
+
+  beforeEach(() => {
+    sessionMock.requireUser.mockReset();
+  });
+
+  it("создаёт заявку студентом через действие", async () => {
+    sessionMock.requireUser.mockResolvedValue(studentSession());
+
+    const result = await createRequestAction(studyInput());
+
+    expect(result.ok).toBe(true);
+
+    if (result.ok) {
+      track(result.data.id);
+      expect(result.data.number).toMatch(/^З-\d{4}-\d{6}$/);
+      expect(result.data.status).toBe("NEW");
+    }
+  });
+
+  it("возвращает VALIDATION_ERROR на некорректный ввод", async () => {
+    sessionMock.requireUser.mockResolvedValue(studentSession());
+
+    const result = await createRequestAction({ typeCode: "STUDY_CERTIFICATE" });
+
+    expect(result).toMatchObject({ ok: false, error: { code: "VALIDATION_ERROR" } });
+
+    if (!result.ok) {
+      expect(result.error.message).toBe("Проверьте заполнение полей.");
+      expect(result.error.requestId).toMatch(/^[0-9a-f-]{36}$/);
+    }
+  });
+
+  it("запрещает сотруднику создавать заявку через действие", async () => {
+    sessionMock.requireUser.mockResolvedValue(employeeSession());
+
+    await expect(createRequestAction(studyInput())).resolves.toMatchObject({
+      ok: false,
+      error: { code: "FORBIDDEN" },
+    });
+  });
+
+  it("запрещает студенту действие сотрудника через действие", async () => {
+    sessionMock.requireUser.mockResolvedValue(studentSession());
+    const created = await createStudy(fixture.annaId);
+
+    await expect(
+      transitionRequestStatusAction({ requestId: created.id, toStatus: "IN_PROGRESS" }),
+    ).resolves.toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
+
+    const stored = await prisma.request.findUnique({
+      where: { id: created.id },
+      select: { status: true },
+    });
+    expect(stored?.status).toBe("NEW");
+  });
+
+  it("возвращает пустой список при некорректном фильтре", async () => {
+    sessionMock.requireUser.mockResolvedValue(studentSession());
+
+    await expect(
+      getMyRequestsAction({ status: "UNKNOWN" } as unknown as RequestListQuery),
+    ).resolves.toEqual([]);
+  });
+
+  it("возвращает null на некорректный идентификатор заявки", async () => {
+    sessionMock.requireUser.mockResolvedValue(studentSession());
+
+    await expect(getRequestAction("not-a-cuid")).resolves.toBeNull();
+  });
+
+  it("отвечает NOT_FOUND при отмене с некорректным идентификатором", async () => {
+    sessionMock.requireUser.mockResolvedValue(studentSession());
+
+    await expect(cancelRequestAction("not-a-cuid")).resolves.toMatchObject({
+      ok: false,
+      error: { code: "NOT_FOUND" },
+    });
+  });
+
+  it("возвращает пустой список сотруднику деканата", async () => {
+    sessionMock.requireUser.mockResolvedValue(employeeSession());
+
+    await expect(getMyRequestsAction()).resolves.toEqual([]);
   });
 });

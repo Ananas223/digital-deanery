@@ -63,7 +63,13 @@ describe("canTransition", () => {
   it.each(["READY", "REJECTED", "CANCELLED"] as RequestStatus[])(
     "не выпускает из терминального статуса %s",
     (status) => {
-      for (const to of ["NEW", "IN_PROGRESS", "READY", "REJECTED", "CANCELLED"] as RequestStatus[]) {
+      for (const to of [
+        "NEW",
+        "IN_PROGRESS",
+        "READY",
+        "REJECTED",
+        "CANCELLED",
+      ] as RequestStatus[]) {
         expect(canTransition(status, to, EMPLOYEE)).toBe(false);
         expect(canTransition(status, to, STUDENT_OWNER)).toBe(false);
       }

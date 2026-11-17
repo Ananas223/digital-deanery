@@ -5,14 +5,12 @@ import type { RequestStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
 import { AppError } from "@/lib/errors";
 import {
+  buildRequestCreatedNotification,
   buildRequestStatusNotification,
   getRequestStatusDedupeKey,
 } from "@/lib/domain/request-notifications";
 import { addMoscowWorkingDays, getMoscowYear } from "@/lib/domain/request-time";
-import {
-  canTransition,
-  type RequestActorRole,
-} from "@/lib/domain/request-status";
+import { canTransition, type RequestActorRole } from "@/lib/domain/request-status";
 import type {
   CreateRequestInput,
   RequestListQuery,
@@ -136,9 +134,7 @@ async function findByIdempotencyKey(
 
 function ensureSameType(existing: RequestSummaryRow, typeCode: RequestTypeCode): RequestCreated {
   if (existing.type.code !== typeCode) {
-    throw new AppError("CONFLICT", {
-      userMessage: "Повторная отправка относится к другому типу заявки.",
-    });
+    throw new AppError("CONFLICT", { userMessage: "Обновите страницу и повторите." });
   }
 
   return toCreated(existing);
@@ -240,7 +236,7 @@ export async function createRequestForUser(
         select: { id: true },
       });
 
-      const content = buildRequestStatusNotification("NEW", number);
+      const content = buildRequestCreatedNotification(number);
 
       await tx.notification.create({
         data: {
@@ -450,7 +446,11 @@ export async function transitionRequestStatusForActor(
     throw new AppError("FORBIDDEN");
   }
 
-  if (input.toStatus === "REJECTED" && !input.comment) {
+  // Обрезаем причину здесь же: прямой вызов домена не должен сохранять
+  // строку из пробелов как «заполненную» (§ 4.4, обязательная причина).
+  const comment = input.comment?.trim() || null;
+
+  if (input.toStatus === "REJECTED" && !comment) {
     throw new AppError("VALIDATION", { userMessage: "Укажите причину отклонения." });
   }
 
@@ -478,7 +478,7 @@ export async function transitionRequestStatusForActor(
       data: {
         status: input.toStatus,
         updatedAt: now,
-        ...(input.toStatus === "REJECTED" ? { rejectionReason: input.comment } : {}),
+        ...(input.toStatus === "REJECTED" ? { rejectionReason: comment } : {}),
         ...(input.toStatus === "IN_PROGRESS" ? { assignedToId: actor.userId } : {}),
       },
     });
@@ -492,7 +492,7 @@ export async function transitionRequestStatusForActor(
         requestId: request.id,
         fromStatus: request.status,
         toStatus: input.toStatus,
-        comment: input.comment ?? null,
+        comment,
         changedById: actor.userId,
         createdAt: now,
       },
