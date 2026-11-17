@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 
 import { createPrismaClient } from "@/lib/db/client";
+import { buildRequestCreatedNotification } from "@/lib/domain/request-notifications";
+import { getMoscowYear } from "@/lib/domain/request-time";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -207,5 +209,76 @@ describe("seed тестовой базы", () => {
     expect(before.grades).toBeGreaterThanOrEqual(18);
     expect(before.exams).toBeGreaterThanOrEqual(16);
     expect(after).toEqual(before);
+  });
+});
+
+describe("seed демо-заявок", () => {
+  it("создаёт шесть демо-заявок с уведомлением о создании и не дублирует их", async () => {
+    const year = getMoscowYear(new Date());
+    const prefix = `З-${year}-`;
+
+    const snapshot = async () => {
+      const requests = await prisma.request.findMany({
+        where: { number: { startsWith: prefix } },
+        orderBy: { number: "asc" },
+        select: { id: true, number: true },
+      });
+      const ids = requests.map((request) => request.id);
+      const [statusHistory, notifications] = await Promise.all([
+        prisma.requestStatusHistory.count({ where: { requestId: { in: ids } } }),
+        prisma.notification.count({ where: { targetId: { in: ids }, category: "REQUESTS" } }),
+      ]);
+
+      return { requests, statusHistory, notifications };
+    };
+
+    const first = await snapshot();
+
+    expect(first.requests).toHaveLength(6);
+    expect(first.requests.map((request) => request.number)).toEqual([
+      `${prefix}900001`,
+      `${prefix}900002`,
+      `${prefix}900003`,
+      `${prefix}900004`,
+      `${prefix}900005`,
+      `${prefix}900006`,
+    ]);
+    expect(new Set(first.requests.map((request) => request.number)).size).toBe(6);
+    // Шесть записей создания и шесть переходов статуса.
+    expect(first.statusHistory).toBe(12);
+    // По уведомлению на создание и на каждый переход.
+    expect(first.notifications).toBe(12);
+
+    for (const request of first.requests) {
+      const created = buildRequestCreatedNotification(request.number);
+      const creationNotifications = await prisma.notification.count({
+        where: {
+          targetId: request.id,
+          category: "REQUESTS",
+          title: created.title,
+          body: created.body,
+        },
+      });
+
+      expect(creationNotifications).toBe(1);
+    }
+
+    const sequence = await prisma.requestNumberSequence.findUnique({
+      where: { year },
+      select: { lastNumber: true },
+    });
+    // Счётчик должен стоять на последнем демо-номере (900006),
+    // иначе первая реальная заявка столкнётся с демо-заявкой.
+    expect(sequence?.lastNumber ?? 0).toBeGreaterThanOrEqual(900_006);
+
+    runSeed();
+
+    const second = await snapshot();
+
+    expect(second.requests.map((request) => request.number)).toEqual(
+      first.requests.map((request) => request.number),
+    );
+    expect(second.statusHistory).toBe(first.statusHistory);
+    expect(second.notifications).toBe(first.notifications);
   });
 });
