@@ -71,7 +71,7 @@ function SessionGroup({
         {exams.map((exam) => (
           <li key={exam.id} className="min-w-0 space-y-4 py-5 sm:py-6">
             <div className="min-w-0 space-y-1">
-              <p className="text-sm leading-6 font-medium text-primary tabular-nums">
+              <p className="text-sm leading-6 font-medium text-link tabular-nums">
                 <time dateTime={exam.startsAt.toISOString()}>{formatDate(exam.startsAt)}</time>
                 {" · "}
                 {formatScheduleTimeRange(exam.startsAt, exam.endsAt)} МСК
@@ -85,7 +85,7 @@ function SessionGroup({
                     { ...context, disciplineId: exam.discipline.id },
                     "discipline-detail",
                   )}
-                  className="inline-flex min-h-11 items-center text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  className="inline-flex min-h-11 items-center text-link underline decoration-link/30 underline-offset-4 hover:decoration-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   {exam.discipline.name}
                 </Link>

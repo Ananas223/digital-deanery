@@ -71,8 +71,8 @@ export function GradesSemesterSelector({
                 className={cn(
                   "inline-flex min-h-11 min-w-0 flex-col justify-center gap-0.5 rounded-lg border px-4 py-2 text-sm leading-5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                   selected
-                    ? "border-primary bg-card text-primary"
-                    : "border-border text-muted-foreground hover:border-primary hover:text-primary active:bg-primary-muted",
+                    ? "border-link bg-card text-link"
+                    : "border-border text-muted-foreground hover:border-link hover:text-link active:bg-primary-muted",
                 )}
               >
                 <span className="font-medium">{getSemesterLabel(semester)}</span>
@@ -103,8 +103,8 @@ export function GradesViewLinks({ context }: { context: GradesContext }) {
               className={cn(
                 "inline-flex min-h-12 items-center border-b-2 px-1 py-3 text-base font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                 context.tab === tab
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground active:text-primary",
+                  ? "border-link text-link"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground active:text-link",
               )}
             >
               {label}

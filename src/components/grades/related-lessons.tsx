@@ -41,7 +41,7 @@ export async function RelatedLessons({
         action={
           <Link
             href="/profile"
-            className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="inline-flex min-h-11 items-center font-medium text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             Открыть профиль
           </Link>
@@ -83,7 +83,7 @@ export async function RelatedLessons({
               <li key={lesson.id} className="min-w-0 space-y-1 py-3">
                 <Link
                   href={scheduleLessonHref(lesson.id, context)}
-                  className="inline-flex min-h-11 flex-wrap items-center gap-x-2 gap-y-1 py-2 text-base font-medium text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  className="inline-flex min-h-11 flex-wrap items-center gap-x-2 gap-y-1 py-2 text-base font-medium text-link underline decoration-link/30 underline-offset-4 hover:decoration-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   <span>{getLessonTypeLabel(lesson.type)}</span>
                   <span className="tabular-nums">

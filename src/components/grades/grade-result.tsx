@@ -13,7 +13,7 @@ export function GradeResult({ result }: { result: Pick<GradeEntry, "score" | "st
         status === "FAILED"
           ? "text-danger-strong"
           : status === "PASSED"
-            ? "text-primary"
+            ? "text-link"
             : "text-muted-foreground",
       )}
     >

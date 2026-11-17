@@ -16,7 +16,12 @@ test.describe("US-01: вход в кабинет", () => {
     await page.goto("/");
 
     await expect(page).toHaveURL(/\/login\?next=%2F$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Вход в кабинет" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Деканат будущего", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Вход в кабинет", exact: true }),
+    ).toBeVisible();
   });
 
   test("после входа возвращает на запрошенную страницу", async ({ page }) => {
@@ -72,21 +77,18 @@ test.describe("US-01: вход в кабинет", () => {
     await submit.click();
 
     await expect(page).toHaveURL(/\/$/);
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Главная", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("main").getByText("Здравствуйте, Анна!", { exact: true }),
-    ).toBeVisible();
+    const homeHeading = page.getByRole("main").getByRole("heading", { level: 1 });
+    await expect(homeHeading).toBeVisible();
+    await expect(homeHeading).toHaveText(
+      /^(?:Доброе утро|Добрый день|Добрый вечер|Доброй ночи), Анна$/,
+    );
 
     // Сессия сохраняется при обновлении страницы (Ф-01.2).
     await page.reload();
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Главная", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("main").getByText("Здравствуйте, Анна!", { exact: true }),
-    ).toBeVisible();
+    await expect(homeHeading).toBeVisible();
+    await expect(homeHeading).toHaveText(
+      /^(?:Доброе утро|Добрый день|Добрый вечер|Доброй ночи), Анна$/,
+    );
 
     // Пять разделов навигации доступны (US-01 п.5): главная + 4 раздела.
     const navigation = page.getByRole("navigation", { name: "Разделы кабинета" }).first();
@@ -165,12 +167,11 @@ test.describe("US-01: вход в кабинет", () => {
     await passwordField(page).fill(DEMO_STUDENTS.mark.password);
     await page.getByRole("button", { name: "Войти", exact: true }).click();
 
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Главная", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("main").getByText("Здравствуйте, Марк!", { exact: true }),
-    ).toBeVisible();
+    const homeHeading = page.getByRole("main").getByRole("heading", { level: 1 });
+    await expect(homeHeading).toBeVisible();
+    await expect(homeHeading).toHaveText(
+      /^(?:Доброе утро|Добрый день|Добрый вечер|Доброй ночи), Марк$/,
+    );
 
     await page.getByRole("button", { name: "Выйти", exact: true }).first().click();
     await expect(page.getByRole("dialog")).toBeVisible();

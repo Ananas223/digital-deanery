@@ -1,6 +1,6 @@
-import { BookOpen } from "lucide-react";
 import Link from "next/link";
 
+import { RouteMark } from "@/components/layout/route-mark";
 import { cn } from "@/lib/utils";
 
 type LogoProps = {
@@ -9,18 +9,13 @@ type LogoProps = {
   linked?: boolean;
 };
 
-/** Own wordmark and Lucide book; no official university insignia. */
+/** Own route mark and wordmark; the visible text names the link once. */
 export function Logo({ className, linked = true }: LogoProps) {
   const content = (
     <>
-      <span
-        aria-hidden="true"
-        className="logo-mark flex size-10 shrink-0 items-center justify-center rounded-xl border border-primary bg-card text-primary"
-      >
-        <BookOpen aria-hidden="true" className="size-5" strokeWidth={1.6} />
-      </span>
+      <RouteMark className="logo-mark size-10 text-link" />
       <span className="logo-wordmark min-w-0 text-lg leading-6 font-semibold tracking-tight wrap-anywhere text-foreground">
-        Цифровой деканат
+        Деканат будущего
       </span>
     </>
   );

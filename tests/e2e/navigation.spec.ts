@@ -13,10 +13,11 @@ test.describe("Главный экран и навигация", () => {
     await annaPage.goto("/");
 
     const main = annaPage.getByRole("main");
-    await expect(
-      main.getByRole("heading", { level: 1, name: "Главная", exact: true }),
-    ).toBeVisible();
-    await expect(main.getByText("Здравствуйте, Анна!", { exact: true })).toBeVisible();
+    const homeHeading = main.getByRole("heading", { level: 1 });
+    await expect(homeHeading).toBeVisible();
+    await expect(homeHeading).toHaveText(
+      /^(?:Доброе утро|Добрый день|Добрый вечер|Доброй ночи), Анна$/,
+    );
 
     const navigation = annaPage.getByRole("navigation", {
       name: "Разделы кабинета",

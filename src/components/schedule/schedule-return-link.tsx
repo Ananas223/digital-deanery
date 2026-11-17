@@ -23,7 +23,7 @@ export function ScheduleReturnLink() {
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center gap-2 rounded-sm text-sm font-medium text-primary underline-offset-4 hover:underline"
+      className="inline-flex min-h-11 items-center gap-2 rounded-sm text-sm font-medium text-link underline-offset-4 hover:underline"
     >
       <ArrowLeft aria-hidden="true" className="size-4" />К расписанию
     </Link>

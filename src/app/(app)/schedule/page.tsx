@@ -82,14 +82,14 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
         day.lessons.map((lesson) => lessonDetailsView(lesson, context)),
       )}
     >
-      <div className="max-w-6xl min-w-0 space-y-4 sm:space-y-7">
+      <div className="mx-auto w-full max-w-[100rem] min-w-0 space-y-4 sm:space-y-7">
         <ScheduleHeader context={context} group={profile?.group} />
         {context.invalidDate ? (
           <Alert title="Дата в ссылке не распознана">
             Проверьте дату или выберите нужный день в календаре.
           </Alert>
         ) : null}
-        <div className="grid min-w-0 gap-7 xl:grid-cols-[minmax(0,1fr)_15rem] xl:gap-8">
+        <div className="grid min-w-0 gap-7 xl:grid-cols-[minmax(0,1fr)_15rem] xl:gap-8 2xl:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="min-w-0 space-y-5 sm:space-y-7">
             <ScheduleControls week={week} context={context} today={today} />
             {context.view === "day" ? (

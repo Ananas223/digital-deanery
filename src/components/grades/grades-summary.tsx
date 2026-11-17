@@ -74,7 +74,7 @@ export function GradesSummary({
                 { ...context, tab: "session", disciplineId: nextExam.discipline.id },
                 "discipline-detail",
               )}
-              className="inline-flex min-h-11 min-w-0 items-center py-2 font-medium text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="inline-flex min-h-11 min-w-0 items-center py-2 font-medium text-link underline decoration-link/40 underline-offset-4 hover:decoration-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               {nextExam.discipline.name}
             </Link>

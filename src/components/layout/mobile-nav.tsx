@@ -35,7 +35,7 @@ export function MobileNav() {
                   "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-0 py-1.5 text-center text-xs leading-4 transition-colors",
                   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
                   active
-                    ? "bg-primary-muted font-semibold text-primary"
+                    ? "bg-primary-muted font-semibold text-link outline-1 -outline-offset-1 outline-selection"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >

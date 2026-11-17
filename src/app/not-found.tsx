@@ -9,7 +9,7 @@ export default function NotFound() {
     <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col items-center justify-center gap-4 px-6 py-16 text-center">
       <span
         aria-hidden="true"
-        className="flex size-12 items-center justify-center rounded-lg bg-primary-muted text-primary"
+        className="flex size-12 items-center justify-center rounded-lg bg-primary-muted text-link"
       >
         <GraduationCap aria-hidden="true" className="size-6" />
       </span>

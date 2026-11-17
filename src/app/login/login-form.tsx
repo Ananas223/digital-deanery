@@ -216,7 +216,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
               aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
               aria-pressed={showPassword}
               aria-controls="login-password"
-              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-md text-muted-foreground transition-colors hover:bg-primary-muted hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-md text-muted-foreground transition-colors hover:bg-primary-muted hover:text-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             >
               {showPassword ? (
                 <EyeOff aria-hidden="true" className="size-5" />

@@ -27,18 +27,18 @@ export function DialogContent({
 }: DialogContentProps) {
   return (
     <BaseDialog.Portal>
-      <BaseDialog.Backdrop className="fixed inset-0 z-50 bg-foreground/40 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:transition-opacity motion-safe:duration-150" />
+      <BaseDialog.Backdrop className="fixed inset-0 z-50 bg-overlay data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:transition-opacity motion-safe:duration-(--duration-panel) motion-safe:ease-interface" />
       <BaseDialog.Viewport className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto sm:items-center sm:p-6">
         <BaseDialog.Popup
           className={cn(
-            "relative max-h-[calc(100dvh-2rem)] w-full min-w-0 overflow-y-auto rounded-t-xl border border-border bg-card p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-card-foreground shadow-popover data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:transition-opacity motion-safe:duration-150 sm:max-w-md sm:rounded-card sm:p-6",
+            "overlay-surface relative max-h-[calc(100dvh-2rem)] w-full min-w-0 overflow-y-auto rounded-t-xl bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-card-foreground shadow-popover data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:transition-opacity motion-safe:duration-(--duration-panel) motion-safe:ease-interface sm:max-w-md sm:rounded-card sm:p-6",
             className,
           )}
         >
           {children}
           <BaseDialog.Close
             aria-label={closeLabel}
-            className="absolute top-2 right-2 inline-flex size-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="absolute top-2 right-2 inline-flex size-11 items-center justify-center rounded-md text-muted-foreground transition-colors duration-(--duration-feedback) ease-interface hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:bg-primary-muted"
           >
             <X aria-hidden="true" className="size-4" />
           </BaseDialog.Close>
@@ -70,7 +70,7 @@ export function DialogDescription({
 }: React.ComponentProps<typeof BaseDialog.Description>) {
   return (
     <BaseDialog.Description
-      className={cn("text-sm leading-6 text-muted-foreground", className)}
+      className={cn("max-w-prose text-base leading-6 text-muted-foreground", className)}
       {...props}
     />
   );
@@ -79,7 +79,7 @@ export function DialogDescription({
 export function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("mt-5 flex flex-wrap items-center justify-end gap-2", className)}
+      className={cn("mt-6 flex flex-wrap items-center justify-end gap-2", className)}
       {...props}
     />
   );

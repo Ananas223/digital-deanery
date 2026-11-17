@@ -59,13 +59,13 @@ export function Field({
       })}
 
       {hint ? (
-        <p id={hintId} className="text-sm leading-6 text-muted-foreground">
+        <p id={hintId} className="text-meta text-muted-foreground">
           {hint}
         </p>
       ) : null}
 
       {error ? (
-        <p id={errorId} className="text-sm leading-6 text-danger-strong">
+        <p id={errorId} className="text-meta text-danger-strong">
           {error}
         </p>
       ) : null}

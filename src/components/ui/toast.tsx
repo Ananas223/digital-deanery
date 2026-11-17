@@ -39,14 +39,14 @@ function ToastList() {
       key={toast.id}
       toast={toast}
       className={cn(
-        "pointer-events-auto w-full rounded-card border border-border bg-card p-4 text-card-foreground shadow-popover motion-safe:transition-opacity motion-safe:duration-150",
+        "overlay-surface pointer-events-auto w-full rounded-card bg-card p-4 text-card-foreground shadow-popover motion-safe:transition-opacity motion-safe:duration-(--duration-panel) motion-safe:ease-interface",
         "data-[ending-style]:opacity-0 data-[starting-style]:opacity-0",
       )}
     >
       <Toast.Content className="flex items-start gap-3">
         <div className="min-w-0 flex-1 space-y-0.5">
-          <Toast.Title className="text-sm font-semibold text-foreground" />
-          <Toast.Description className="text-sm leading-6 text-muted-foreground" />
+          <Toast.Title className="text-base leading-6 font-semibold text-foreground" />
+          <Toast.Description className="text-meta text-muted-foreground" />
         </div>
         {/* Обычная кнопка вместо Toast.Close: Base UI скрывает свою кнопку от скринридера,
             пока тост не получил фокус. */}
@@ -54,7 +54,7 @@ function ToastList() {
           type="button"
           aria-label="Закрыть уведомление"
           onClick={() => close(toast.id)}
-          className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-(--duration-feedback) ease-interface hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:bg-primary-muted"
         >
           <X aria-hidden="true" className="size-4" />
         </button>

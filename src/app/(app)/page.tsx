@@ -4,12 +4,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { HomeHeader } from "@/components/dashboard/home-header";
 import { StudentOverview, StudentOverviewSkeleton } from "@/components/dashboard/student-overview";
 import { TodayOverview, TodayOverviewSkeleton } from "@/components/dashboard/today-overview";
 import { Alert } from "@/components/ui/alert";
-import { PageHeader } from "@/components/ui/page-header";
 import { getCurrentUser } from "@/lib/auth/session";
-import { formatDate, getFirstName } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Главная",
@@ -26,22 +25,12 @@ export default async function HomePage() {
   const now = new Date();
 
   return (
-    <div className="min-w-0 space-y-6 wrap-anywhere sm:space-y-8">
-      <PageHeader
-        title="Главная"
-        description={`Здравствуйте, ${getFirstName(user.name)}!`}
-        className="border-b border-border pb-5 sm:pb-6"
-        actions={
-          <div className="space-y-1 text-sm sm:text-right">
-            <p className="font-medium text-foreground">Сегодня, {formatDate(now)}</p>
-            <p className="text-muted-foreground">Московское время</p>
-          </div>
-        }
-      />
+    <div className="min-w-0 space-y-4 wrap-anywhere sm:space-y-6">
+      <HomeHeader name={user.name} initialNow={now.getTime()} />
 
       {user.role === "STUDENT" ? (
-        <div className="grid min-w-0 items-start gap-8 xl:grid-cols-3">
-          <section aria-labelledby="today-heading" className="min-w-0 space-y-5 xl:col-span-2">
+        <div className="grid min-w-0 items-start gap-6 sm:gap-8 xl:grid-cols-3">
+          <section aria-labelledby="today-heading" className="min-w-0 space-y-4 xl:col-span-2">
             <h2 id="today-heading" className="sr-only">
               Занятия сегодня
             </h2>
@@ -52,7 +41,7 @@ export default async function HomePage() {
 
             <Link
               href="/schedule"
-              className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-primary underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+              className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-link underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
             >
               Всё расписание
               <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
@@ -82,7 +71,7 @@ export default async function HomePage() {
           </Alert>
           <Link
             href="/profile"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
           >
             Открыть профиль
             <ArrowRight aria-hidden="true" className="size-4 shrink-0" />

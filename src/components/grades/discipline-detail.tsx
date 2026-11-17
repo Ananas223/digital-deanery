@@ -63,7 +63,7 @@ export function DisciplineDetail({
       <div className="min-w-0 space-y-3">
         <Link
           href={returnHref}
-          className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          className="inline-flex min-h-11 items-center text-sm font-medium text-link underline underline-offset-4 hover:decoration-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           {context.tab === "session" ? "К списку сессии" : "К списку дисциплин"}
         </Link>

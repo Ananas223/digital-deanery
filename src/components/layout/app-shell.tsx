@@ -1,6 +1,5 @@
 "use client";
 
-import { UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,7 +13,9 @@ import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
 import type { ShellUser } from "@/components/layout/types";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ToastProvider } from "@/components/ui/toast";
+import { getInitials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type AppShellProps = {
@@ -35,32 +36,44 @@ export function AppShell({ user, children }: AppShellProps) {
 
         <aside
           aria-label="Кабинет студента"
-          className="sticky top-0 hidden h-dvh min-w-0 flex-col overflow-y-auto border-r border-border bg-card px-5 pt-8 pb-5 md:flex"
+          className="sticky top-0 hidden h-dvh min-w-0 flex-col overflow-y-auto border-r border-border bg-card px-4 pt-6 pb-4 md:flex"
         >
           <Logo className="mx-2" />
-          <div className="mt-14">
+          <div className="mt-10">
             <SidebarNav />
           </div>
 
-          <div className="mt-auto pt-10">
+          <div className="mt-auto pt-8">
             <div className="space-y-2 border-t border-border pt-4">
               <Link
                 href="/profile"
-                aria-label={`Профиль: ${user.name}`}
                 aria-current={profileActive ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 min-w-0 items-center gap-3 rounded-lg px-4 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                  "flex min-h-11 min-w-0 items-center gap-3 rounded-lg px-4 py-2 text-sm transition-colors duration-(--duration-feedback) ease-interface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                   profileActive
                     ? "bg-primary font-medium text-primary-foreground"
-                    : "text-foreground hover:bg-primary-muted",
+                    : "text-foreground hover:bg-primary-muted active:bg-muted",
                 )}
               >
-                <UserRound aria-hidden="true" className="size-4 shrink-0" />
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
+                    profileActive
+                      ? "bg-primary-foreground text-primary-solid"
+                      : "bg-primary-muted text-link",
+                  )}
+                >
+                  {getInitials(user.name)}
+                </span>
                 <span>Профиль</span>
               </Link>
-              <p className="px-4 text-sm leading-6 text-muted-foreground">{user.name}</p>
-              <div className="[&>button]:w-full [&>button]:justify-start [&>button]:px-4">
-                <LogoutButton />
+              <p className="px-4 text-meta text-muted-foreground">{user.name}</p>
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="min-w-0 flex-1 [&>button]:w-full [&>button]:justify-start [&>button]:px-4">
+                  <LogoutButton />
+                </div>
+                <ThemeToggle />
               </div>
             </div>
           </div>
@@ -72,7 +85,7 @@ export function AppShell({ user, children }: AppShellProps) {
           <main
             id="main-content"
             tabIndex={-1}
-            className="min-w-0 flex-1 pt-3 outline-offset-4 md:pt-9"
+            className="min-w-0 flex-1 pt-2 outline-offset-4 md:pt-8"
           >
             {children}
           </main>

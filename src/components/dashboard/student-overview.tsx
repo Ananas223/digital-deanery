@@ -36,7 +36,7 @@ export async function StudentOverview({ userId }: StudentOverviewProps) {
         action={
           <Link
             href="/profile"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-primary underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
           >
             Открыть профиль
             <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
@@ -76,7 +76,7 @@ export async function StudentOverview({ userId }: StudentOverviewProps) {
       </dl>
       <Link
         href="/profile"
-        className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-primary underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+        className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-link underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
       >
         Открыть профиль
         <ArrowRight aria-hidden="true" className="size-4 shrink-0" />

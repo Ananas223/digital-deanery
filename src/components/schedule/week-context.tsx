@@ -45,7 +45,7 @@ export function WeekContext({ week, context }: WeekContextProps) {
                 <span
                   className={cn(
                     "text-sm font-medium group-hover:underline",
-                    selected && "text-primary",
+                    selected && "text-link",
                   )}
                 >
                   {formatScheduleDate(day.startsAt, {
@@ -66,7 +66,9 @@ export function WeekContext({ week, context }: WeekContextProps) {
                     <time dateTime={lastEnd.toISOString()}>{formatScheduleTime(lastEnd)}</time>
                   </span>
                 ) : day.lessons.length > 0 ? (
-                  <span className="col-span-2 text-sm text-danger">Все занятия отменены</span>
+                  <span className="col-span-2 text-sm text-danger-strong">
+                    Все занятия отменены
+                  </span>
                 ) : null}
               </Link>
             </li>

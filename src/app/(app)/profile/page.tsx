@@ -61,7 +61,7 @@ export default async function ProfilePage() {
                 <span>{getRoleLabel(user.role)}</span>
                 {profile ? (
                   <>
-                    <span className="font-medium text-primary">{profile.group}</span>
+                    <span className="font-medium text-link">{profile.group}</span>
                     <span>{formatNumber(profile.course)} курс</span>
                   </>
                 ) : null}
@@ -112,7 +112,7 @@ export default async function ProfilePage() {
               id="readonly-heading"
               className="flex items-center gap-2 text-sm font-medium text-foreground"
             >
-              <LockKeyhole aria-hidden="true" className="size-4 shrink-0 text-primary" />
+              <LockKeyhole aria-hidden="true" className="size-4 shrink-0 text-link" />
               Только для чтения
             </h2>
             <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
@@ -122,7 +122,7 @@ export default async function ProfilePage() {
             {user.role === "STUDENT" ? (
               <Link
                 href="/requests"
-                className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-primary underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-link underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
               >
                 Перейти в раздел заявок
                 <ArrowRight aria-hidden="true" className="size-4 shrink-0" />

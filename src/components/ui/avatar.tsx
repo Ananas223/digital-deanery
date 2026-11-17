@@ -4,7 +4,7 @@ import { getInitials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const avatarVariants = cva(
-  "inline-flex shrink-0 items-center justify-center rounded-full bg-primary-muted font-semibold text-primary uppercase select-none",
+  "inline-flex shrink-0 items-center justify-center rounded-full bg-primary-muted font-semibold text-link uppercase select-none",
   {
     variants: {
       size: {

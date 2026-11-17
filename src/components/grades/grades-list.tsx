@@ -44,7 +44,7 @@ export function GradesList({ grades, context }: { grades: GradeEntry[]; context:
                     { ...context, disciplineId: grade.discipline.id },
                     "discipline-detail",
                   )}
-                  className="inline-flex min-h-11 items-center text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  className="inline-flex min-h-11 items-center text-link underline decoration-link/30 underline-offset-4 hover:decoration-link focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   {grade.discipline.name}
                 </Link>

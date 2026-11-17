@@ -26,7 +26,7 @@ export function SidebarNav() {
                   "flex min-h-12 min-w-0 items-center gap-3 rounded-lg px-4 py-3 text-sm leading-5 transition-colors",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                   active
-                    ? "bg-primary font-semibold text-primary-foreground"
+                    ? "bg-primary font-semibold text-primary-foreground outline-1 -outline-offset-1 outline-selection"
                     : "text-muted-foreground hover:bg-primary-muted hover:text-foreground",
                 )}
               >

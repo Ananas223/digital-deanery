@@ -51,7 +51,7 @@ export default async function LessonPage({ params, searchParams }: LessonPagePro
     <div className="min-w-0 space-y-6">
       <Link
         href={scheduleHref(context, context.view === "week")}
-        className="inline-flex min-h-11 items-center gap-2 rounded-sm text-sm font-medium text-primary underline-offset-4 hover:underline"
+        className="inline-flex min-h-11 items-center gap-2 rounded-sm text-sm font-medium text-link underline-offset-4 hover:underline"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />К расписанию
       </Link>
@@ -117,7 +117,7 @@ export default async function LessonPage({ params, searchParams }: LessonPagePro
       </article>
       <Link
         href={scheduleDisciplineHref(effective.discipline.id, context)}
-        className="inline-flex min-h-11 items-center rounded-sm font-medium text-primary underline underline-offset-4"
+        className="inline-flex min-h-11 items-center rounded-sm font-medium text-link underline underline-offset-4"
       >
         Успеваемость по дисциплине
       </Link>

@@ -48,18 +48,18 @@ export function WeekAgenda({ days, context, initialNow }: WeekAgendaProps) {
             <div
               className={cn(
                 "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-border pb-2",
-                day.date === context.day && "border-primary",
+                day.date === context.day && "border-link",
               )}
             >
               <h2 id={`day-${day.date}`} className="scroll-mt-6 text-lg font-medium">
                 {formatScheduleDayHeading(day.startsAt)}
                 {day.date === today ? (
-                  <span className="ms-2 text-sm font-normal text-primary">Сегодня</span>
+                  <span className="ms-2 text-sm font-normal text-link">Сегодня</span>
                 ) : null}
               </h2>
               <Link
                 href={scheduleHref({ ...context, view: "day", day: day.date })}
-                className="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-primary underline underline-offset-4"
+                className="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-link underline underline-offset-4"
                 aria-label={`Открыть день: ${formatScheduleDayHeading(day.startsAt)}`}
               >
                 Открыть день
@@ -74,7 +74,7 @@ export function WeekAgenda({ days, context, initialNow }: WeekAgendaProps) {
               >
                 {day.lessons.map((lesson) => (
                   <li key={lesson.id}>
-                    <WeekLessonRow lesson={lesson} position={positions.get(lesson.id)} />
+                    <WeekLessonRow lesson={lesson} position={positions.get(lesson.id)} now={now} />
                   </li>
                 ))}
               </ol>

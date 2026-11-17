@@ -107,10 +107,10 @@ export function ScheduleControls({ week, context, today }: ScheduleControlsProps
               aria-current={selected ? "date" : undefined}
               className={cn(
                 "flex min-h-14 min-w-max flex-1 basis-11 flex-col items-center justify-center gap-0 rounded-lg border border-transparent px-1 py-0.5 text-center transition-colors hover:bg-primary-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:min-h-16 sm:gap-0.5 sm:py-2",
-                selected && "border-primary bg-card text-primary",
+                selected && "border-link bg-card text-link",
               )}
             >
-              <span className={cn("text-sm", selected ? "text-primary" : "text-muted-foreground")}>
+              <span className={cn("text-sm", selected ? "text-link" : "text-muted-foreground")}>
                 {formatScheduleDate(day.startsAt, {
                   weekday: "short",
                   day: undefined,
@@ -121,7 +121,7 @@ export function ScheduleControls({ week, context, today }: ScheduleControlsProps
               <span
                 className={cn(
                   "text-lg tabular-nums",
-                  isToday && "font-semibold underline decoration-primary underline-offset-4",
+                  isToday && "font-semibold underline decoration-link underline-offset-4",
                 )}
               >
                 {formatScheduleDate(day.startsAt, {
