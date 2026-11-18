@@ -295,6 +295,28 @@ export async function getMyRequests(
 }
 
 /**
+ * Активные заявки текущего студента: `NEW` и `IN_PROGRESS`, новые сверху.
+ *
+ * `userId` берётся только из проверенной серверной сессии; профиль отсутствует —
+ * возвращается пустой список. Завершённые и отменённые заявки в блок не входят.
+ */
+export async function getActiveRequestsForUser(userId: string): Promise<RequestSummary[]> {
+  const studentId = await getStudentProfileId(userId);
+
+  if (!studentId) {
+    return [];
+  }
+
+  const requests = await prisma.request.findMany({
+    where: { studentId, status: { in: ["NEW", "IN_PROGRESS"] } },
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+    select: summarySelect,
+  });
+
+  return requests.map(toSummary);
+}
+
+/**
  * Карточка заявки. Студент получает только свою заявку, чужой идентификатор
  * возвращает `null` — нейтральный ответ без раскрытия существования записи.
  */
