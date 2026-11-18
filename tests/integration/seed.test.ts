@@ -282,3 +282,135 @@ describe("seed демо-заявок", () => {
     expect(second.notifications).toBe(first.notifications);
   });
 });
+
+describe("seed демо-уведомлений", () => {
+  /**
+   * Строки seed-уведомлений: объявления деканата, дедлайны и изменения
+   * расписания. Уведомления заявок (`request:...`) в выборку не попадают.
+   */
+  const loadSeedNotifications = () =>
+    prisma.notification.findMany({
+      where: { dedupeKey: { startsWith: "seed:" } },
+      orderBy: { dedupeKey: "asc" },
+      select: {
+        id: true,
+        dedupeKey: true,
+        category: true,
+        priority: true,
+        title: true,
+        body: true,
+        audienceType: true,
+        audienceStudentId: true,
+        audienceGroupId: true,
+        audienceFacultyId: true,
+        targetType: true,
+        targetId: true,
+        publishedAt: true,
+        expiresAt: true,
+      },
+    });
+
+  it("создаёт объявления деканата, дедлайны и изменения расписания", async () => {
+    const rows = await loadSeedNotifications();
+
+    expect(rows).toHaveLength(15);
+
+    const byCategory = (category: (typeof rows)[number]["category"]) =>
+      rows.filter((row) => row.category === category);
+
+    expect(byCategory("DEANERY")).toHaveLength(3);
+    expect(byCategory("DEADLINES")).toHaveLength(3);
+    expect(byCategory("SCHEDULE")).toHaveLength(9);
+
+    const keys = rows.flatMap((row) => (row.dedupeKey === null ? [] : [row.dedupeKey]));
+    expect(keys).toHaveLength(15);
+    expect(new Set(keys).size).toBe(15);
+    expect(keys.every((key) => key.startsWith("seed:"))).toBe(true);
+
+    for (const row of rows) {
+      expect(row.title.trim().length).toBeGreaterThan(0);
+      expect(row.body.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it("заполняет ровно одно поле аудитории по её типу", async () => {
+    const rows = await loadSeedNotifications();
+
+    for (const row of rows) {
+      const filled = [row.audienceStudentId, row.audienceGroupId, row.audienceFacultyId].filter(
+        (value) => value !== null,
+      );
+      expect(filled).toHaveLength(1);
+
+      const expected = {
+        STUDENT: row.audienceStudentId,
+        GROUP: row.audienceGroupId,
+        FACULTY: row.audienceFacultyId,
+      }[row.audienceType];
+      expect(expected).not.toBeNull();
+    }
+  });
+
+  it("показывает объявления деканата всем трём аудиториям", async () => {
+    const deanery = (await loadSeedNotifications()).filter((row) => row.category === "DEANERY");
+
+    expect(new Set(deanery.map((row) => row.audienceType))).toEqual(
+      new Set(["STUDENT", "GROUP", "FACULTY"]),
+    );
+    expect(deanery.some((row) => row.priority === "IMPORTANT")).toBe(true);
+    // Объявления без связанного объекта: перехода по карточке нет.
+    expect(deanery.every((row) => row.targetType === "NONE" && row.targetId === null)).toBe(true);
+  });
+
+  it("оставляет дедлайны без связанного занятия и с ограниченным сроком", async () => {
+    const deadlines = (await loadSeedNotifications()).filter((row) => row.category === "DEADLINES");
+
+    expect(deadlines).toHaveLength(3);
+    expect(deadlines.every((row) => row.targetType === "NONE" && row.targetId === null)).toBe(true);
+    expect(deadlines.filter((row) => row.priority === "IMPORTANT")).toHaveLength(2);
+    expect(deadlines.every((row) => row.expiresAt !== null)).toBe(true);
+  });
+
+  it("связывает уведомления расписания с девятью занятиями своих групп", async () => {
+    const schedule = (await loadSeedNotifications()).filter((row) => row.category === "SCHEDULE");
+
+    expect(schedule).toHaveLength(9);
+    expect(schedule.every((row) => row.targetType === "LESSON" && row.targetId !== null)).toBe(
+      true,
+    );
+
+    const targetIds = schedule.flatMap((row) => (row.targetId === null ? [] : [row.targetId]));
+    expect(new Set(targetIds).size).toBe(9);
+
+    const lessons = await prisma.lesson.findMany({
+      where: { id: { in: targetIds } },
+      select: { id: true, groupId: true },
+    });
+    expect(lessons).toHaveLength(9);
+
+    const groupIdByLesson = new Map(lessons.map((lesson) => [lesson.id, lesson.groupId]));
+    for (const row of schedule) {
+      const lessonGroupId = row.targetId === null ? undefined : groupIdByLesson.get(row.targetId);
+
+      expect(lessonGroupId).toBeDefined();
+      // Аудитория изменения расписания — группа занятия.
+      expect(row.audienceGroupId).toBe(lessonGroupId);
+    }
+  });
+
+  it("не меняет идентификаторы уведомлений при повторном seed", async () => {
+    const before = await loadSeedNotifications();
+    const totalBefore = await prisma.notification.count();
+
+    runSeed();
+
+    const after = await loadSeedNotifications();
+    const totalAfter = await prisma.notification.count();
+
+    expect(before).toHaveLength(15);
+    expect(after.map((row) => ({ id: row.id, dedupeKey: row.dedupeKey }))).toEqual(
+      before.map((row) => ({ id: row.id, dedupeKey: row.dedupeKey })),
+    );
+    expect(totalAfter).toBe(totalBefore);
+  });
+});
