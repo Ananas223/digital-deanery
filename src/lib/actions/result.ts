@@ -3,6 +3,7 @@ import { AppError, getErrorMessage } from "@/lib/errors";
 /**
  * Публичный результат Server Action: коды совпадают с контрактом заявок
  * (`docs/specs/p4-requests.md` § 4.5), внутренние детали наружу не попадают.
+ * `AI_UNAVAILABLE` зарезервирован под маршрут помощника (`p9-ai-assistant.md` § 4.5).
  */
 export type ActionErrorCode =
   | "UNAUTHORIZED"
@@ -12,6 +13,7 @@ export type ActionErrorCode =
   | "CONFLICT"
   | "INVALID_TRANSITION"
   | "RATE_LIMITED"
+  | "AI_UNAVAILABLE"
   | "INTERNAL";
 
 export type ActionResult<T> =
