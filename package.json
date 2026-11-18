@@ -30,8 +30,10 @@
   "dependencies": {
     "@base-ui/react": "^1.9.0",
     "@hookform/resolvers": "^7.0.6",
+    "@openrouter/ai-sdk-provider": "2.10.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
+    "ai": "6.0.333",
     "better-auth": "1.7.23",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
@@ -45,6 +47,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@ai-sdk/provider": "3.0.19",
     "@playwright/test": "1.65.1",
     "@tailwindcss/postcss": "4.3.5",
     "@types/node": "^22.18.0",

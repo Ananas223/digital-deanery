@@ -6,6 +6,7 @@ export type ErrorCode =
   | "CONFLICT"
   | "INVALID_TRANSITION"
   | "RATE_LIMITED"
+  | "AI_UNAVAILABLE"
   | "INTERNAL";
 
 const ERROR_STATUS: Record<ErrorCode, number> = {
@@ -16,6 +17,7 @@ const ERROR_STATUS: Record<ErrorCode, number> = {
   CONFLICT: 409,
   INVALID_TRANSITION: 409,
   RATE_LIMITED: 429,
+  AI_UNAVAILABLE: 503,
   INTERNAL: 500,
 };
 
@@ -27,6 +29,7 @@ const PUBLIC_MESSAGES: Record<ErrorCode, string> = {
   CONFLICT: "Действие уже выполнено или данные конфликтуют.",
   INVALID_TRANSITION: "Это действие сейчас недоступно.",
   RATE_LIMITED: "Попробуйте позже.",
+  AI_UNAVAILABLE: "Помощник временно недоступен. Остальные разделы работают.",
   INTERNAL: "Что-то пошло не так. Попробуйте ещё раз.",
 };
 
