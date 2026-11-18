@@ -5,7 +5,7 @@
 | ID             | `SPEC-P5-NOTIFICATIONS`                                                     |
 | Название       | Лента уведомлений: аудитории, категории, непрочитанные, отметка о прочтении |
 | Статус         | Черновик                                                                    |
-| Версия         | `0.2`                                                                       |
+| Версия         | `0.5`                                                                       |
 | Дата           | 18.11.2026                                                                  |
 | Требования PRD | `Ф-05.1`–`Ф-05.8`, `US-09`, `A-07`, `A-08`, `A-09`                          |
 | Задачи плана   | `P5-BE-01`–`P5-BE-04`, `P5-FE-01`–`P5-FE-04`, `P5-GATE-01/02`               |
@@ -77,7 +77,7 @@
 |                    | `readAt`            | `DateTime`             | да             | UTC                                            |
 |                    | —                   | —                      | —              | уникальность `[notificationId, userId]`        |
 
-Фактические индексы на 17.11.2026: `Notification(audienceStudentId, publishedAt)`, `Notification(audienceGroupId, publishedAt)`, `Notification(audienceType, publishedAt)`, `Notification(targetType, targetId)`, `Notification(dedupeKey)` unique. `NotificationRead` и индексы `Notification(category, publishedAt)`, `NotificationRead(userId, readAt)` добавляются в `P5-BE-01` вместе с отметками прочтения.
+Фактические индексы на 18.11.2026: `Notification(audienceStudentId, publishedAt)`, `Notification(audienceGroupId, publishedAt)`, `Notification(audienceType, publishedAt)`, `Notification(category, publishedAt)`, `Notification(targetType, targetId)`, `Notification(dedupeKey)` unique; `NotificationRead(userId, readAt)` и уникальность `NotificationRead(notificationId, userId)`. Модель `NotificationRead` и оба новых индекса добавлены миграцией `20261117215341_add_notification_reads` в `P5-BE-01`.
 
 ### 4.2. Enum-типы
 
@@ -107,6 +107,8 @@ getRequestStatusDedupeKey(requestId, historyId) → "request:{requestId}:status:
 - заголовок и текст — по статусу (`NEW`, `IN_PROGRESS`, `READY`, `REJECTED`, `CANCELLED`), без персональных данных сверх необходимого;
 - если уведомление не создано, транзакция откатывается: заявка без уведомления противоречит `Ф-04.8`.
 
+На 18.11.2026 контракт реализован и покрыт тестами: 26 юнит-сценариев в `tests/unit/request-notifications.test.ts` и интеграционные сценарии в `tests/integration/request-notifications.test.ts` — создание, перевод в работу, готовность, отклонение с причиной, отмена, уникальность ключа, адресация только владельцу и откат транзакции. Seed добавляет 15 демо-уведомлений категорий `DEANERY`, `DEADLINES` и `SCHEDULE` с ключами `seed:`; всего с уведомлениями заявок — 27.
+
 ### 4.4. Server Actions
 
 | Действие                   | Сигнатура (план)                                                             | Права                          | Ошибки                   |
@@ -117,6 +119,15 @@ getRequestStatusDedupeKey(requestId, historyId) → "request:{requestId}:status:
 | `markAllNotificationsRead` | `() => Promise<ActionResult<{ count: number }>>`                             | `STUDENT`                      | —                        |
 
 `NotificationFilter`: `category: "ALL" | NotificationCategory`. `NotificationPage`: `items`, `nextCursor`, `unreadCount`.
+
+Фактическая реализация на 18.11.2026:
+
+- `getNotifications` отдаёт страницу из 20 элементов; `nextCursor` — `id` последнего элемента, следующий вызов передаёт его в `cursor`. Порядок: `priority` по убыванию (`IMPORTANT` выше), затем `publishedAt` по убыванию, затем `id` по убыванию для устойчивости страниц.
+- `unreadCount` в `NotificationPage` и `getUnreadCount` считают все непрочитанные доступные уведомления студента, без учёта выбранной категории.
+- Истёкшие уведомления (`expiresAt <= now`) не попадают ни в ленту, ни в счётчик; запись при этом не удаляется.
+- `markNotificationRead` проверяет аудиторию уведомления и идемпотентен: повторный вызов сохраняет первую отметку и не создаёт дубль.
+- `markAllNotificationsRead` отмечает все доступные непрочитанные уведомления и возвращает число новых отметок; повторный вызов возвращает `0`.
+- Некорректные категория и курсор отклоняются с `VALIDATION_ERROR`; сотрудник деканата получает пустую ленту, `0` в счётчике и `FORBIDDEN` на изменение.
 
 Доступность уведомления определяется сервером: `audienceType = STUDENT` и совпадает студент, либо `GROUP` и совпадает группа профиля, либо `FACULTY` и совпадает факультет. `userId` и группа берутся из сессии, не из аргументов.
 
@@ -209,7 +220,9 @@ getRequestStatusDedupeKey(requestId, historyId) → "request:{requestId}:status:
 
 ## 11. История изменений
 
-| Версия | Дата       | Что изменилось                                                                                       | Влияние на задачи и тесты                                |
-| ------ | ---------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| 0.1    | 16.11.2026 | Первый черновик: модель, аудитории, контракт события, UI, тесты                                      | До `P5-BE-01` согласовать § 10                           |
-| 0.2    | 18.11.2026 | Уточнены фактические индексы `Notification` и контракт события из заявок после `P4-BE-01`–`P4-BE-05` | `P5-BE-01`: отметки прочтения и выборки; модель уже есть |
+| Версия | Дата       | Что изменилось                                                                                                                                                                                           | Влияние на задачи и тесты                                                     |
+| ------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 0.1    | 16.11.2026 | Первый черновик: модель, аудитории, контракт события, UI, тесты                                                                                                                                          | До `P5-BE-01` согласовать § 10                                                |
+| 0.2    | 18.11.2026 | Уточнены фактические индексы `Notification` и контракт события из заявок после `P4-BE-01`–`P4-BE-05`                                                                                                     | `P5-BE-01`: отметки прочтения и выборки; модель уже есть                      |
+| 0.3    | 18.11.2026 | Зафиксирован `P5-BE-01`: модель `NotificationRead`, фактические индексы и миграция `20261117215341_add_notification_reads`                                                                               | Проверки `P5-BE-01`; схема и отметки прочтения                                |
+| 0.4    | 18.11.2026 | Зафиксирована реализация ленты `P5-BE-03`: страница 20, порядок «важные → новые», курсор по `id`, истёкшие вне ленты и счётчика, счётчик по всем категориям, идемпотентные отметки, поведение сотрудника | `tests/unit/notifications.test.ts`, `tests/integration/notifications.test.ts` |

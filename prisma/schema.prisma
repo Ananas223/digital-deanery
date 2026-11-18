@@ -108,6 +108,7 @@ model User {
   assignedRequests      Request[]              @relation("RequestAssignee")
   requestHistoryEntries RequestStatusHistory[] @relation("RequestHistoryAuthor")
   createdNotifications  Notification[]         @relation("NotificationCreatedBy")
+  notificationReads     NotificationRead[]
 
   @@unique([email])
   @@map("user")
@@ -505,9 +506,26 @@ model Notification {
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
 
+  reads NotificationRead[]
+
   @@index([audienceStudentId, publishedAt])
   @@index([audienceGroupId, publishedAt])
   @@index([audienceType, publishedAt])
+  @@index([category, publishedAt])
   @@index([targetType, targetId])
   @@map("notification")
+}
+
+/// Отметка о прочтении персональна: групповое уведомление читают независимо.
+model NotificationRead {
+  id             String       @id @default(cuid())
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([notificationId, userId])
+  @@index([userId, readAt])
+  @@map("notification_read")
 }
