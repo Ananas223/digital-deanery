@@ -38,6 +38,13 @@ export type MarkAllResult = {
   count: number;
 };
 
+export type UnreadNotifications = {
+  /** Непрочитанные по всей доступной ленте, без учёта лимита. */
+  count: number;
+  /** Не более `limit`, важные сверху, затем новые. Все элементы непрочитаны. */
+  items: NotificationItem[];
+};
+
 const notificationFields = {
   id: true,
   category: true,
@@ -165,6 +172,55 @@ export async function getUnreadCountForUser(
   }
 
   return prisma.notification.count({ where: unreadWhere(student, userId, now) });
+}
+
+/** Лимит превью непрочитанных по умолчанию (главный экран: до трёх элементов). */
+export const UNREAD_PREVIEW_DEFAULT_LIMIT = 3;
+/** Верхняя граница превью: защищает главный экран от случайного большого лимита. */
+const UNREAD_PREVIEW_MAX_LIMIT = 20;
+
+/** Приводит лимит превью к целому числу в диапазоне `1..20`; нечисло — значение по умолчанию. */
+function normalizeUnreadLimit(limit: number): number {
+  if (!Number.isFinite(limit)) {
+    return UNREAD_PREVIEW_DEFAULT_LIMIT;
+  }
+
+  return Math.min(UNREAD_PREVIEW_MAX_LIMIT, Math.max(1, Math.trunc(limit)));
+}
+
+/**
+ * Непрочитанные уведомления для главного экрана: `count` — по всей доступной
+ * ленте, `items` — не более `limit` важных и новых.
+ *
+ * `limit` приводится к диапазону `1..20` (дробное округляется вниз, нечисло
+ * даёт значение по умолчанию 3). Без академического профиля возвращается
+ * пустой результат, а не ошибка. Персональные данные не кешируются.
+ */
+export async function getUnreadNotificationsForUser(
+  userId: string,
+  limit = UNREAD_PREVIEW_DEFAULT_LIMIT,
+  now: Date = new Date(),
+): Promise<UnreadNotifications> {
+  const student = await getStudentNotificationAudience(userId);
+
+  if (!student) {
+    return { count: 0, items: [] };
+  }
+
+  const where = unreadWhere(student, userId, now);
+
+  const [rows, count] = await prisma.$transaction([
+    prisma.notification.findMany({
+      where,
+      orderBy: [{ priority: "desc" }, { publishedAt: "desc" }, { id: "desc" }],
+      take: normalizeUnreadLimit(limit),
+      select: notificationFields,
+    }),
+    prisma.notification.count({ where }),
+  ]);
+
+  // Выборка уже ограничена непрочитанными: дополнительный запрос отметок не нужен.
+  return { count, items: rows.map((row) => ({ ...row, isRead: false })) };
 }
 
 /**
