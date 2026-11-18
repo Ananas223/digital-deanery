@@ -2,25 +2,27 @@
 
 Реестр сторонних библиотек, инструментов и материалов прототипа. Требование — `AGENTS.md` § 4.3 и § 7.4. Запись добавляется при подключении нового компонента.
 
-| Компонент       | Роль в проекте                                                           | Лицензия           | Источник                       |
-| --------------- | ------------------------------------------------------------------------ | ------------------ | ------------------------------ |
-| Next.js         | Фреймворк: App Router, Server Components, Server Actions, Route Handlers | MIT                | https://nextjs.org             |
-| React           | Библиотека интерфейса                                                    | MIT                | https://react.dev              |
-| TypeScript      | Типизация клиента и сервера                                              | Apache-2.0         | https://www.typescriptlang.org |
-| Tailwind CSS v4 | Стилизация и дизайн-токены                                               | MIT                | https://tailwindcss.com        |
-| shadcn/ui       | Паттерны компонентов и доступная разметка                                | MIT                | https://ui.shadcn.com          |
-| Base UI         | Примитивы доступности                                                    | MIT                | https://base-ui.com            |
-| Motion          | Анимации и переходы                                                      | MIT                | https://motion.dev             |
-| Recharts        | Графики успеваемости и сводок                                            | MIT                | https://recharts.org           |
-| React Hook Form | Состояние форм                                                           | MIT                | https://react-hook-form.com    |
-| Zod             | Схемы валидации клиента и сервера                                        | MIT                | https://zod.dev                |
-| Lucide React    | Набор иконок                                                             | ISC                | https://lucide.dev             |
-| PostgreSQL      | Реляционная база данных                                                  | PostgreSQL License | https://www.postgresql.org     |
-| Prisma ORM      | Схема, миграции и типизированные запросы                                 | Apache-2.0         | https://www.prisma.io          |
-| Better Auth     | Аутентификация и серверные сессии                                        | MIT                | https://www.better-auth.com    |
-| Vercel AI SDK   | Вызов LLM и стриминг ответа                                              | Apache-2.0         | https://sdk.vercel.ai          |
-| Playwright      | E2E-тесты                                                                | Apache-2.0         | https://playwright.dev         |
-| Vitest          | Юнит- и интеграционные тесты                                             | MIT                | https://vitest.dev             |
+| Компонент             | Роль в проекте                                                           | Лицензия           | Источник                       |
+| --------------------- | ------------------------------------------------------------------------ | ------------------ | ------------------------------ |
+| Next.js               | Фреймворк: App Router, Server Components, Server Actions, Route Handlers | MIT                | https://nextjs.org             |
+| React                 | Библиотека интерфейса                                                    | MIT                | https://react.dev              |
+| TypeScript            | Типизация клиента и сервера                                              | Apache-2.0         | https://www.typescriptlang.org |
+| Tailwind CSS v4       | Стилизация и дизайн-токены                                               | MIT                | https://tailwindcss.com        |
+| shadcn/ui             | Паттерны компонентов и доступная разметка                                | MIT                | https://ui.shadcn.com          |
+| Base UI               | Примитивы доступности                                                    | MIT                | https://base-ui.com            |
+| Motion                | Анимации и переходы                                                      | MIT                | https://motion.dev             |
+| Recharts              | Графики успеваемости и сводок                                            | MIT                | https://recharts.org           |
+| React Hook Form       | Состояние форм                                                           | MIT                | https://react-hook-form.com    |
+| Zod                   | Схемы валидации клиента и сервера                                        | MIT                | https://zod.dev                |
+| Lucide React          | Набор иконок                                                             | ISC                | https://lucide.dev             |
+| PostgreSQL            | Реляционная база данных                                                  | PostgreSQL License | https://www.postgresql.org     |
+| Prisma ORM            | Схема, миграции и типизированные запросы                                 | Apache-2.0         | https://www.prisma.io          |
+| Better Auth           | Аутентификация и серверные сессии                                        | MIT                | https://www.better-auth.com    |
+| Vercel AI SDK         | Вызов LLM и стриминг ответа (`ai@6.0.333`)                               | Apache-2.0         | https://sdk.vercel.ai          |
+| OpenRouter provider   | Адаптер OpenRouter для AI SDK (`@openrouter/ai-sdk-provider@2.10.0`)     | Apache-2.0         | https://openrouter.ai          |
+| AI SDK provider types | Типы провайдера v3 для тестов (`@ai-sdk/provider@3.0.19`, dev)           | Apache-2.0         | https://sdk.vercel.ai          |
+| Playwright            | E2E-тесты                                                                | Apache-2.0         | https://playwright.dev         |
+| Vitest                | Юнит- и интеграционные тесты                                             | MIT                | https://vitest.dev             |
 
 ## Правила ведения
 
