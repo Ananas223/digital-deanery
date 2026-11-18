@@ -5,7 +5,7 @@
 | ID             | `SPEC-P5-NOTIFICATIONS`                                                     |
 | Название       | Лента уведомлений: аудитории, категории, непрочитанные, отметка о прочтении |
 | Статус         | Черновик                                                                    |
-| Версия         | `0.2`                                                                       |
+| Версия         | `0.3`                                                                       |
 | Дата           | 18.11.2026                                                                  |
 | Требования PRD | `Ф-05.1`–`Ф-05.8`, `US-09`, `A-07`, `A-08`, `A-09`                          |
 | Задачи плана   | `P5-BE-01`–`P5-BE-04`, `P5-FE-01`–`P5-FE-04`, `P5-GATE-01/02`               |
@@ -77,7 +77,7 @@
 |                    | `readAt`            | `DateTime`             | да             | UTC                                            |
 |                    | —                   | —                      | —              | уникальность `[notificationId, userId]`        |
 
-Фактические индексы на 17.11.2026: `Notification(audienceStudentId, publishedAt)`, `Notification(audienceGroupId, publishedAt)`, `Notification(audienceType, publishedAt)`, `Notification(targetType, targetId)`, `Notification(dedupeKey)` unique. `NotificationRead` и индексы `Notification(category, publishedAt)`, `NotificationRead(userId, readAt)` добавляются в `P5-BE-01` вместе с отметками прочтения.
+Фактические индексы на 18.11.2026: `Notification(audienceStudentId, publishedAt)`, `Notification(audienceGroupId, publishedAt)`, `Notification(audienceType, publishedAt)`, `Notification(category, publishedAt)`, `Notification(targetType, targetId)`, `Notification(dedupeKey)` unique; `NotificationRead(userId, readAt)` и уникальность `NotificationRead(notificationId, userId)`. Модель `NotificationRead` и оба новых индекса добавлены миграцией `20261117215341_add_notification_reads` в `P5-BE-01`.
 
 ### 4.2. Enum-типы
 
