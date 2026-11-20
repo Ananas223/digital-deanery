@@ -20,11 +20,20 @@ export const DEMO_STUDENTS = {
   },
 } as const;
 
+/** Демо-сотрудник деканата из `prisma/seed.ts`. */
+export const DEMO_EMPLOYEE = {
+  email: "elena.smirnova@example.com",
+  name: "Елена Викторовна Смирнова",
+  firstName: "Елена",
+  password: "Deanery#2026",
+} as const;
+
 /** Куда `auth.setup.ts` сохраняет сессии и откуда их читают сценарии. */
 export const STORAGE_STATE = {
   dir: path.join(rootDir, ".auth"),
   anna: path.join(rootDir, ".auth", "anna.json"),
   mark: path.join(rootDir, ".auth", "mark.json"),
+  employee: path.join(rootDir, ".auth", "employee.json"),
 } as const;
 
 /** Разделы кабинета: подпись в навигации и адрес. */
@@ -78,6 +87,8 @@ type Fixtures = {
   annaPage: import("@playwright/test").Page;
   /** Страница с сохранённой сессией Марка. */
   markPage: import("@playwright/test").Page;
+  /** Страница с сохранённой сессией сотрудника деканата. */
+  employeePage: import("@playwright/test").Page;
 };
 
 /**
@@ -101,6 +112,16 @@ export const test = base.extend<Fixtures>({
       baseURL,
       viewport,
       storageState: STORAGE_STATE.mark,
+    });
+    const page = await context.newPage();
+    await use(page);
+    await context.close();
+  },
+  employeePage: async ({ browser, baseURL, viewport }, use) => {
+    const context = await browser.newContext({
+      baseURL,
+      viewport,
+      storageState: STORAGE_STATE.employee,
     });
     const page = await context.newPage();
     await use(page);

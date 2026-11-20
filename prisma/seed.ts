@@ -39,6 +39,12 @@ type DemoStudent = {
   enrolledAt: Date;
 };
 
+type DemoAccount = {
+  email: string;
+  name: string;
+  role: "STUDENT" | "DEAN_EMPLOYEE";
+};
+
 type DemoTeacher = {
   email: string;
   fullName: string;
@@ -233,6 +239,13 @@ const DEMO_STUDENTS: DemoStudent[] = [
     enrolledAt: new Date("2025-09-01T00:00:00.000Z"),
   },
 ];
+
+/** Демо-сотрудник деканата: обрабатывает заявки, не имеет студенческого профиля. */
+const DEMO_EMPLOYEE: DemoAccount = {
+  email: "elena.smirnova@example.com",
+  name: "Елена Викторовна Смирнова",
+  role: "DEAN_EMPLOYEE",
+};
 
 const TEACHERS: DemoTeacher[] = [
   { email: "i.sokolova@example.com", fullName: "Ирина Владимировна Соколова" },
@@ -1426,9 +1439,9 @@ function lessonKey(
   return [groupCode, day, start.join(":"), disciplineCode, subgroup].join("|");
 }
 
-async function ensureDemoStudent(student: DemoStudent, summary: SeedSummary) {
+async function ensureDemoAccount(account: DemoAccount, summary: SeedSummary) {
   const existing = await prisma.user.findUnique({
-    where: { email: student.email },
+    where: { email: account.email },
     select: { id: true },
   });
 
@@ -1437,7 +1450,7 @@ async function ensureDemoStudent(student: DemoStudent, summary: SeedSummary) {
   if (existing) {
     const user = await prisma.user.update({
       where: { id: existing.id },
-      data: { name: student.name, role: student.role },
+      data: { name: account.name, role: account.role },
       select: { id: true },
     });
     userId = user.id;
@@ -1445,19 +1458,19 @@ async function ensureDemoStudent(student: DemoStudent, summary: SeedSummary) {
   } else {
     const result = await auth.api.signUpEmail({
       body: {
-        email: student.email,
+        email: account.email,
         password: DEMO_PASSWORD,
-        name: student.name,
+        name: account.name,
       },
     });
 
     if (!result.user?.id) {
-      throw new Error(`Не удалось создать демо-пользователя ${student.email}`);
+      throw new Error(`Не удалось создать демо-пользователя ${account.email}`);
     }
 
     const user = await prisma.user.update({
       where: { id: result.user.id },
-      data: { name: student.name, role: student.role },
+      data: { name: account.name, role: account.role },
       select: { id: true },
     });
     userId = user.id;
@@ -1819,6 +1832,7 @@ async function seedRequests(
   types: Map<string, string>,
   profiles: Map<string, string>,
   userIds: Map<string, string>,
+  employeeUserId: string,
   disciplines: Map<string, string>,
   summary: SeedSummary,
 ) {
@@ -1869,6 +1883,8 @@ async function seedRequests(
         dueAt: addMoscowWorkingDays(createdAt, type.processingDays),
         createdAt,
         updatedAt,
+        // Заявки в работе и завершённые обработал демо-сотрудник.
+        assignedToId: demo.status === "NEW" || demo.status === "CANCELLED" ? null : employeeUserId,
         ...(demo.rejectionReason ? { rejectionReason: demo.rejectionReason } : {}),
       },
       select: { id: true, number: true },
@@ -1907,7 +1923,9 @@ async function seedRequests(
           fromStatus: transition.fromStatus,
           toStatus: transition.toStatus,
           comment: transition.comment ?? null,
-          changedById: transition.byStudent ? (userIds.get(demo.studentEmail) ?? null) : null,
+          changedById: transition.byStudent
+            ? (userIds.get(demo.studentEmail) ?? null)
+            : employeeUserId,
           createdAt: changedAt,
         },
         select: { id: true },
@@ -2282,6 +2300,10 @@ async function main() {
   const profiles = new Map<string, string>();
   const userIds = new Map<string, string>();
 
+  // Сотрудник создаётся до заявок: его идентификатор нужен как исполнитель
+  // для демонстрационных заявок в работе и в истории переходов.
+  const employeeUserId = await ensureDemoAccount(DEMO_EMPLOYEE, summary);
+
   for (const student of DEMO_STUDENTS) {
     const facultyId = faculties.get(student.facultyCode);
     const programId = programs.get(student.programCode);
@@ -2291,7 +2313,7 @@ async function main() {
       throw new Error(`Неполные справочники для ${student.email}`);
     }
 
-    const userId = await ensureDemoStudent(student, summary);
+    const userId = await ensureDemoAccount(student, summary);
 
     const profile = await prisma.studentProfile.upsert({
       where: { userId },
@@ -2392,7 +2414,7 @@ async function main() {
   await seedGrades(semesters, profiles, groups, teachers, disciplines, rooms, summary);
 
   const requestTypes = await seedRequestTypes(summary);
-  await seedRequests(requestTypes, profiles, userIds, disciplines, summary);
+  await seedRequests(requestTypes, profiles, userIds, employeeUserId, disciplines, summary);
   await seedNotifications({ profiles, groups, faculties, lessonIds }, summary);
 
   console.log(

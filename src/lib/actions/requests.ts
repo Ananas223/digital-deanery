@@ -1,12 +1,18 @@
 "use server";
 
 import { requireUser } from "@/lib/auth/session";
-import type { RequestCreated, RequestDetail, RequestSummary } from "@/lib/domain/requests";
+import type {
+  RequestCreated,
+  RequestDetail,
+  RequestQueueItem,
+  RequestSummary,
+} from "@/lib/domain/requests";
 import {
   cancelRequestForUser,
   createRequestForUser,
   getMyRequests as getMyRequestsForUser,
   getRequest as getRequestForActor,
+  listRequestQueueForActor,
   transitionRequestStatusForActor,
 } from "@/lib/domain/requests";
 import { AppError } from "@/lib/errors";
@@ -16,8 +22,10 @@ import {
   createRequestSchema,
   requestIdSchema,
   requestListQuerySchema,
+  requestQueueQuerySchema,
   requestStatusTransitionSchema,
   type RequestListQuery,
+  type RequestQueueQuery,
 } from "@/lib/validation/requests";
 import type { ActionResult } from "./result";
 import { toActionError } from "./result";
@@ -110,4 +118,23 @@ export async function getRequest(requestId: string): Promise<RequestDetail | nul
   }
 
   return getRequestForActor({ userId: user.id, role: user.role }, parsed.data);
+}
+
+/**
+ * Очередь заявок для сотрудника деканата. Роль проверяется в доменном слое;
+ * студент получает `FORBIDDEN`, а не пустой список, потому что это действие
+ * доступно только сотруднику по контракту `p4-requests.md`.
+ */
+export async function listRequestQueue(
+  filter?: RequestQueueQuery,
+): Promise<ActionResult<RequestQueueItem[]>> {
+  try {
+    const user = await requireUser();
+    const parsed = parseInput(requestQueueQuerySchema, filter ?? {});
+    const data = await listRequestQueueForActor({ userId: user.id, role: user.role }, parsed);
+
+    return { ok: true, data };
+  } catch (error) {
+    return toActionError(error);
+  }
 }

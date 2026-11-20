@@ -7,6 +7,7 @@ import {
   createRequest as createRequestAction,
   getMyRequests as getMyRequestsAction,
   getRequest as getRequestAction,
+  listRequestQueue as listRequestQueueAction,
   transitionRequestStatus as transitionRequestStatusAction,
 } from "@/lib/actions/requests";
 import { createPrismaClient } from "@/lib/db/client";
@@ -16,6 +17,7 @@ import {
   createRequestForUser,
   getMyRequests,
   getRequest,
+  listRequestQueueForActor,
   transitionRequestStatusForActor,
 } from "@/lib/domain/requests";
 import type { CreateRequestInput, RequestListQuery } from "@/lib/validation/requests";
@@ -427,6 +429,42 @@ describe("список и карточка заявки", () => {
 
     expect(detail?.id).toBe(created.id);
     expect(detail?.canCancel).toBe(false);
+    expect(detail?.student?.fullName).toBe("Анна Петрова");
+    expect(detail?.allowedTransitions).toEqual(["IN_PROGRESS"]);
+  });
+
+  it("строит очередь сотрудника: новые раньше взятых в работу", async () => {
+    const first = await createStudy(fixture.annaId);
+    const second = await createStudy(fixture.markId);
+
+    const queue = await listRequestQueueForActor({
+      userId: fixture.employeeId,
+      role: "DEAN_EMPLOYEE",
+    });
+
+    const firstIndex = queue.findIndex((request) => request.id === first.id);
+    const secondIndex = queue.findIndex((request) => request.id === second.id);
+
+    expect(firstIndex).toBeGreaterThanOrEqual(0);
+    expect(secondIndex).toBeGreaterThan(firstIndex);
+    expect(
+      queue.every((request) => request.status === "NEW" || request.status === "IN_PROGRESS"),
+    ).toBe(true);
+    expect(queue.find((request) => request.id === first.id)?.studentName).toBe("Анна Петрова");
+  });
+
+  it("фильтрует очередь по статусу и запрещает её студенту", async () => {
+    const created = await createStudy(fixture.annaId);
+
+    const ready = await listRequestQueueForActor(
+      { userId: fixture.employeeId, role: "DEAN_EMPLOYEE" },
+      { status: "READY" },
+    );
+    expect(ready.some((request) => request.id === created.id)).toBe(false);
+
+    await expect(
+      listRequestQueueForActor({ userId: fixture.annaId, role: "STUDENT" }),
+    ).rejects.toMatchObject({ name: "AppError", code: "FORBIDDEN" });
   });
 });
 
@@ -771,5 +809,35 @@ describe("контракт Server Actions", () => {
     sessionMock.requireUser.mockResolvedValue(employeeSession());
 
     await expect(getMyRequestsAction()).resolves.toEqual([]);
+  });
+
+  it("возвращает сотруднику очередь через действие", async () => {
+    sessionMock.requireUser.mockResolvedValue(employeeSession());
+    const created = await createStudy(fixture.annaId);
+
+    const result = await listRequestQueueAction({ status: "NEW" });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.some((request) => request.id === created.id)).toBe(true);
+      expect(result.data.every((request) => request.status === "NEW")).toBe(true);
+    }
+  });
+
+  it("запрещает студенту получать очередь через действие", async () => {
+    sessionMock.requireUser.mockResolvedValue(studentSession());
+
+    await expect(listRequestQueueAction()).resolves.toMatchObject({
+      ok: false,
+      error: { code: "FORBIDDEN" },
+    });
+  });
+
+  it("возвращает VALIDATION_ERROR на некорректный фильтр очереди", async () => {
+    sessionMock.requireUser.mockResolvedValue(employeeSession());
+
+    await expect(
+      listRequestQueueAction({ status: "UNKNOWN" } as unknown as { status: "NEW" }),
+    ).resolves.toMatchObject({ ok: false, error: { code: "VALIDATION_ERROR" } });
   });
 });

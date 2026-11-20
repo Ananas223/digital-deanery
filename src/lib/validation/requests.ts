@@ -120,6 +120,11 @@ export const requestListQuerySchema = z.object({
   status: requestStatusSchema.optional(),
 });
 
+/** Очередь сотрудника: без фильтра — активные заявки, со статусом — выбранная колонка. */
+export const requestQueueQuerySchema = z.object({
+  status: requestStatusSchema.optional(),
+});
+
 export const requestIdSchema = z.cuid("Некорректный идентификатор заявки");
 
 export const cancelRequestSchema = z.object({
@@ -149,4 +154,5 @@ export const requestStatusTransitionSchema = z
 export type CreateRequestInput = z.infer<typeof createRequestSchema>;
 export type RequestPayloadInput = z.infer<typeof requestPayloadSchema>;
 export type RequestListQuery = z.infer<typeof requestListQuerySchema>;
+export type RequestQueueQuery = z.infer<typeof requestQueueQuerySchema>;
 export type RequestStatusTransitionInput = z.infer<typeof requestStatusTransitionSchema>;

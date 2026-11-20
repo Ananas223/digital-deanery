@@ -43,18 +43,35 @@ afterAll(async () => {
 });
 
 describe("seed тестовой базы", () => {
-  it("создаёт ровно двух демо-студентов", async () => {
+  it("создаёт двух демо-студентов и сотрудника деканата", async () => {
     const users = await prisma.user.findMany({
       orderBy: { email: "asc" },
       select: { email: true, name: true, role: true },
     });
 
-    expect(users).toHaveLength(2);
+    expect(users).toHaveLength(3);
     expect(users.map((user) => user.email)).toEqual([
+      "anna.petrova@example.com",
+      "elena.smirnova@example.com",
+      "mark.sokolov@example.com",
+    ]);
+    expect(users.filter((user) => user.role === "STUDENT").map((user) => user.email)).toEqual([
       "anna.petrova@example.com",
       "mark.sokolov@example.com",
     ]);
-    expect(users.every((user) => user.role === "STUDENT")).toBe(true);
+    expect(users.find((user) => user.email === "elena.smirnova@example.com")?.role).toBe(
+      "DEAN_EMPLOYEE",
+    );
+  });
+
+  it("не создаёт студенческий профиль сотруднику деканата", async () => {
+    const employee = await prisma.user.findUnique({
+      where: { email: "elena.smirnova@example.com" },
+      select: { role: true, studentProfile: { select: { id: true } } },
+    });
+
+    expect(employee?.role).toBe("DEAN_EMPLOYEE");
+    expect(employee?.studentProfile).toBeNull();
   });
 
   it("создаёт профили с ожидаемыми группами и курсами", async () => {
@@ -88,7 +105,7 @@ describe("seed тестовой базы", () => {
       select: { providerId: true, password: true, userId: true },
     });
 
-    expect(accounts).toHaveLength(2);
+    expect(accounts).toHaveLength(3);
 
     for (const account of accounts) {
       expect(account.providerId).toBe("credential");
@@ -205,7 +222,7 @@ describe("seed тестовой базы", () => {
       exams: await prisma.exam.count(),
     };
 
-    expect(before).toMatchObject({ users: 2, profiles: 2, accounts: 2 });
+    expect(before).toMatchObject({ users: 3, profiles: 2, accounts: 3 });
     expect(before.grades).toBeGreaterThanOrEqual(18);
     expect(before.exams).toBeGreaterThanOrEqual(16);
     expect(after).toEqual(before);

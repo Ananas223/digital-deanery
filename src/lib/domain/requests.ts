@@ -10,11 +10,16 @@ import {
   getRequestStatusDedupeKey,
 } from "@/lib/domain/request-notifications";
 import { addMoscowWorkingDays, getMoscowYear } from "@/lib/domain/request-time";
-import { canTransition, type RequestActorRole } from "@/lib/domain/request-status";
+import {
+  canTransition,
+  getAllowedTransitions,
+  type RequestActorRole,
+} from "@/lib/domain/request-status";
 import type {
   CreateRequestInput,
   RequestListQuery,
   RequestPayloadInput,
+  RequestQueueQuery,
   RequestStatusTransitionInput,
   RequestTypeCode,
 } from "@/lib/validation/requests";
@@ -54,6 +59,35 @@ export type RequestDetail = RequestSummary & {
   payload: RequestPayloadInput["payload"] | null;
   history: RequestHistoryEntry[];
   canCancel: boolean;
+  /** Сотруднику нужны данные студента для обработки; студент их не получает. */
+  student: RequestStudent | null;
+  assignedToName: string | null;
+  allowedTransitions: RequestStatus[];
+  /** Название дисциплины для заявки на пересдачу; иначе `null`. */
+  disciplineName: string | null;
+};
+
+export type RequestStudent = {
+  fullName: string;
+  studentNumber: string;
+  groupCode: string;
+  facultyName: string;
+  programName: string;
+};
+
+export type RequestQueueItem = {
+  id: string;
+  number: string;
+  typeCode: RequestTypeCode;
+  typeTitle: string;
+  status: RequestStatus;
+  createdAt: Date;
+  dueAt: Date | null;
+  studentName: string;
+  studentNumber: string;
+  groupCode: string;
+  facultyName: string;
+  assignedToName: string | null;
 };
 
 export type RequestCreated = {
@@ -77,6 +111,26 @@ const summarySelect = {
 } satisfies Prisma.RequestSelect;
 
 type RequestSummaryRow = Prisma.RequestGetPayload<{ select: typeof summarySelect }>;
+
+const queueSelect = {
+  id: true,
+  number: true,
+  status: true,
+  createdAt: true,
+  dueAt: true,
+  type: { select: { code: true, title: true } },
+  student: {
+    select: {
+      studentNumber: true,
+      user: { select: { name: true } },
+      group: { select: { code: true } },
+      faculty: { select: { name: true } },
+    },
+  },
+  assignedTo: { select: { name: true } },
+} satisfies Prisma.RequestSelect;
+
+type RequestQueueRow = Prisma.RequestGetPayload<{ select: typeof queueSelect }>;
 
 function toSummary(row: RequestSummaryRow): RequestSummary {
   return {
@@ -317,6 +371,63 @@ export async function getActiveRequestsForUser(userId: string): Promise<RequestS
 }
 
 /**
+ * Очередь сотрудника деканата. Без фильтра показывает активные заявки:
+ * сначала новые, затем взятые в работу; внутри группы — старые сверху.
+ * Явный фильтр статуса показывает выбранную колонку от новых к старым.
+ *
+ * Роль проверяется здесь, рядом с данными. Студент получает `FORBIDDEN`
+ * и не может использовать очередь как способ увидеть чужие заявки.
+ */
+export async function listRequestQueueForActor(
+  actor: RequestActor,
+  filter: RequestQueueQuery = {},
+): Promise<RequestQueueItem[]> {
+  if (actor.role !== "DEAN_EMPLOYEE") {
+    throw new AppError("FORBIDDEN");
+  }
+
+  const requests = await prisma.request.findMany({
+    where: filter.status ? { status: filter.status } : { status: { in: ["NEW", "IN_PROGRESS"] } },
+    select: queueSelect,
+  });
+
+  const statusRank: Record<RequestStatus, number> = {
+    NEW: 0,
+    IN_PROGRESS: 1,
+    READY: 2,
+    REJECTED: 3,
+    CANCELLED: 4,
+  };
+
+  return requests.map(toQueueItem).sort((left, right) => {
+    const rank = statusRank[left.status] - statusRank[right.status];
+    if (rank !== 0) {
+      return rank;
+    }
+
+    const direction = filter.status ? -1 : 1;
+    return (left.createdAt.getTime() - right.createdAt.getTime()) * direction;
+  });
+}
+
+function toQueueItem(row: RequestQueueRow): RequestQueueItem {
+  return {
+    id: row.id,
+    number: row.number,
+    typeCode: row.type.code as RequestTypeCode,
+    typeTitle: row.type.title,
+    status: row.status,
+    createdAt: row.createdAt,
+    dueAt: row.dueAt,
+    studentName: row.student.user.name,
+    studentNumber: row.student.studentNumber,
+    groupCode: row.student.group.code,
+    facultyName: row.student.faculty.name,
+    assignedToName: row.assignedTo?.name ?? null,
+  };
+}
+
+/**
  * Карточка заявки. Студент получает только свою заявку, чужой идентификатор
  * возвращает `null` — нейтральный ответ без раскрытия существования записи.
  */
@@ -343,6 +454,16 @@ export async function getRequest(
       ...summarySelect,
       studentId: true,
       payload: true,
+      assignedTo: { select: { name: true } },
+      student: {
+        select: {
+          studentNumber: true,
+          user: { select: { name: true } },
+          group: { select: { code: true } },
+          faculty: { select: { name: true } },
+          program: { select: { name: true } },
+        },
+      },
       history: {
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: {
@@ -366,6 +487,19 @@ export async function getRequest(
     payload: request.payload,
   });
 
+  let disciplineName: string | null = null;
+
+  if (parsedPayload.success && parsedPayload.data.typeCode === "RETAKE") {
+    const discipline = await prisma.discipline.findUnique({
+      where: { id: parsedPayload.data.payload.disciplineId },
+      select: { name: true },
+    });
+
+    disciplineName = discipline?.name ?? null;
+  }
+
+  const isOwner = actor.role === "STUDENT" && request.studentId === studentId;
+
   return {
     ...toSummary(request),
     payload: parsedPayload.success ? parsedPayload.data.payload : null,
@@ -377,8 +511,23 @@ export async function getRequest(
       changedByName: entry.changedBy?.name ?? null,
       createdAt: entry.createdAt,
     })),
-    canCancel:
-      actor.role === "STUDENT" && request.studentId === studentId && request.status === "NEW",
+    canCancel: isOwner && request.status === "NEW",
+    student:
+      actor.role === "DEAN_EMPLOYEE"
+        ? {
+            fullName: request.student.user.name,
+            studentNumber: request.student.studentNumber,
+            groupCode: request.student.group.code,
+            facultyName: request.student.faculty.name,
+            programName: request.student.program.name,
+          }
+        : null,
+    assignedToName: request.assignedTo?.name ?? null,
+    allowedTransitions: getAllowedTransitions(request.status, {
+      role: actor.role,
+      isOwner,
+    }),
+    disciplineName,
   };
 }
 
