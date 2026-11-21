@@ -2,6 +2,12 @@ import "dotenv/config";
 
 import { createAuth } from "../src/lib/auth/create-auth";
 import { createPrismaClient } from "../src/lib/db/client";
+import {
+  buildRequestCreatedNotification,
+  buildRequestStatusNotification,
+  getRequestStatusDedupeKey,
+} from "../src/lib/domain/request-notifications";
+import { addMoscowWorkingDays, getMoscowYear } from "../src/lib/domain/request-time";
 
 const prisma = createPrismaClient();
 const auth = createAuth(prisma);
@@ -31,6 +37,12 @@ type DemoStudent = {
   studyForm: "BUDGET" | "PAID";
   subgroup: "FIRST" | "SECOND";
   enrolledAt: Date;
+};
+
+type DemoAccount = {
+  email: string;
+  name: string;
+  role: "STUDENT" | "DEAN_EMPLOYEE";
 };
 
 type DemoTeacher = {
@@ -122,6 +134,68 @@ type DemoSemester = {
   endsAt: Date;
 };
 
+type RequestTypeCodeValue = "STUDY_CERTIFICATE" | "PLACE_REQUIREMENT" | "ACADEMIC_LEAVE" | "RETAKE";
+type RequestStatusValue = "NEW" | "IN_PROGRESS" | "READY" | "REJECTED" | "CANCELLED";
+/** Статус, в который заявка переходит: создание `NEW` пишется отдельной записью истории. */
+type RequestTransitionStatusValue = Exclude<RequestStatusValue, "NEW">;
+
+type DemoRequestType = {
+  code: RequestTypeCodeValue;
+  title: string;
+  description: string;
+  processingDays: number;
+  sortOrder: number;
+};
+
+type DemoRequestTransition = {
+  fromStatus: RequestStatusValue;
+  toStatus: RequestTransitionStatusValue;
+  /** Сколько дней назад произошёл переход; всегда позже создания заявки. */
+  daysAgo: number;
+  time: [number, number];
+  comment?: string;
+  /** Автор — студент-владелец (отмена); иначе система или сотрудник, `changedById = null`. */
+  byStudent?: boolean;
+};
+
+type DemoRequest = {
+  /** Шесть цифр номера заявки: 900001–900006, вне диапазона реальной выдачи. */
+  numberSuffix: number;
+  studentEmail: string;
+  typeCode: RequestTypeCodeValue;
+  status: RequestStatusValue;
+  /** Сколько дней назад создана заявка: вне окна лимита 10 минут. */
+  daysAgo: number;
+  time: [number, number];
+  /** Payload по § 4.3 спецификации; для `RETAKE` берётся id дисциплины из справочника. */
+  payload: (disciplines: Map<string, string>) => Record<string, string>;
+  rejectionReason?: string;
+  transitions: DemoRequestTransition[];
+};
+
+/** Аудитория демо-уведомления: ровно один из трёх вариантов. */
+type DemoNotificationAudience =
+  | { type: "STUDENT"; studentEmail: string }
+  | { type: "GROUP"; groupCode: string }
+  | { type: "FACULTY"; facultyCode: string };
+
+type DemoNotificationPriority = "NORMAL" | "IMPORTANT";
+
+type DemoSeedNotification = {
+  /** Суффикс ключа дедупликации: полный ключ строки — `seed:{key}`. */
+  key: string;
+  category: "DEANERY" | "DEADLINES";
+  priority: DemoNotificationPriority;
+  title: string;
+  body: string;
+  audience: DemoNotificationAudience;
+  /** Сколько дней назад опубликовано уведомление. */
+  daysAgo: number;
+  time: [number, number];
+  /** Срок актуальности в днях от сегодняшнего дня; без значения — без срока. */
+  expiresInDays?: number;
+};
+
 const FACULTIES = [
   { code: "FMO", name: "Факультет международных отношений" },
   { code: "FMEO", name: "Факультет международных экономических отношений" },
@@ -165,6 +239,13 @@ const DEMO_STUDENTS: DemoStudent[] = [
     enrolledAt: new Date("2025-09-01T00:00:00.000Z"),
   },
 ];
+
+/** Демо-сотрудник деканата: обрабатывает заявки, не имеет студенческого профиля. */
+const DEMO_EMPLOYEE: DemoAccount = {
+  email: "elena.smirnova@example.com",
+  name: "Елена Викторовна Смирнова",
+  role: "DEAN_EMPLOYEE",
+};
 
 const TEACHERS: DemoTeacher[] = [
   { email: "i.sokolova@example.com", fullName: "Ирина Владимировна Соколова" },
@@ -1048,6 +1129,275 @@ const DEMO_EXAMS: DemoExam[] = [
   },
 ];
 
+/** Каталог типов заявок: четыре типа по `Ф-04.1`. */
+const REQUEST_TYPES: DemoRequestType[] = [
+  {
+    code: "STUDY_CERTIFICATE",
+    title: "Справка об обучении",
+    description:
+      "Подтверждает, что студент обучается в университете: направление, курс и форма обучения.",
+    processingDays: 3,
+    sortOrder: 1,
+  },
+  {
+    code: "PLACE_REQUIREMENT",
+    title: "Справка по месту требования",
+    description:
+      "Справка для организаций и учреждений: получатель и место предоставления указываются в заявке.",
+    processingDays: 5,
+    sortOrder: 2,
+  },
+  {
+    code: "ACADEMIC_LEAVE",
+    title: "Академический отпуск",
+    description:
+      "Заявление на академический отпуск по медицинским или семейным обстоятельствам с указанием периода.",
+    processingDays: 10,
+    sortOrder: 3,
+  },
+  {
+    code: "RETAKE",
+    title: "Пересдача",
+    description: "Заявление на пересдачу зачёта или экзамена по дисциплине с указанием причины.",
+    processingDays: 7,
+    sortOrder: 4,
+  },
+];
+
+/**
+ * Демо-заявки двух студентов. Вместе они покрывают все пять статусов:
+ * `NEW`, `IN_PROGRESS`, `READY`, `REJECTED` и `CANCELLED`.
+ * Даты лежат в прошлом и вне окна лимита создания (10 заявок за 10 минут).
+ * Номера собираются из московского года и суффикса 900001–900006.
+ */
+const DEMO_REQUESTS: DemoRequest[] = [
+  // Анна Петрова: готовая справка об обучении.
+  {
+    numberSuffix: 900001,
+    studentEmail: "anna.petrova@example.com",
+    typeCode: "STUDY_CERTIFICATE",
+    status: "READY",
+    daysAgo: 12,
+    time: [9, 40],
+    payload: () => ({
+      deliveryPlace: "Отдел кадров ООО «Северный ветер»",
+      comment: "Справка нужна для подтверждения периода обучения при трудоустройстве.",
+    }),
+    transitions: [
+      {
+        fromStatus: "NEW",
+        toStatus: "IN_PROGRESS",
+        daysAgo: 11,
+        time: [10, 15],
+        comment: "Заявка принята в работу, срок подготовки — 3 рабочих дня.",
+      },
+      {
+        fromStatus: "IN_PROGRESS",
+        toStatus: "READY",
+        daysAgo: 8,
+        time: [16, 20],
+        comment: "Справка готова, её можно забрать в деканате на первом этаже.",
+      },
+    ],
+  },
+  // Анна Петрова: отклонённая справка по месту требования.
+  {
+    numberSuffix: 900002,
+    studentEmail: "anna.petrova@example.com",
+    typeCode: "PLACE_REQUIREMENT",
+    status: "REJECTED",
+    daysAgo: 9,
+    time: [12, 5],
+    payload: () => ({
+      organizationName: "Территориальный отдел социальной защиты",
+      deliveryPlace: "Приёмное окно № 3, ул. Лесная, 12",
+      comment: "Справка нужна для оформления социальной стипендии.",
+    }),
+    rejectionReason:
+      "В заявке не указан полный адрес организации. Уточните место предоставления и создайте заявку повторно.",
+    transitions: [
+      {
+        fromStatus: "NEW",
+        toStatus: "IN_PROGRESS",
+        daysAgo: 8,
+        time: [9, 30],
+        comment: "Заявка принята в работу.",
+      },
+      {
+        fromStatus: "IN_PROGRESS",
+        toStatus: "REJECTED",
+        daysAgo: 6,
+        time: [15, 45],
+        comment:
+          "В заявке не указан полный адрес организации. Уточните место предоставления и создайте заявку повторно.",
+      },
+    ],
+  },
+  // Анна Петрова: новая заявка на академический отпуск.
+  {
+    numberSuffix: 900003,
+    studentEmail: "anna.petrova@example.com",
+    typeCode: "ACADEMIC_LEAVE",
+    status: "NEW",
+    daysAgo: 2,
+    time: [18, 10],
+    payload: () => ({
+      reason:
+        "Прохожу длительное лечение в стационаре, справка из клиники передана в деканат вместе с заявлением.",
+      startDate: "2026-12-01",
+      endDate: "2027-05-31",
+      comment: "Прошу сохранить место в группе MO-21-4.",
+    }),
+    transitions: [],
+  },
+  // Марк Соколов: пересдача экзамена, заявка в работе.
+  {
+    numberSuffix: 900004,
+    studentEmail: "mark.sokolov@example.com",
+    typeCode: "RETAKE",
+    status: "IN_PROGRESS",
+    daysAgo: 5,
+    time: [11, 25],
+    payload: (disciplines) => {
+      const disciplineId = disciplines.get("MEO-101");
+      if (!disciplineId) {
+        throw new Error("Не найдена дисциплина MEO-101");
+      }
+
+      return {
+        disciplineId,
+        reason: "Пропустил экзамен из-за болезни, справка из поликлиники есть в деканате.",
+      };
+    },
+    transitions: [
+      {
+        fromStatus: "NEW",
+        toStatus: "IN_PROGRESS",
+        daysAgo: 4,
+        time: [10, 5],
+        comment: "Заявка принята в работу, деканат согласует дату пересдачи с преподавателем.",
+      },
+    ],
+  },
+  // Марк Соколов: справка об обучении, отменена студентом.
+  {
+    numberSuffix: 900005,
+    studentEmail: "mark.sokolov@example.com",
+    typeCode: "STUDY_CERTIFICATE",
+    status: "CANCELLED",
+    daysAgo: 7,
+    time: [8, 50],
+    payload: () => ({
+      deliveryPlace: "Военный комиссариат Советского района",
+      comment: "Справка нужна для уточнения данных воинского учёта.",
+    }),
+    transitions: [
+      {
+        fromStatus: "NEW",
+        toStatus: "CANCELLED",
+        daysAgo: 7,
+        time: [9, 20],
+        comment: "Отменил заявку: справка больше не требуется.",
+        byStudent: true,
+      },
+    ],
+  },
+  // Марк Соколов: новая справка по месту требования.
+  {
+    numberSuffix: 900006,
+    studentEmail: "mark.sokolov@example.com",
+    typeCode: "PLACE_REQUIREMENT",
+    status: "NEW",
+    daysAgo: 3,
+    time: [14, 0],
+    payload: () => ({
+      organizationName: "Городская поликлиника № 4",
+      deliveryPlace: "Регистратура, ул. Строителей, 21",
+      comment: "Справка нужна для оформления медицинской книжки.",
+    }),
+    transitions: [],
+  },
+];
+
+/**
+ * Последний демо-номер. Счётчик года поднимается до него (заведомо выше 900000),
+ * поэтому первая реальная заявка получает 900007 и не пересекается с демо.
+ */
+const DEMO_REQUEST_LAST_NUMBER = Math.max(...DEMO_REQUESTS.map((request) => request.numberSuffix));
+
+/**
+ * Демо-объявления деканата и дедлайны покрывают все три аудитории: студента,
+ * группу и факультет. Ключ строки стабилен между запусками seed, поэтому
+ * `upsert` по `dedupeKey` сохраняет идентификаторы уведомлений.
+ */
+const DEMO_NOTIFICATIONS: DemoSeedNotification[] = [
+  {
+    key: "deanery:session-meeting",
+    category: "DEANERY",
+    priority: "IMPORTANT",
+    title: "Собрание группы перед сессией",
+    body: "Собрание группы MO-21-4 состоится в четверг в 16:30, аудитория А-305. Обсудим допуск к зачётам и выбор дисциплин.",
+    audience: { type: "GROUP", groupCode: "MO-21-4" },
+    daysAgo: 1,
+    time: [9, 30],
+    expiresInDays: 14,
+  },
+  {
+    key: "deanery:scholarship",
+    category: "DEANERY",
+    priority: "NORMAL",
+    title: "Приём заявлений на повышенную стипендию",
+    body: "До 30 ноября деканат принимает заявления на повышенную государственную стипендию. Кабинет А-101, будни с 10:00 до 17:00.",
+    audience: { type: "FACULTY", facultyCode: "FMO" },
+    daysAgo: 3,
+    time: [12, 0],
+    expiresInDays: 21,
+  },
+  {
+    key: "deanery:coursework-consultation",
+    category: "DEANERY",
+    priority: "NORMAL",
+    title: "Консультация по курсовой работе",
+    body: "Консультация по курсовой работе по экономической географии — в пятницу в 15:00, аудитория А-410.",
+    audience: { type: "STUDENT", studentEmail: "anna.petrova@example.com" },
+    daysAgo: 2,
+    time: [15, 0],
+  },
+  {
+    key: "deadline:coursework",
+    category: "DEADLINES",
+    priority: "IMPORTANT",
+    title: "Дедлайн курсовой работы",
+    body: "Курсовая работа по экономической географии принимается до конца зачётной недели. Загрузите файл в личный кабинет или передайте преподавателю.",
+    audience: { type: "STUDENT", studentEmail: "anna.petrova@example.com" },
+    daysAgo: 2,
+    time: [9, 0],
+    expiresInDays: 14,
+  },
+  {
+    key: "deadline:retake",
+    category: "DEADLINES",
+    priority: "IMPORTANT",
+    title: "Дедлайн пересдачи",
+    body: "Пересдача по микроэкономике — до 20 декабря. Запишитесь в деканате, кабинет А-101.",
+    audience: { type: "STUDENT", studentEmail: "mark.sokolov@example.com" },
+    daysAgo: 1,
+    time: [10, 0],
+    expiresInDays: 12,
+  },
+  {
+    key: "deadline:session-week",
+    category: "DEADLINES",
+    priority: "NORMAL",
+    title: "Зачётная неделя",
+    body: "Зачётная неделя начинается 15 декабря. Проверьте расписание зачётов и допуск по дисциплинам.",
+    audience: { type: "GROUP", groupCode: "MO-21-4" },
+    daysAgo: 3,
+    time: [8, 45],
+    expiresInDays: 20,
+  },
+];
+
 type SeedSummary = {
   created: number;
   updated: number;
@@ -1057,6 +1407,10 @@ type SeedSummary = {
   semesters: number;
   grades: number;
   exams: number;
+  requestTypes: number;
+  requests: number;
+  requestHistory: number;
+  notifications: number;
 };
 
 /** Понедельник текущей недели в 00:00 по Москве, выраженный как UTC-инстант. */
@@ -1085,9 +1439,9 @@ function lessonKey(
   return [groupCode, day, start.join(":"), disciplineCode, subgroup].join("|");
 }
 
-async function ensureDemoStudent(student: DemoStudent, summary: SeedSummary) {
+async function ensureDemoAccount(account: DemoAccount, summary: SeedSummary) {
   const existing = await prisma.user.findUnique({
-    where: { email: student.email },
+    where: { email: account.email },
     select: { id: true },
   });
 
@@ -1096,7 +1450,7 @@ async function ensureDemoStudent(student: DemoStudent, summary: SeedSummary) {
   if (existing) {
     const user = await prisma.user.update({
       where: { id: existing.id },
-      data: { name: student.name, role: student.role },
+      data: { name: account.name, role: account.role },
       select: { id: true },
     });
     userId = user.id;
@@ -1104,19 +1458,19 @@ async function ensureDemoStudent(student: DemoStudent, summary: SeedSummary) {
   } else {
     const result = await auth.api.signUpEmail({
       body: {
-        email: student.email,
+        email: account.email,
         password: DEMO_PASSWORD,
-        name: student.name,
+        name: account.name,
       },
     });
 
     if (!result.user?.id) {
-      throw new Error(`Не удалось создать демо-пользователя ${student.email}`);
+      throw new Error(`Не удалось создать демо-пользователя ${account.email}`);
     }
 
     const user = await prisma.user.update({
       where: { id: result.user.id },
-      data: { name: student.name, role: student.role },
+      data: { name: account.name, role: account.role },
       select: { id: true },
     });
     userId = user.id;
@@ -1245,6 +1599,9 @@ async function seedSchedule(
     });
     summary.changes += 1;
   }
+
+  // Идентификаторы занятий нужны уведомлениям расписания: цель `LESSON`.
+  return lessonIds;
 }
 
 /** Начало календарного дня по Москве, выраженное как UTC-инстант. */
@@ -1255,6 +1612,26 @@ function moscowStartOfDay(year: number, month: number, day: number): Date {
 /** Последняя секунда календарного дня по Москве. */
 function moscowEndOfDay(year: number, month: number, day: number): Date {
   return new Date(Date.UTC(year, month, day, 23, 59, 59) - MSK_OFFSET_MS);
+}
+
+/** Время по Москве за `daysAgo` дней до сегодняшнего дня, выраженное как UTC-инстант. */
+function moscowDaysAgo(daysAgo: number, [hour, minute]: [number, number]): Date {
+  const mskNow = new Date(Date.now() + MSK_OFFSET_MS);
+
+  return new Date(
+    Date.UTC(
+      mskNow.getUTCFullYear(),
+      mskNow.getUTCMonth(),
+      mskNow.getUTCDate() - daysAgo,
+      hour,
+      minute,
+    ) - MSK_OFFSET_MS,
+  );
+}
+
+/** Время по Москве через `days` дней от сегодняшнего дня, выраженное как UTC-инстант. */
+function moscowDaysFromNow(days: number, time: [number, number]): Date {
+  return moscowDaysAgo(-days, time);
 }
 
 function autumnSemester(startYear: number): DemoSemester {
@@ -1414,6 +1791,453 @@ async function seedGrades(
   summary.semesters += 2;
 }
 
+/** Каталог типов заявок обновляется через upsert по `code` и не дублируется. */
+async function seedRequestTypes(summary: SeedSummary) {
+  const types = new Map<string, string>();
+
+  for (const type of REQUEST_TYPES) {
+    const record = await prisma.requestType.upsert({
+      where: { code: type.code },
+      update: {
+        title: type.title,
+        description: type.description,
+        processingDays: type.processingDays,
+        sortOrder: type.sortOrder,
+        isActive: true,
+      },
+      create: {
+        code: type.code,
+        title: type.title,
+        description: type.description,
+        processingDays: type.processingDays,
+        sortOrder: type.sortOrder,
+      },
+      select: { id: true, code: true },
+    });
+
+    types.set(record.code, record.id);
+    summary.requestTypes += 1;
+  }
+
+  return types;
+}
+
+/**
+ * Seed владеет демо-заявками студентов: прежние заявки удаляются вместе с историей
+ * (каскад), уведомления категории «Заявки» — отдельной выборкой, затем данные
+ * создаются заново. Запись создания (`null → NEW`) и переходы статусов
+ * сопровождаются уведомлениями по контракту `P5-BE-02`.
+ */
+async function seedRequests(
+  types: Map<string, string>,
+  profiles: Map<string, string>,
+  userIds: Map<string, string>,
+  employeeUserId: string,
+  disciplines: Map<string, string>,
+  summary: SeedSummary,
+) {
+  const profileIds = [...profiles.values()];
+
+  await prisma.notification.deleteMany({
+    where: { category: "REQUESTS", audienceStudentId: { in: profileIds } },
+  });
+  await prisma.request.deleteMany({ where: { studentId: { in: profileIds } } });
+
+  // Счётчик года поднимается до демо-диапазона, но не откатывает уже выданные
+  // номера: повторный seed идемпотентен, а реальная выдача продолжается выше.
+  const year = getMoscowYear(new Date());
+
+  await prisma.$executeRaw`
+    INSERT INTO "request_number_sequence" ("year", "lastNumber")
+    VALUES (${year}, ${DEMO_REQUEST_LAST_NUMBER})
+    ON CONFLICT ("year")
+    DO UPDATE SET "lastNumber" = GREATEST("request_number_sequence"."lastNumber", ${DEMO_REQUEST_LAST_NUMBER})
+  `;
+
+  for (const demo of DEMO_REQUESTS) {
+    const studentId = profiles.get(demo.studentEmail);
+    const typeId = types.get(demo.typeCode);
+    const type = REQUEST_TYPES.find((item) => item.code === demo.typeCode);
+
+    if (!studentId) {
+      throw new Error(`Не найден профиль студента ${demo.studentEmail}`);
+    }
+    if (!typeId || !type) {
+      throw new Error(`Не найден тип заявки ${demo.typeCode}`);
+    }
+
+    const number = `З-${year}-${String(demo.numberSuffix).padStart(6, "0")}`;
+    const createdAt = moscowDaysAgo(demo.daysAgo, demo.time);
+    const lastTransition = demo.transitions[demo.transitions.length - 1];
+    const updatedAt = lastTransition
+      ? moscowDaysAgo(lastTransition.daysAgo, lastTransition.time)
+      : createdAt;
+
+    const request = await prisma.request.create({
+      data: {
+        number,
+        studentId,
+        typeId,
+        status: demo.status,
+        payload: demo.payload(disciplines),
+        dueAt: addMoscowWorkingDays(createdAt, type.processingDays),
+        createdAt,
+        updatedAt,
+        // Заявки в работе и завершённые обработал демо-сотрудник.
+        assignedToId: demo.status === "NEW" || demo.status === "CANCELLED" ? null : employeeUserId,
+        ...(demo.rejectionReason ? { rejectionReason: demo.rejectionReason } : {}),
+      },
+      select: { id: true, number: true },
+    });
+    summary.requests += 1;
+
+    const creation = await prisma.requestStatusHistory.create({
+      data: { requestId: request.id, toStatus: "NEW", createdAt },
+      select: { id: true },
+    });
+    summary.requestHistory += 1;
+
+    // Создание заявки сопровождается тем же уведомлением, что и в рантайме.
+    const createdContent = buildRequestCreatedNotification(request.number);
+    await prisma.notification.create({
+      data: {
+        category: "REQUESTS",
+        priority: createdContent.priority,
+        title: createdContent.title,
+        body: createdContent.body,
+        audienceType: "STUDENT",
+        audienceStudentId: studentId,
+        targetType: "REQUEST",
+        targetId: request.id,
+        dedupeKey: getRequestStatusDedupeKey(request.id, creation.id),
+        publishedAt: createdAt,
+      },
+    });
+    summary.notifications += 1;
+
+    for (const transition of demo.transitions) {
+      const changedAt = moscowDaysAgo(transition.daysAgo, transition.time);
+      const entry = await prisma.requestStatusHistory.create({
+        data: {
+          requestId: request.id,
+          fromStatus: transition.fromStatus,
+          toStatus: transition.toStatus,
+          comment: transition.comment ?? null,
+          changedById: transition.byStudent
+            ? (userIds.get(demo.studentEmail) ?? null)
+            : employeeUserId,
+          createdAt: changedAt,
+        },
+        select: { id: true },
+      });
+      summary.requestHistory += 1;
+
+      const notification = buildRequestStatusNotification(transition.toStatus, request.number);
+      await prisma.notification.create({
+        data: {
+          category: "REQUESTS",
+          priority: notification.priority,
+          title: notification.title,
+          body: notification.body,
+          audienceType: "STUDENT",
+          audienceStudentId: studentId,
+          targetType: "REQUEST",
+          targetId: request.id,
+          dedupeKey: getRequestStatusDedupeKey(request.id, entry.id),
+          publishedAt: changedAt,
+        },
+      });
+      summary.notifications += 1;
+    }
+  }
+}
+
+/** Часы и минуты в формате `HH:MM` для текста уведомления. */
+function formatClock([hour, minute]: [number, number]): string {
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+/** Заголовок и приоритет уведомления по типу изменения занятия. */
+const CHANGE_NOTIFICATION_TEMPLATES: Record<
+  ChangeTypeValue,
+  { title: string; priority: DemoNotificationPriority }
+> = {
+  CANCELLATION: { title: "Занятие отменено", priority: "IMPORTANT" },
+  TIME_CHANGE: { title: "Изменено время занятия", priority: "IMPORTANT" },
+  ROOM_CHANGE: { title: "Изменена аудитория", priority: "NORMAL" },
+  TEACHER_CHANGE: { title: "Замена преподавателя", priority: "NORMAL" },
+  LESSON_REPLACEMENT: { title: "Замена занятия", priority: "IMPORTANT" },
+};
+
+function disciplineNameByCode(code: string): string {
+  const discipline = DISCIPLINES.find((item) => item.code === code);
+  if (!discipline) {
+    throw new Error(`Не найдена дисциплина ${code}`);
+  }
+
+  return discipline.name;
+}
+
+function teacherFullNameByEmail(email: string): string {
+  const teacher = TEACHERS.find((item) => item.email === email);
+  if (!teacher) {
+    throw new Error(`Не найден преподаватель ${email}`);
+  }
+
+  return teacher.fullName;
+}
+
+/** Текст уведомления об изменении занятия: дисциплина и суть изменения. */
+function changeNotificationBody(change: DemoChange): string {
+  const disciplineName = disciplineNameByCode(change.disciplineCode);
+
+  switch (change.type) {
+    case "CANCELLATION":
+      return `${disciplineName}: занятие отменено. ${change.reason}.`;
+    case "TIME_CHANGE": {
+      if (!change.newStart || !change.newEnd) {
+        throw new Error(`Не указано новое время занятия ${change.disciplineCode}`);
+      }
+
+      return `${disciplineName}: занятие перенесено на ${formatClock(change.newStart)}–${formatClock(change.newEnd)}. ${change.reason}.`;
+    }
+    case "ROOM_CHANGE": {
+      if (!change.newBuildingCode || !change.newRoomNumber) {
+        throw new Error(`Не указана новая аудитория занятия ${change.disciplineCode}`);
+      }
+
+      return `${disciplineName}: занятие пройдёт в аудитории ${change.newBuildingCode}-${change.newRoomNumber}. ${change.reason}.`;
+    }
+    case "TEACHER_CHANGE": {
+      if (!change.newTeacherEmail) {
+        throw new Error(`Не указан новый преподаватель занятия ${change.disciplineCode}`);
+      }
+
+      return `${disciplineName}: замена преподавателя — ${teacherFullNameByEmail(change.newTeacherEmail)}. ${change.reason}.`;
+    }
+    case "LESSON_REPLACEMENT": {
+      if (!change.replacementDisciplineCode) {
+        throw new Error(`Не указана дисциплина замены занятия ${change.disciplineCode}`);
+      }
+
+      return `${disciplineName}: занятие заменено на «${disciplineNameByCode(change.replacementDisciplineCode)}». ${change.reason}.`;
+    }
+  }
+}
+
+type ScheduleNotificationRow = {
+  /** Полный ключ дедупликации строки расписания: `seed:schedule:...`. */
+  key: string;
+  groupCode: string;
+  title: string;
+  body: string;
+  priority: DemoNotificationPriority;
+  targetId: string;
+  publishedAt: Date;
+  /** Конец текущей учебной недели: после него изменение неактуально. */
+  expiresAt: Date;
+};
+
+function buildChangeNotification(
+  change: DemoChange,
+  index: number,
+  lessonIds: Map<string, string>,
+): ScheduleNotificationRow {
+  const template = CHANGE_NOTIFICATION_TEMPLATES[change.type];
+  const subgroup = change.subgroup ?? "ALL";
+  const targetId = lessonIds.get(
+    lessonKey(change.groupCode, change.day, change.start, change.disciplineCode, subgroup),
+  );
+
+  if (!targetId) {
+    throw new Error(
+      `Не найдено занятие для уведомления: ${change.groupCode} ${change.disciplineCode}`,
+    );
+  }
+
+  return {
+    key: [
+      "seed",
+      "schedule",
+      change.groupCode,
+      change.day,
+      change.start.join(":"),
+      change.disciplineCode,
+      subgroup,
+      change.type,
+    ].join(":"),
+    groupCode: change.groupCode,
+    title: template.title,
+    body: changeNotificationBody(change),
+    priority: template.priority,
+    targetId,
+    // Время публикации растёт с индексом изменения: лента сохраняет порядок.
+    publishedAt: moscowDaysAgo(1, [8, 30 + index]),
+    expiresAt: new Date(getCurrentWeekMonday() + 7 * DAY_MS),
+  };
+}
+
+type NotificationAudienceData = {
+  audienceType: "STUDENT" | "GROUP" | "FACULTY";
+  audienceStudentId: string | null;
+  audienceGroupId: string | null;
+  audienceFacultyId: string | null;
+};
+
+/** Ровно одно поле аудитории заполнено, остальные явно `null`. */
+function audienceData(
+  audience: DemoNotificationAudience,
+  {
+    profiles,
+    groups,
+    faculties,
+  }: {
+    profiles: Map<string, string>;
+    groups: Map<string, string>;
+    faculties: Map<string, string>;
+  },
+): NotificationAudienceData {
+  switch (audience.type) {
+    case "STUDENT": {
+      const studentId = profiles.get(audience.studentEmail);
+      if (!studentId) {
+        throw new Error(`Не найден профиль студента ${audience.studentEmail}`);
+      }
+
+      return {
+        audienceType: "STUDENT",
+        audienceStudentId: studentId,
+        audienceGroupId: null,
+        audienceFacultyId: null,
+      };
+    }
+    case "GROUP": {
+      const groupId = groups.get(audience.groupCode);
+      if (!groupId) {
+        throw new Error(`Не найдена группа ${audience.groupCode}`);
+      }
+
+      return {
+        audienceType: "GROUP",
+        audienceStudentId: null,
+        audienceGroupId: groupId,
+        audienceFacultyId: null,
+      };
+    }
+    case "FACULTY": {
+      const facultyId = faculties.get(audience.facultyCode);
+      if (!facultyId) {
+        throw new Error(`Не найден факультет ${audience.facultyCode}`);
+      }
+
+      return {
+        audienceType: "FACULTY",
+        audienceStudentId: null,
+        audienceGroupId: null,
+        audienceFacultyId: facultyId,
+      };
+    }
+  }
+}
+
+type SeedNotificationRow = {
+  key: string;
+  category: "DEANERY" | "DEADLINES" | "SCHEDULE";
+  priority: DemoNotificationPriority;
+  title: string;
+  body: string;
+  audience: DemoNotificationAudience;
+  targetType: "NONE" | "LESSON";
+  targetId: string | null;
+  publishedAt: Date;
+  expiresAt: Date | null;
+};
+
+/**
+ * Seed владеет уведомлениями с префиксом `seed:`: объявлениями деканата,
+ * дедлайнами и изменениями расписания. Строки обновляются через `upsert` по
+ * `dedupeKey`, поэтому идентификаторы стабильны между запусками, а уведомления
+ * заявок (`request:...`) остаются нетронутыми.
+ */
+async function seedNotifications(
+  {
+    profiles,
+    groups,
+    faculties,
+    lessonIds,
+  }: {
+    profiles: Map<string, string>;
+    groups: Map<string, string>;
+    faculties: Map<string, string>;
+    lessonIds: Map<string, string>;
+  },
+  summary: SeedSummary,
+) {
+  const staticRows: SeedNotificationRow[] = DEMO_NOTIFICATIONS.map((row) => ({
+    key: `seed:${row.key}`,
+    category: row.category,
+    priority: row.priority,
+    title: row.title,
+    body: row.body,
+    audience: row.audience,
+    targetType: "NONE",
+    targetId: null,
+    publishedAt: moscowDaysAgo(row.daysAgo, row.time),
+    expiresAt:
+      row.expiresInDays === undefined ? null : moscowDaysFromNow(row.expiresInDays, row.time),
+  }));
+
+  const scheduleRows: SeedNotificationRow[] = CHANGES.map((change, index) => {
+    const content = buildChangeNotification(change, index, lessonIds);
+
+    return {
+      key: content.key,
+      category: "SCHEDULE",
+      priority: content.priority,
+      title: content.title,
+      body: content.body,
+      // Изменение расписания адресовано всей группе занятия.
+      audience: { type: "GROUP", groupCode: content.groupCode },
+      targetType: "LESSON",
+      targetId: content.targetId,
+      publishedAt: content.publishedAt,
+      expiresAt: content.expiresAt,
+    };
+  });
+
+  const rows = [...staticRows, ...scheduleRows];
+  const keys = rows.map((row) => row.key);
+
+  // Устаревшие строки seed удаляем; `startsWith` не затрагивает чужие ключи.
+  await prisma.notification.deleteMany({
+    where: {
+      AND: [{ dedupeKey: { startsWith: "seed:" } }, { dedupeKey: { notIn: keys } }],
+    },
+  });
+
+  for (const row of rows) {
+    const audience = audienceData(row.audience, { profiles, groups, faculties });
+    const data = {
+      category: row.category,
+      priority: row.priority,
+      title: row.title,
+      body: row.body,
+      ...audience,
+      targetType: row.targetType,
+      targetId: row.targetId,
+      publishedAt: row.publishedAt,
+      expiresAt: row.expiresAt,
+    };
+
+    await prisma.notification.upsert({
+      where: { dedupeKey: row.key },
+      update: data,
+      create: { dedupeKey: row.key, ...data, createdById: null },
+    });
+    summary.notifications += 1;
+  }
+}
+
 async function main() {
   const summary: SeedSummary = {
     created: 0,
@@ -1424,6 +2248,10 @@ async function main() {
     semesters: 0,
     grades: 0,
     exams: 0,
+    requestTypes: 0,
+    requests: 0,
+    requestHistory: 0,
+    notifications: 0,
   };
 
   const faculties = new Map<string, string>();
@@ -1470,6 +2298,11 @@ async function main() {
   }
 
   const profiles = new Map<string, string>();
+  const userIds = new Map<string, string>();
+
+  // Сотрудник создаётся до заявок: его идентификатор нужен как исполнитель
+  // для демонстрационных заявок в работе и в истории переходов.
+  const employeeUserId = await ensureDemoAccount(DEMO_EMPLOYEE, summary);
 
   for (const student of DEMO_STUDENTS) {
     const facultyId = faculties.get(student.facultyCode);
@@ -1480,7 +2313,7 @@ async function main() {
       throw new Error(`Неполные справочники для ${student.email}`);
     }
 
-    const userId = await ensureDemoStudent(student, summary);
+    const userId = await ensureDemoAccount(student, summary);
 
     const profile = await prisma.studentProfile.upsert({
       where: { userId },
@@ -1508,6 +2341,7 @@ async function main() {
       select: { id: true },
     });
     profiles.set(student.email, profile.id);
+    userIds.set(student.email, userId);
     summary.profiles += 1;
   }
 
@@ -1570,7 +2404,7 @@ async function main() {
     }
   }
 
-  await seedSchedule(groups, teachers, disciplines, rooms, summary);
+  const lessonIds = await seedSchedule(groups, teachers, disciplines, rooms, summary);
 
   const demo = getDemoSemesters();
   const semesters = {
@@ -1579,8 +2413,12 @@ async function main() {
   };
   await seedGrades(semesters, profiles, groups, teachers, disciplines, rooms, summary);
 
+  const requestTypes = await seedRequestTypes(summary);
+  await seedRequests(requestTypes, profiles, userIds, employeeUserId, disciplines, summary);
+  await seedNotifications({ profiles, groups, faculties, lessonIds }, summary);
+
   console.log(
-    `Seed завершён: пользователей создано ${summary.created}, обновлено ${summary.updated}, профилей обработано ${summary.profiles}, занятий создано ${summary.lessons}, изменений ${summary.changes}, семестров ${summary.semesters}, оценок ${summary.grades}, экзаменов ${summary.exams}.`,
+    `Seed завершён: пользователей создано ${summary.created}, обновлено ${summary.updated}, профилей обработано ${summary.profiles}, занятий создано ${summary.lessons}, изменений ${summary.changes}, семестров ${summary.semesters}, оценок ${summary.grades}, экзаменов ${summary.exams}, типов заявок ${summary.requestTypes}, заявок ${summary.requests}, записей истории ${summary.requestHistory}, уведомлений ${summary.notifications}.`,
   );
 }
 

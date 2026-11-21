@@ -2,26 +2,28 @@
 
 Реестр сторонних библиотек, инструментов и материалов прототипа. Требование — `AGENTS.md` § 4.3 и § 7.4. Запись добавляется при подключении нового компонента.
 
-| Компонент           | Роль в проекте                                                           | Лицензия           | Источник                                                                              |
-| ------------------- | ------------------------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------- |
-| Next.js             | Фреймворк: App Router, Server Components, Server Actions, Route Handlers | MIT                | https://nextjs.org                                                                    |
-| React               | Библиотека интерфейса                                                    | MIT                | https://react.dev                                                                     |
-| TypeScript          | Типизация клиента и сервера                                              | Apache-2.0         | https://www.typescriptlang.org                                                        |
-| Tailwind CSS v4     | Стилизация и дизайн-токены                                               | MIT                | https://tailwindcss.com                                                               |
-| shadcn/ui           | Паттерны компонентов и доступная разметка                                | MIT                | https://ui.shadcn.com                                                                 |
-| Base UI             | Примитивы доступности                                                    | MIT                | https://base-ui.com                                                                   |
-| Motion              | Анимации и переходы                                                      | MIT                | https://motion.dev                                                                    |
-| Recharts            | Графики успеваемости и сводок                                            | MIT                | https://recharts.org                                                                  |
-| React Hook Form     | Состояние форм                                                           | MIT                | https://react-hook-form.com                                                           |
-| Zod                 | Схемы валидации клиента и сервера                                        | MIT                | https://zod.dev                                                                       |
-| Lucide React 1.72.0 | Набор иконок и встроенные SVG в дизайн-образцах                          | ISC                | https://lucide.dev                                                                    |
-| Onest 5.3.1         | Локальные WOFF2: Cyrillic/Latin, 400/500/600/700                         | SIL OFL 1.1        | [Лицензия](../public/fonts/onest/LICENSE), [проект](https://github.com/simpals/onest) |
-| PostgreSQL          | Реляционная база данных                                                  | PostgreSQL License | https://www.postgresql.org                                                            |
-| Prisma ORM          | Схема, миграции и типизированные запросы                                 | Apache-2.0         | https://www.prisma.io                                                                 |
-| Better Auth         | Аутентификация и серверные сессии                                        | MIT                | https://www.better-auth.com                                                           |
-| Vercel AI SDK       | Вызов LLM и стриминг ответа                                              | Apache-2.0         | https://sdk.vercel.ai                                                                 |
-| Playwright          | E2E-тесты                                                                | Apache-2.0         | https://playwright.dev                                                                |
-| Vitest              | Юнит- и интеграционные тесты                                             | MIT                | https://vitest.dev                                                                    |
+| Компонент             | Роль в проекте                                                           | Лицензия           | Источник                                                                              |
+| --------------------- | ------------------------------------------------------------------------ | ------------------ | ------------------------------------------------------------------------------------- |
+| Next.js               | Фреймворк: App Router, Server Components, Server Actions, Route Handlers | MIT                | https://nextjs.org                                                                    |
+| React                 | Библиотека интерфейса                                                    | MIT                | https://react.dev                                                                     |
+| TypeScript            | Типизация клиента и сервера                                              | Apache-2.0         | https://www.typescriptlang.org                                                        |
+| Tailwind CSS v4       | Стилизация и дизайн-токены                                               | MIT                | https://tailwindcss.com                                                               |
+| shadcn/ui             | Паттерны компонентов и доступная разметка                                | MIT                | https://ui.shadcn.com                                                                 |
+| Base UI               | Примитивы доступности                                                    | MIT                | https://base-ui.com                                                                   |
+| Motion                | Анимации и переходы                                                      | MIT                | https://motion.dev                                                                    |
+| Recharts              | Графики успеваемости и сводок                                            | MIT                | https://recharts.org                                                                  |
+| React Hook Form       | Состояние форм                                                           | MIT                | https://react-hook-form.com                                                           |
+| Zod                   | Схемы валидации клиента и сервера                                        | MIT                | https://zod.dev                                                                       |
+| Lucide React          | Набор иконок                                                             | ISC                | https://lucide.dev                                                                    |
+| Onest 5.3.1           | Локальные WOFF2: Cyrillic/Latin, 400/500/600/700                         | SIL OFL 1.1        | [Лицензия](../public/fonts/onest/LICENSE), [проект](https://github.com/simpals/onest) |
+| PostgreSQL            | Реляционная база данных                                                  | PostgreSQL License | https://www.postgresql.org                                                            |
+| Prisma ORM            | Схема, миграции и типизированные запросы                                 | Apache-2.0         | https://www.prisma.io                                                                 |
+| Better Auth           | Аутентификация и серверные сессии                                        | MIT                | https://www.better-auth.com                                                           |
+| Vercel AI SDK         | Вызов LLM и стриминг ответа (`ai@6.0.333`)                               | Apache-2.0         | https://sdk.vercel.ai                                                                 |
+| OpenRouter provider   | Адаптер OpenRouter для AI SDK (`@openrouter/ai-sdk-provider@2.10.0`)     | Apache-2.0         | https://openrouter.ai                                                                 |
+| AI SDK provider types | Типы провайдера v3 для тестов (`@ai-sdk/provider@3.0.19`, dev)           | Apache-2.0         | https://sdk.vercel.ai                                                                 |
+| Playwright            | E2E-тесты                                                                | Apache-2.0         | https://playwright.dev                                                                |
+| Vitest                | Юнит- и интеграционные тесты                                             | MIT                | https://vitest.dev                                                                    |
 
 ## Правила ведения
 
@@ -33,9 +35,9 @@
 
 ## Сгенерировано ИИ
 
-- **Демонстрационные данные.** ФИО студентов, факультеты, направления, группы, преподаватели, дисциплины, аудитории и занятия созданы ИИ в OpenCode и хранятся в `prisma/seed.ts`; оценки и экзамены двух семестров уже добавлены в upstream (`P3-BE-04`). Данные вымышлены, совпадения случайны, реальные люди и системы вуза не использовались.
+- **Демонстрационные данные.** ФИО студентов, факультеты, направления, группы, преподаватели, дисциплины, аудитории и занятия созданы ИИ в OpenCode и хранятся в `prisma/seed.ts`; оценки и экзамены двух семестров добавлены в рамках `P3-BE-04`. Данные вымышлены, совпадения случайны, реальные люди и системы вуза не использовались.
 - **Тексты интерфейса.** Подписи, пояснения, пустые состояния и сообщения об ошибках написаны ИИ в рамках задач плана; сторонние тексты не копировались.
-- **Изображения и иконки.** Генерация изображений не использовалась. Три PNG в [`docs/frontend-design/images/`](frontend-design/images/) — собственные снимки настоящего приложения с вымышленными данными. Иконки UI и дизайн-образцов — Lucide React 1.72.0, ISC; Onest хранится локально вместе с лицензией. Собственный знак интерфейса не копирует символику вуза.
+- **Изображения и иконки.** Три PNG показывают предыдущую итерацию на вымышленных данных. Иконки интерфейса взяты из Lucide React. Onest хранится в проекте вместе с лицензией. Геометрия и цвета Блика взяты из предоставленного `blik.json`. Анимация реализована в компонентах интерфейса. [Снимки](frontend-design/images/).
 - **Официальная символика.** Логотип и символика вуза не используются; пометка о конкурсном концепте видна в интерфейсе.
 
 ## Материалы с особыми условиями
@@ -43,7 +45,3 @@
 - **Шрифты.** Onest 5.3.1, SIL Open Font License 1.1; восемь файлов `onest-{cyrillic,latin}-{400,500,600,700}-normal.woff2` находятся в [`public/fonts/onest/`](../public/fonts/onest/), полный текст — [`LICENSE`](../public/fonts/onest/LICENSE). В runtime нет внешней загрузки шрифта.
 - **Иконки.** Используется один набор — Lucide React; сторонние SVG не добавляются без записи в реестре.
 - **Демонстрационные данные.** Все ФИО, оценки и контакты вымышлены и не являются сторонним материалом.
-
-## Дизайн-артефакты frontend
-
-[`DESIGN.md`](../DESIGN.md) и [`.impeccable/design.json`](../.impeccable/design.json) фиксируют собственную утверждённую систему «Маршрут дня». Impeccable — основной процесс фиксации и проверки; Stageshow использовался точечно для композиции и движения, без kit или нового стека. Modern Web Guidance консультировался как руководство; внешний код и новые изображения из него не переносились. Локальная подготовка ветки не добавляет npm-зависимостей; точные версии приложения сохраняются в `package-lock.json`.

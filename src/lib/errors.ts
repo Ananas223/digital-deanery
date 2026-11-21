@@ -1,5 +1,13 @@
 export type ErrorCode =
-  "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "VALIDATION" | "CONFLICT" | "INTERNAL";
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
+  | "NOT_FOUND"
+  | "VALIDATION"
+  | "CONFLICT"
+  | "INVALID_TRANSITION"
+  | "RATE_LIMITED"
+  | "AI_UNAVAILABLE"
+  | "INTERNAL";
 
 const ERROR_STATUS: Record<ErrorCode, number> = {
   UNAUTHORIZED: 401,
@@ -7,6 +15,9 @@ const ERROR_STATUS: Record<ErrorCode, number> = {
   NOT_FOUND: 404,
   VALIDATION: 422,
   CONFLICT: 409,
+  INVALID_TRANSITION: 409,
+  RATE_LIMITED: 429,
+  AI_UNAVAILABLE: 503,
   INTERNAL: 500,
 };
 
@@ -16,6 +27,9 @@ const PUBLIC_MESSAGES: Record<ErrorCode, string> = {
   NOT_FOUND: "Запись не найдена.",
   VALIDATION: "Проверьте заполнение полей.",
   CONFLICT: "Действие уже выполнено или данные конфликтуют.",
+  INVALID_TRANSITION: "Это действие сейчас недоступно.",
+  RATE_LIMITED: "Попробуйте позже.",
+  AI_UNAVAILABLE: "Помощник временно недоступен. Остальные разделы работают.",
   INTERNAL: "Что-то пошло не так. Попробуйте ещё раз.",
 };
 

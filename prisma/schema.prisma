@@ -56,6 +56,39 @@ enum GradeStatus {
   NOT_GRADED
 }
 
+enum RequestStatus {
+  NEW
+  IN_PROGRESS
+  READY
+  REJECTED
+  CANCELLED
+}
+
+enum NotificationCategory {
+  DEANERY
+  SCHEDULE
+  REQUESTS
+  DEADLINES
+}
+
+enum NotificationPriority {
+  NORMAL
+  IMPORTANT
+}
+
+enum NotificationAudience {
+  STUDENT
+  GROUP
+  FACULTY
+}
+
+enum NotificationTarget {
+  REQUEST
+  LESSON
+  SECTION
+  NONE
+}
+
 // --- Better Auth (сгенерировано CLI 1.7.23, модели проверены вручную) ---
 
 model User {
@@ -71,6 +104,11 @@ model User {
   accounts      Account[]
 
   studentProfile StudentProfile?
+
+  assignedRequests      Request[]              @relation("RequestAssignee")
+  requestHistoryEntries RequestStatusHistory[] @relation("RequestHistoryAuthor")
+  createdNotifications  Notification[]         @relation("NotificationCreatedBy")
+  notificationReads     NotificationRead[]
 
   @@unique([email])
   @@map("user")
@@ -133,8 +171,9 @@ model Faculty {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  programs Program[]
-  students StudentProfile[]
+  programs      Program[]
+  students      StudentProfile[]
+  notifications Notification[]   @relation("NotificationAudienceFaculty")
 
   @@map("faculty")
 }
@@ -163,9 +202,10 @@ model Group {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  students StudentProfile[]
-  lessons  Lesson[]
-  exams    Exam[]
+  students      StudentProfile[]
+  lessons       Lesson[]
+  exams         Exam[]
+  notifications Notification[]   @relation("NotificationAudienceGroup")
 
   @@index([programId])
   @@map("group")
@@ -189,7 +229,9 @@ model StudentProfile {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  grades Grade[]
+  grades        Grade[]
+  requests      Request[]
+  notifications Notification[] @relation("NotificationAudienceStudent")
 
   @@index([groupId])
   @@index([programId])
@@ -373,4 +415,117 @@ model Exam {
   @@index([semesterId, startsAt])
   @@index([disciplineId])
   @@map("exam")
+}
+
+// --- Заявки и уведомления этапа 4 ---
+
+model RequestType {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  title          String
+  description    String
+  processingDays Int
+  isActive       Boolean  @default(true)
+  sortOrder      Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  requests Request[]
+
+  @@map("request_type")
+}
+
+model Request {
+  id              String         @id @default(cuid())
+  number          String         @unique
+  studentId       String
+  student         StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  typeId          String
+  type            RequestType    @relation(fields: [typeId], references: [id])
+  status          RequestStatus  @default(NEW)
+  payload         Json
+  clientRequestId String?
+  dueAt           DateTime?
+  rejectionReason String?
+  assignedToId    String?
+  assignedTo      User?          @relation("RequestAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  history RequestStatusHistory[]
+
+  @@unique([studentId, clientRequestId])
+  @@index([studentId, createdAt])
+  @@index([status, createdAt])
+  @@index([typeId])
+  @@map("request")
+}
+
+model RequestStatusHistory {
+  id          String         @id @default(cuid())
+  requestId   String
+  request     Request        @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  fromStatus  RequestStatus?
+  toStatus    RequestStatus
+  comment     String?
+  changedById String?
+  changedBy   User?          @relation("RequestHistoryAuthor", fields: [changedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime       @default(now())
+
+  @@index([requestId, createdAt])
+  @@map("request_status_history")
+}
+
+model RequestNumberSequence {
+  year       Int @id
+  lastNumber Int @default(0)
+
+  @@map("request_number_sequence")
+}
+
+model Notification {
+  id                String               @id @default(cuid())
+  category          NotificationCategory
+  priority          NotificationPriority @default(NORMAL)
+  title             String
+  body              String
+  audienceType      NotificationAudience
+  audienceStudentId String?
+  audienceStudent   StudentProfile?      @relation("NotificationAudienceStudent", fields: [audienceStudentId], references: [id], onDelete: SetNull)
+  audienceGroupId   String?
+  audienceGroup     Group?               @relation("NotificationAudienceGroup", fields: [audienceGroupId], references: [id], onDelete: SetNull)
+  audienceFacultyId String?
+  audienceFaculty   Faculty?             @relation("NotificationAudienceFaculty", fields: [audienceFacultyId], references: [id], onDelete: SetNull)
+  targetType        NotificationTarget   @default(NONE)
+  targetId          String?
+  dedupeKey         String?              @unique
+  publishedAt       DateTime
+  expiresAt         DateTime?
+  createdById       String?
+  createdBy         User?                @relation("NotificationCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  reads NotificationRead[]
+
+  @@index([audienceStudentId, publishedAt])
+  @@index([audienceGroupId, publishedAt])
+  @@index([audienceType, publishedAt])
+  @@index([category, publishedAt])
+  @@index([targetType, targetId])
+  @@map("notification")
+}
+
+/// Отметка о прочтении персональна: групповое уведомление читают независимо.
+model NotificationRead {
+  id             String       @id @default(cuid())
+  notificationId String
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  readAt         DateTime     @default(now())
+
+  @@unique([notificationId, userId])
+  @@index([userId, readAt])
+  @@map("notification_read")
 }

@@ -4,6 +4,7 @@ import { UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { AssistantTrigger } from "@/components/assistant/assistant-trigger";
 import { Logo } from "@/components/layout/logo";
 import { LogoutButton } from "@/components/layout/logout-button";
 import type { ShellUser } from "@/components/layout/types";
@@ -18,9 +19,10 @@ export function AppHeader({ user }: { user: ShellUser }) {
 
   return (
     <header className="flex min-h-12 min-w-0 flex-wrap items-center justify-between gap-2 border-b border-border md:hidden">
-      <Logo className="flex-1 basis-40 gap-2 [&_.logo-mark]:size-8 [&_.logo-wordmark]:text-sm [&_.logo-wordmark]:leading-tight" />
+      <Logo className="flex-1 basis-32 gap-1.5 sm:basis-40 [&_.logo-mark]:size-7 [&_.logo-wordmark]:text-sm [&_.logo-wordmark]:leading-tight" />
 
       <div className="ms-auto flex shrink-0 items-center gap-1">
+        <AssistantTrigger placement="mobile" />
         <Link
           href="/profile"
           aria-label={`${getInitials(user.name)} Профиль: ${user.name}`}

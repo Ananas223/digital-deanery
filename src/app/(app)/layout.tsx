@@ -2,6 +2,8 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/layout/app-shell";
+import { getUnreadCount } from "@/lib/actions/notifications";
+import { isAiEnabled } from "@/lib/ai/provider";
 import { SESSION_COOKIE_SUFFIX } from "@/lib/auth/redirect";
 import { getCurrentUser } from "@/lib/auth/session";
 
@@ -37,7 +39,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect(query ? `/login?${query}` : "/login");
   }
 
+  const unreadCount =
+    user.role === "STUDENT" ? await getUnreadCount().catch(() => undefined) : undefined;
+  const assistantEnabled = user.role === "STUDENT" && isAiEnabled();
+
   return (
-    <AppShell user={{ name: user.name, email: user.email, role: user.role }}>{children}</AppShell>
+    <AppShell
+      key={user.id}
+      user={{ name: user.name, email: user.email, role: user.role }}
+      unreadCount={unreadCount}
+      assistantEnabled={assistantEnabled}
+    >
+      {children}
+    </AppShell>
   );
 }
