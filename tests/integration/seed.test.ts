@@ -1,4 +1,3 @@
-import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,6 +6,8 @@ import { afterAll, describe, expect, it } from "vitest";
 import { createPrismaClient } from "@/lib/db/client";
 import { buildRequestCreatedNotification } from "@/lib/domain/request-notifications";
 import { getMoscowYear } from "@/lib/domain/request-time";
+
+import { runLocalBin } from "../setup/run-local-bin";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -31,10 +32,9 @@ const EXPECTED_STUDENTS = [
 ] as const;
 
 function runSeed(): void {
-  execFileSync(path.resolve(rootDir, "node_modules/.bin/tsx"), ["prisma/seed.ts"], {
-    cwd: rootDir,
-    env: { ...process.env, DATABASE_URL: process.env["DATABASE_URL"] },
-    stdio: "pipe",
+  runLocalBin(rootDir, "tsx", ["prisma/seed.ts"], {
+    ...process.env,
+    DATABASE_URL: process.env["DATABASE_URL"],
   });
 }
 

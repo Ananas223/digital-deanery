@@ -131,6 +131,7 @@ const PAST_EXAM: SessionExam = {
   assessmentType: "EXAM",
   startsAt: new Date("2026-11-10T09:00:00.000Z"),
   endsAt: new Date("2026-11-10T11:00:00.000Z"),
+  previousStartsAt: null,
   room: { buildingCode: "A", number: "А-305", name: "Аудитория 305" },
   teacherName: TEACHER.fullName,
   result: null,
@@ -142,6 +143,7 @@ const FUTURE_EXAM: SessionExam = {
   assessmentType: "EXAM",
   startsAt: new Date("2026-12-20T09:00:00.000Z"),
   endsAt: new Date("2026-12-20T11:00:00.000Z"),
+  previousStartsAt: null,
   room: null,
   teacherName: null,
   result: null,
@@ -153,6 +155,7 @@ const IN_PROGRESS_EXAM: SessionExam = {
   assessmentType: "EXAM",
   startsAt: new Date("2026-11-17T08:30:00.000Z"),
   endsAt: new Date("2026-11-17T10:00:00.000Z"),
+  previousStartsAt: null,
   room: null,
   teacherName: null,
   result: null,
@@ -162,6 +165,7 @@ const OVERVIEW: SemesterOverview = {
   semester: SEMESTER,
   grades: [],
   session: [PAST_EXAM, FUTURE_EXAM],
+  sessionPublication: null,
   summary: SUMMARY,
 };
 
@@ -197,6 +201,7 @@ const FOUR_REQUESTS: RequestSummary[] = Array.from({ length: 4 }, (_, index) => 
 const NOTIFICATION: NotificationItem = {
   id: "notification-1",
   category: "DEANERY",
+  source: "DEANERY",
   priority: "IMPORTANT",
   title: "Собрание группы перед сессией",
   body: "Собрание состоится в четверг.",

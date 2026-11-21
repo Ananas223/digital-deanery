@@ -1,11 +1,12 @@
 import type { Metadata, Route } from "next";
 import { redirect } from "next/navigation";
 
-import { Logo } from "@/components/layout/logo";
+import { EntranceMark } from "@/components/layout/entrance-mark";
+import { RouteMark } from "@/components/layout/route-mark";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SkipLink } from "@/components/layout/skip-link";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Alert } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
 import { sanitizeNextPath } from "@/lib/auth/redirect";
 import { getCurrentUser } from "@/lib/auth/session";
 
@@ -40,45 +41,60 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       <SkipLink />
-
-      <header className="border-b border-border">
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center px-4 md:px-6">
-          <Logo linked={false} />
-        </div>
-      </header>
+      <EntranceMark />
 
       <main
         id="main-content"
         tabIndex={-1}
-        className="flex flex-1 items-center justify-center px-4 py-10"
+        className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 wrap-anywhere sm:px-6 sm:py-10 lg:py-16"
       >
-        <div className="w-full max-w-md space-y-4">
-          {sessionExpired ? (
-            <Alert tone="info" title="Сессия истекла">
-              {nextPath
-                ? "Войдите снова, чтобы вернуться на запрошенную страницу. Введённые данные не сохраняются."
-                : "Войдите снова, чтобы продолжить работу. Введённые данные не сохраняются."}
-            </Alert>
-          ) : null}
-
-          <div className="space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Вход в кабинет</h1>
-            <p className="text-sm text-muted-foreground">
-              Введите e-mail и пароль, чтобы открыть свой кабинет.
+        <section className="grid min-w-0 rounded-card border border-border bg-card lg:grid-cols-12">
+          <header className="min-w-0 rounded-t-card bg-background p-5 sm:p-8 lg:col-span-5 lg:rounded-tl-card lg:rounded-tr-none lg:border-r lg:border-border lg:p-10 lg:pb-8">
+            <div className="mb-4 flex items-center justify-between gap-4 lg:mb-6">
+              <RouteMark className="size-10 text-link lg:size-12" />
+              <ThemeToggle />
+            </div>
+            <h1 className="text-brand-title text-balance text-foreground">Деканат будущего</h1>
+            <p className="mt-4 max-w-prose text-base leading-relaxed text-pretty text-muted-foreground">
+              Ваше расписание и учебные данные.
             </p>
+          </header>
+
+          <div className="min-w-0 border-t border-border p-5 sm:p-8 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1 lg:border-t-0 lg:p-10">
+            <div className="mb-6 space-y-2">
+              <h2
+                id="login-heading"
+                className="text-xl leading-7 font-semibold tracking-tight text-balance text-foreground"
+              >
+                Вход в кабинет
+              </h2>
+              <p className="text-meta text-pretty text-muted-foreground">
+                Введите e-mail и пароль своего аккаунта.
+              </p>
+            </div>
+
+            {sessionExpired ? (
+              <Alert tone="info" title="Сессия истекла" className="mb-6">
+                {nextPath
+                  ? "Войдите снова, чтобы вернуться на запрошенную страницу. Введённые данные не сохраняются."
+                  : "Войдите снова, чтобы продолжить работу. Введённые данные не сохраняются."}
+              </Alert>
+            ) : null}
+
+            <LoginForm nextPath={nextPath} />
           </div>
 
-          <Card>
-            <CardContent className="pt-5">
-              <LoginForm nextPath={nextPath} />
-            </CardContent>
-          </Card>
-
-          <DemoAccess />
-        </div>
+          <aside className="min-w-0 rounded-b-card border-t border-border bg-background p-5 sm:p-8 lg:col-span-5 lg:col-start-1 lg:row-start-2 lg:rounded-r-none lg:border-t-0 lg:border-r lg:p-10 lg:pt-0">
+            <DemoAccess />
+          </aside>
+        </section>
       </main>
 
-      <SiteFooter />
+      <div className="px-4 sm:px-6">
+        <div className="mx-auto w-full max-w-6xl">
+          <SiteFooter />
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import "dotenv/config";
 
-import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { runLocalBin } from "./run-local-bin";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -27,14 +28,6 @@ function getTestDatabaseUrl(): string {
   return testDatabaseUrl;
 }
 
-function runLocalBin(bin: string, args: string[], env: NodeJS.ProcessEnv): void {
-  execFileSync(path.resolve(rootDir, "node_modules/.bin", bin), args, {
-    cwd: rootDir,
-    env,
-    stdio: "inherit",
-  });
-}
-
 /**
  * Готовит тестовую PostgreSQL перед прогоном Vitest:
  * применяет миграции Prisma и выполняет идемпотентный seed демо-студентов.
@@ -52,6 +45,6 @@ export default function setup(): void {
     NEXT_PUBLIC_APP_URL: process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000",
   };
 
-  runLocalBin("prisma", ["migrate", "deploy"], env);
-  runLocalBin("tsx", ["prisma/seed.ts"], env);
+  runLocalBin(rootDir, "prisma", ["migrate", "deploy"], env);
+  runLocalBin(rootDir, "tsx", ["prisma/seed.ts"], env);
 }

@@ -15,7 +15,7 @@ export function Spinner({ className, label, ...props }: SpinnerProps) {
       className={cn("inline-flex shrink-0 items-center justify-center", className)}
       {...props}
     >
-      <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+      <LoaderCircle aria-hidden="true" className="size-4 motion-safe:animate-spin" />
       {label ? <span className="sr-only">{label}</span> : null}
     </span>
   );

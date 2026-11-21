@@ -1,10 +1,10 @@
 import { DEMO_STUDENTS, expect, expectNoHorizontalScroll, SECTIONS, test } from "./fixtures";
 
 /**
- * Каркас разделов и навигация (A-12, P0-FE-03/04).
+ * Главный экран и навигация (A-12, P0-FE-03/04).
  *
- * На этапе 0 разделы — объяснённые пустые состояния без «рыбного» текста;
- * сценарии US-02…US-09 расширяются на этапах 2–5, когда появляются данные.
+ * Разделы проверяются по заголовкам и доступной навигации; содержимое зависит
+ * от готовых серверных модулей, а расписание уже показывает реальные занятия.
  */
 test.describe("Главный экран и навигация", () => {
   test("главный экран приветствует студента по имени и показывает разделы", async ({
@@ -12,21 +12,40 @@ test.describe("Главный экран и навигация", () => {
   }) => {
     await annaPage.goto("/");
 
-    await expect(annaPage.getByRole("heading", { level: 1 })).toContainText("Здравствуйте, Анна");
-    await expect(annaPage.getByRole("heading", { name: "Разделы кабинета" })).toBeVisible();
+    const main = annaPage.getByRole("main");
+    const homeHeading = main.getByRole("heading", { level: 1 });
+    await expect(homeHeading).toBeVisible();
+    await expect(homeHeading).toHaveText(
+      /^(?:Доброе утро|Добрый день|Добрый вечер|Доброй ночи), Анна$/,
+    );
+
+    const navigation = annaPage.getByRole("navigation", {
+      name: "Разделы кабинета",
+      exact: true,
+    });
+    await expect(navigation).toHaveCount(1);
+    await expect(navigation).toBeVisible();
 
     for (const section of SECTIONS) {
-      await expect(
-        annaPage.getByRole("link", { name: new RegExp(section.label) }).first(),
-      ).toBeVisible();
+      const name =
+        section.path === "/notifications"
+          ? /^Уведомления(?: Непрочитанных [\d\s]+)?$/
+          : section.label;
+      const link = navigation.getByRole("link", { name, exact: true });
+      await expect(link).toBeVisible();
+      await expect(link).toHaveAttribute("href", section.path);
     }
+
+    await expect(
+      main.getByRole("heading", { level: 2, name: "Быстрые действия", exact: true }),
+    ).toBeVisible();
 
     // Пометка о конкурсном концепте видна в футере (A-10).
     await expect(annaPage.getByText("Учебный концепт для конкурса")).toBeVisible();
     await expectNoHorizontalScroll(annaPage);
   });
 
-  test("все четыре раздела открываются и объясняют пустое состояние", async ({ annaPage }) => {
+  test("все четыре раздела открываются с заголовком и навигацией", async ({ annaPage }) => {
     for (const section of SECTIONS) {
       await annaPage.goto(section.path);
 

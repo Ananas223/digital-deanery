@@ -1,76 +1,247 @@
 @import "tailwindcss";
 
-/* ---------------------------------------------------------------------------
-   Дизайн-токены «Цифрового деканата».
-   CSS-first: каждая переменная @theme создаёт утилиты Tailwind.
-   Тёмная тема не реализуется (PRD § 6, приоритет P2).
---------------------------------------------------------------------------- */
+/* Onest, unmodified local subsets. SIL Open Font License: /fonts/onest/LICENSE. */
+@font-face {
+  font-family: "Onest";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("/fonts/onest/onest-cyrillic-400-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: "Onest";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("/fonts/onest/onest-latin-400-normal.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Onest";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url("/fonts/onest/onest-cyrillic-500-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: "Onest";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url("/fonts/onest/onest-latin-500-normal.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Onest";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url("/fonts/onest/onest-cyrillic-600-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: "Onest";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url("/fonts/onest/onest-latin-600-normal.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Onest";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url("/fonts/onest/onest-cyrillic-700-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: "Onest";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url("/fonts/onest/onest-latin-700-normal.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Approved B: «Маршрут дня». Shared CSS-first tokens for every surface. */
 @theme {
-  --color-background: oklch(0.985 0.004 250);
-  --color-foreground: oklch(0.22 0.02 260);
+  --color-background: #f0f5fc;
+  --color-foreground: #142d4a;
+  --color-card: #ffffff;
+  --color-card-foreground: #142d4a;
+  --color-muted: #e8f0fa;
+  --color-muted-foreground: #536f91;
+  --color-border: #c8d8ed;
+  --color-input: #708bad;
+  --color-ring: #245fa6;
+  --color-primary: #245fa6;
+  --color-primary-foreground: #ffffff;
+  --color-primary-muted: #e1ecfb;
+  --color-link: #245fa6;
+  --color-primary-solid: #245fa6;
+  --color-selection: transparent;
+  --color-danger-fill-hover: #a0322b;
+  --color-primary-hover: color-mix(in oklab, var(--color-primary) 88%, #142d4a);
+  --color-primary-active: color-mix(in oklab, var(--color-primary) 76%, #142d4a);
+  --color-overlay: rgb(20 45 74 / 0.48);
+  --color-secondary: #e8f0fa;
+  --color-secondary-foreground: #142d4a;
+  --color-accent: #e1ecfb;
+  --color-accent-foreground: #245fa6;
 
-  --color-card: oklch(1 0 0);
-  --color-card-foreground: oklch(0.22 0.02 260);
+  --color-success: #23724d;
+  --color-success-foreground: #ffffff;
+  --color-success-muted: #edf7f1;
+  --color-success-strong: #246241;
+  --color-warning: #8b5c13;
+  --color-warning-foreground: #ffffff;
+  --color-warning-muted: #fff6e6;
+  --color-warning-strong: #79500c;
+  --color-danger: #b33e35;
+  --color-danger-foreground: #ffffff;
+  --color-danger-muted: #fdf0ef;
+  --color-danger-strong: #a0322b;
+  --color-info: #245fa6;
+  --color-info-foreground: #ffffff;
+  --color-info-muted: #e8f0fb;
+  --color-info-strong: #24558f;
 
-  --color-muted: oklch(0.955 0.008 255);
-  --color-muted-foreground: oklch(0.48 0.02 260);
-
-  --color-border: oklch(0.9 0.01 255);
-  --color-input: oklch(0.86 0.015 255);
-  --color-ring: oklch(0.55 0.13 222);
-
-  --color-primary: oklch(0.47 0.12 222);
-  --color-primary-foreground: oklch(0.99 0.002 250);
-  --color-primary-muted: oklch(0.93 0.03 222);
-
-  --color-secondary: oklch(0.95 0.01 250);
-  --color-secondary-foreground: oklch(0.3 0.03 255);
-
-  --color-accent: oklch(0.93 0.04 180);
-  --color-accent-foreground: oklch(0.28 0.05 190);
-
-  --color-success: oklch(0.6 0.13 155);
-  --color-success-foreground: oklch(0.99 0.002 250);
-  --color-success-muted: oklch(0.95 0.04 155);
-
-  --color-warning: oklch(0.75 0.14 75);
-  --color-warning-foreground: oklch(0.26 0.05 70);
-  --color-warning-muted: oklch(0.97 0.04 85);
-
-  --color-danger: oklch(0.55 0.19 25);
-  --color-danger-foreground: oklch(0.99 0.002 250);
-  --color-danger-muted: oklch(0.96 0.03 25);
-
-  --color-info: oklch(0.52 0.12 250);
-  --color-info-foreground: oklch(0.99 0.002 250);
-  --color-info-muted: oklch(0.95 0.03 250);
-
-  /* Насыщенные варианты для текста на светлых подложках: контраст WCAG AA. */
-  --color-success-strong: oklch(0.42 0.1 155);
-  --color-warning-strong: oklch(0.44 0.09 70);
-  --color-danger-strong: oklch(0.45 0.17 25);
-  --color-info-strong: oklch(0.44 0.12 250);
-
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", "Roboto Mono", monospace;
+  --font-sans: "Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", monospace;
 
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
+  --text-page-title: 1.625rem;
+  --text-page-title--line-height: 1.2;
+  --text-page-title--font-weight: 600;
+  --text-page-title--letter-spacing: -0.025em;
+  --text-brand-title: 2rem;
+  --text-brand-title--line-height: 1.12;
+  --text-brand-title--font-weight: 600;
+  --text-brand-title--letter-spacing: -0.025em;
+  --text-lesson-title: 1.25rem;
+  --text-lesson-title--line-height: 1.35;
+  --text-lesson-title--font-weight: 600;
+  --text-lesson-title--letter-spacing: -0.02em;
+  --text-lesson-time: 1.25rem;
+  --text-lesson-time--line-height: 1.3;
+  --text-lesson-time--font-weight: 600;
+  --text-lesson-time--letter-spacing: -0.015em;
+  --text-lesson-room: 1rem;
+  --text-lesson-room--line-height: 1.5;
+  --text-lesson-room--font-weight: 500;
+  --text-meta: 0.875rem;
+  --text-meta--line-height: 1.5;
+  --text-meta--font-weight: 400;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.4;
+  --text-caption--font-weight: 500;
 
   --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 0.875rem;
   --radius-xl: 1rem;
-  --radius-card: 0.875rem;
+  --radius-card: 1rem;
 
-  --shadow-card: 0 1px 2px oklch(0.22 0.02 260 / 0.04), 0 8px 24px oklch(0.22 0.02 260 / 0.06);
-  --shadow-popover: 0 4px 12px oklch(0.22 0.02 260 / 0.1), 0 16px 40px oklch(0.22 0.02 260 / 0.12);
+  --spacing-rail: 14.5rem;
+  --spacing-shell-gutter: clamp(1.5rem, 3vw, 2.75rem);
+  --spacing-bottom-safe: calc(5.5em + env(safe-area-inset-bottom));
+
+  --shadow-card: 0 0 #0000;
+  --shadow-popover: 0 20px 64px rgb(20 45 74 / 0.24);
+
+  --duration-feedback: 140ms;
+  --duration-panel: 200ms;
+  --duration-entrance: 320ms;
+  --ease-interface: cubic-bezier(0.16, 1, 0.3, 1);
+  --default-transition-duration: var(--duration-feedback);
+  --default-transition-timing-function: var(--ease-interface);
 
   --breakpoint-xs: 22.5rem;
 }
 
 @layer base {
+  /* Explicit choice and no-JS OS fallback share graphite tokens. */
+  :root[data-theme="dark"] {
+    --color-background: #101319;
+    --color-foreground: #f0f5fc;
+    --color-card: #1b222d;
+    --color-card-foreground: #f0f5fc;
+    --color-muted: #273241;
+    --color-muted-foreground: #b3c2d5;
+    --color-border: #43546b;
+    --color-input: #8299b5;
+    --color-ring: #c8d8ed;
+    --color-link: #c8d8ed;
+    --color-selection: #c8d8ed;
+    --color-primary-muted: #223c5b;
+    --color-secondary: #273241;
+    --color-secondary-foreground: #f0f5fc;
+    --color-accent: #223c5b;
+    --color-accent-foreground: #c8d8ed;
+    --color-success-muted: #193c2c;
+    --color-success-strong: #9cd9b5;
+    --color-warning-muted: #45351d;
+    --color-warning-strong: #ebc585;
+    --color-danger: #c34c41;
+    --color-danger-muted: #472925;
+    --color-danger-strong: #f4b1aa;
+    --color-info-muted: #203953;
+    --color-info-strong: #c8d8ed;
+    --color-overlay: rgb(0 0 0 / 0.64);
+    --shadow-popover: 0 20px 64px rgb(0 0 0 / 0.48);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]):not([data-theme="dark"]) {
+      --color-background: #101319;
+      --color-foreground: #f0f5fc;
+      --color-card: #1b222d;
+      --color-card-foreground: #f0f5fc;
+      --color-muted: #273241;
+      --color-muted-foreground: #b3c2d5;
+      --color-border: #43546b;
+      --color-input: #8299b5;
+      --color-ring: #c8d8ed;
+      --color-link: #c8d8ed;
+      --color-selection: #c8d8ed;
+      --color-primary-muted: #223c5b;
+      --color-secondary: #273241;
+      --color-secondary-foreground: #f0f5fc;
+      --color-accent: #223c5b;
+      --color-accent-foreground: #c8d8ed;
+      --color-success-muted: #193c2c;
+      --color-success-strong: #9cd9b5;
+      --color-warning-muted: #45351d;
+      --color-warning-strong: #ebc585;
+      --color-danger: #c34c41;
+      --color-danger-muted: #472925;
+      --color-danger-strong: #f4b1aa;
+      --color-info-muted: #203953;
+      --color-info-strong: #c8d8ed;
+      --color-overlay: rgb(0 0 0 / 0.64);
+      --shadow-popover: 0 20px 64px rgb(0 0 0 / 0.48);
+    }
+  }
+
   *,
   ::after,
   ::before {
@@ -78,15 +249,22 @@
   }
 
   html {
+    color-scheme: light dark;
+    background-color: var(--color-background);
+    accent-color: var(--color-primary);
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
+    scroll-padding-block-end: var(--spacing-bottom-safe);
+    scrollbar-color: var(--color-input) var(--color-background);
   }
 
   body {
+    min-block-size: 100dvh;
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    min-height: 100dvh;
+    font-size: 1rem;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -101,24 +279,210 @@
     text-wrap: pretty;
   }
 
+  a {
+    text-underline-offset: 0.2em;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  input,
+  textarea {
+    caret-color: var(--color-link);
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-ring);
-    outline-offset: 2px;
+    outline-offset: 3px;
   }
 
   ::selection {
     background-color: var(--color-primary-muted);
     color: var(--color-foreground);
   }
+
+  @media (width >= 48rem) {
+    :root {
+      --text-page-title: 2.125rem;
+      --text-brand-title: 3.25rem;
+      --text-lesson-title: 1.5rem;
+      --text-lesson-time: 1.375rem;
+    }
+
+    html {
+      scroll-padding-block-end: 1.5rem;
+    }
+  }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+@layer utilities {
+  .text-page-title,
+  .text-brand-title,
+  .text-lesson-title,
+  .text-lesson-room {
+    overflow-wrap: anywhere;
+  }
+
+  .text-lesson-time {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Determinate lesson progress: native element, no reveal or value animation. */
+@layer components {
+  .lesson-progress {
+    --lesson-progress-fill: var(--color-link);
+    --lesson-progress-track: var(--color-border);
+    --lesson-progress-radius: 9999px;
+    display: block;
+    inline-size: 100%;
+    block-size: 0.375rem;
+    appearance: none;
+    border: 0 solid;
+    overflow: clip;
+    border-radius: var(--lesson-progress-radius);
+    background: var(--lesson-progress-track);
+  }
+
+  .lesson-progress[data-on-primary] {
+    --lesson-progress-fill: var(--color-primary-foreground);
+    --lesson-progress-track: rgb(255 255 255 / 0.2);
+  }
+
+  .lesson-progress::-webkit-progress-bar {
+    background: transparent;
+  }
+
+  .lesson-progress::-webkit-progress-value {
+    border-radius: var(--lesson-progress-radius);
+    background: var(--lesson-progress-fill);
+  }
+
+  .lesson-progress::-moz-progress-bar {
+    border-radius: var(--lesson-progress-radius);
+    background: var(--lesson-progress-fill);
+  }
+}
+
+/* The decorative stroke stays on the top edge, away from the ready interface. */
+@layer components {
+  .entrance-mark {
+    position: fixed;
+    z-index: 50;
+    inset-block-start: 0;
+    inset-inline-start: 1rem;
+    inline-size: 6rem;
+    block-size: 0.375rem;
+    pointer-events: none;
+  }
+
+  .entrance-mark::before,
+  .entrance-mark::after {
+    position: absolute;
+    content: "";
+    background: var(--color-primary);
+    opacity: 0;
+  }
+
+  .entrance-mark::before {
+    inset-block-start: 0.125rem;
+    inset-inline-start: 0;
+    inline-size: 100%;
+    block-size: 0.125rem;
+    transform-origin: left center;
+  }
+
+  .entrance-mark::after {
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    inline-size: 0.375rem;
+    block-size: 0.375rem;
+    border-radius: 50%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .entrance-mark[data-enter="true"]::before {
+      animation: entrance-line var(--duration-entrance) var(--ease-interface) both;
+    }
+
+    .entrance-mark[data-enter="true"]::after {
+      animation: entrance-point var(--duration-entrance) var(--ease-interface) both;
+    }
+  }
+}
+
+@keyframes entrance-line {
+  0% {
+    opacity: 1;
+    transform: scaleX(0);
+  }
+  78% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes entrance-point {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  78% {
+    opacity: 1;
+    transform: translateX(5.5rem);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(5.5rem);
+  }
+}
+
+@media (forced-colors: active) {
+  .lesson-progress {
+    --lesson-progress-fill: Highlight;
+    --lesson-progress-track: Canvas;
+    appearance: auto;
+    overflow: visible;
+    border: revert;
+    background: revert;
+    forced-color-adjust: auto;
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
+  }
+
+  [aria-current="page"] {
+    outline: 1px solid Highlight;
+    outline-offset: -1px;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    border-color: ButtonText;
+  }
+
+  .overlay-surface {
+    outline: 1px solid CanvasText;
+    outline-offset: -1px;
+  }
+
+  .overlay-surface:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+
+  .entrance-mark {
+    display: none;
   }
 }

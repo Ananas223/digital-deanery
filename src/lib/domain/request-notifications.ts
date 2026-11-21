@@ -13,6 +13,8 @@ export type RequestNotificationContent = {
   priority: "NORMAL" | "IMPORTANT";
 };
 
+export const REQUEST_NOTIFICATION_SOURCE = "REQUESTS_SYSTEM" as const;
+
 /**
  * Уведомление о создании заявки. Отдельная функция нужна и созданию в рантайме,
  * и seed-скрипту: текст не должен расходиться между демо-данными и приложением.

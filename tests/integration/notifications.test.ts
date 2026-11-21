@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { NotificationSource } from "@/generated/prisma/enums";
 import {
   getNotifications as getNotificationsAction,
   getUnreadCount as getUnreadCountAction,
@@ -67,6 +68,7 @@ const createdUserIds: string[] = [];
 
 type NotificationSeed = {
   category?: "DEANERY" | "SCHEDULE" | "REQUESTS" | "DEADLINES";
+  source?: NotificationSource;
   priority?: "NORMAL" | "IMPORTANT";
   title?: string;
   body?: string;
@@ -89,6 +91,7 @@ async function createNotification(seed: NotificationSeed) {
   const notification = await prisma.notification.create({
     data: {
       category: seed.category ?? "DEANERY",
+      source: seed.source,
       priority: seed.priority ?? "NORMAL",
       title: seed.title ?? "Тестовое уведомление",
       body: seed.body ?? "Текст тестового уведомления.",
@@ -362,6 +365,51 @@ describe("лента уведомлений", () => {
     expect(ids).not.toContain(feedNotifications.foreignStudent.id);
     expect(ids).not.toContain(feedNotifications.foreignGroup.id);
     expect(ids).not.toContain(feedNotifications.foreignFaculty.id);
+  });
+
+  it("по границе expiresAt помещает в архив только уже опубликованные сообщения своей аудитории", async () => {
+    const own = await createNotification({
+      category: "DEADLINES",
+      source: "DEANERY",
+      audienceType: "STUDENT",
+      audienceStudentId: fixture.feed.profileId,
+      publishedAt: hoursBefore(1),
+      expiresAt: NOW,
+    });
+    const future = await createNotification({
+      category: "DEADLINES",
+      audienceType: "STUDENT",
+      audienceStudentId: fixture.feed.profileId,
+      publishedAt: new Date(NOW.getTime() + 3_600_000),
+      expiresAt: NOW,
+    });
+    const foreign = await createNotification({
+      category: "DEADLINES",
+      audienceType: "GROUP",
+      audienceGroupId: fixture.mark.groupId,
+      publishedAt: hoursBefore(1),
+      expiresAt: NOW,
+    });
+    const [active, archive, unread] = await Promise.all([
+      getNotificationsForUser(fixture.feed.userId, { category: "DEADLINES" }, undefined, NOW),
+      getNotificationsForUser(
+        fixture.feed.userId,
+        { category: "DEADLINES", scope: "ARCHIVE" },
+        undefined,
+        NOW,
+      ),
+      getUnreadCountForUser(fixture.feed.userId, NOW),
+    ]);
+    expect(archive.items.find(({ id }) => id === own.id)).toMatchObject({
+      category: "DEADLINES",
+      source: "DEANERY",
+      publishedAt: hoursBefore(1),
+    });
+    expect(archive.items.map(({ id }) => id)).not.toContain(foreign.id);
+    expect(archive.items.map(({ id }) => id)).not.toContain(future.id);
+    expect(active.items.map(({ id }) => id)).not.toContain(own.id);
+    expect(archive.unreadCount).toBe(active.unreadCount);
+    expect(archive.unreadCount).toBe(unread);
   });
 
   it.each([

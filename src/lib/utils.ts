@@ -1,5 +1,25 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        {
+          text: [
+            "page-title",
+            "brand-title",
+            "lesson-title",
+            "lesson-time",
+            "lesson-room",
+            "meta",
+            "caption",
+          ],
+        },
+      ],
+    },
+  },
+});
 
 /**
  * Объединяет классы Tailwind: clsx собирает условные значения,

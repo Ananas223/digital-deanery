@@ -12,6 +12,8 @@ export const NOTIFICATION_FILTER_CATEGORIES = ["ALL", ...NOTIFICATION_CATEGORIES
 
 export type NotificationCategoryValue = (typeof NOTIFICATION_CATEGORIES)[number];
 export type NotificationFilterCategory = (typeof NOTIFICATION_FILTER_CATEGORIES)[number];
+export const NOTIFICATION_SCOPES = ["ACTIVE", "ARCHIVE"] as const;
+export type NotificationScope = (typeof NOTIFICATION_SCOPES)[number];
 
 /** Размер страницы ленты; пагинация идёт по `id`-курсору. */
 export const NOTIFICATION_PAGE_SIZE = 20;
@@ -20,6 +22,7 @@ export const notificationCategorySchema = z.enum(NOTIFICATION_CATEGORIES);
 
 export const notificationFilterSchema = z.object({
   category: z.enum(NOTIFICATION_FILTER_CATEGORIES).default("ALL"),
+  scope: z.enum(NOTIFICATION_SCOPES).optional(),
 });
 
 export const notificationCursorSchema = z.cuid("Некорректный курсор ленты");

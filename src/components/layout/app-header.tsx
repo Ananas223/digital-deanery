@@ -1,37 +1,47 @@
-import Link from "next/link";
+"use client";
 
+import { UserRound } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+import { AssistantTrigger } from "@/components/assistant/assistant-trigger";
 import { Logo } from "@/components/layout/logo";
 import { LogoutButton } from "@/components/layout/logout-button";
-import { getRoleLabel } from "@/components/layout/role-label";
 import type { ShellUser } from "@/components/layout/types";
-import { Avatar } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { getInitials } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
-/** Шапка кабинета: словесный знак, профиль и выход. */
+/** Mobile masthead; the page supplies its own single heading. */
 export function AppHeader({ user }: { user: ShellUser }) {
+  const pathname = usePathname();
+  const home = pathname === "/";
+
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-3 px-4 md:px-6">
-        <Logo />
+    <header className="flex min-h-12 min-w-0 flex-wrap items-center justify-between gap-2 border-b border-border md:hidden">
+      <Logo className="flex-1 basis-32 gap-1.5 sm:basis-40 [&_.logo-mark]:size-7 [&_.logo-wordmark]:text-sm [&_.logo-wordmark]:leading-tight" />
 
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <Link
-            href="/profile"
-            aria-label={`Профиль: ${user.name}`}
-            className="flex min-h-11 min-w-11 items-center gap-2 rounded-md px-1 py-1 transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:px-2"
-          >
-            <Avatar name={user.name} size="sm" />
-            <span className="hidden min-w-0 flex-col text-left sm:flex">
-              <span className="max-w-40 truncate text-sm font-medium text-foreground">
-                {user.name}
-              </span>
-              <span className="max-w-40 truncate text-xs text-muted-foreground">
-                {getRoleLabel(user.role)}
-              </span>
+      <div className="ms-auto flex shrink-0 items-center gap-1">
+        <AssistantTrigger placement="mobile" />
+        <Link
+          href="/profile"
+          aria-label={`${getInitials(user.name)} Профиль: ${user.name}`}
+          aria-current={pathname === "/profile" ? "page" : undefined}
+          className={cn(
+            "inline-flex size-11 shrink-0 items-center justify-center rounded-lg transition-colors duration-(--duration-feedback) ease-interface hover:bg-primary-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:bg-muted",
+            home ? "rounded-full bg-primary-muted text-link" : "text-foreground",
+          )}
+        >
+          {home ? (
+            <span aria-hidden="true" className="text-sm font-semibold">
+              {getInitials(user.name)}
             </span>
-          </Link>
-
-          <LogoutButton />
-        </div>
+          ) : (
+            <UserRound aria-hidden="true" className="size-5" />
+          )}
+        </Link>
+        <ThemeToggle />
+        <LogoutButton />
       </div>
     </header>
   );

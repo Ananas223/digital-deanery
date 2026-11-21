@@ -16,7 +16,12 @@ test.describe("US-01: вход в кабинет", () => {
     await page.goto("/");
 
     await expect(page).toHaveURL(/\/login\?next=%2F$/);
-    await expect(page.getByRole("heading", { level: 1, name: "Вход в кабинет" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Деканат будущего", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Вход в кабинет", exact: true }),
+    ).toBeVisible();
   });
 
   test("после входа возвращает на запрошенную страницу", async ({ page }) => {
@@ -72,11 +77,18 @@ test.describe("US-01: вход в кабинет", () => {
     await submit.click();
 
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Здравствуйте, Анна");
+    const homeHeading = page.getByRole("main").getByRole("heading", { level: 1 });
+    await expect(homeHeading).toBeVisible();
+    await expect(homeHeading).toHaveText(
+      /^(?:Доброе утро|Добрый день|Добрый вечер|Доброй ночи), Анна$/,
+    );
 
     // Сессия сохраняется при обновлении страницы (Ф-01.2).
     await page.reload();
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Здравствуйте, Анна");
+    await expect(homeHeading).toBeVisible();
+    await expect(homeHeading).toHaveText(
+      /^(?:Доброе утро|Добрый день|Добрый вечер|Доброй ночи), Анна$/,
+    );
 
     // Пять разделов навигации доступны (US-01 п.5): главная + 4 раздела.
     const navigation = page.getByRole("navigation", { name: "Разделы кабинета" }).first();
@@ -110,8 +122,25 @@ test.describe("US-01: вход в кабинет", () => {
 
     await page.getByRole("button", { name: "Войти", exact: true }).click();
 
-    await expect(page.getByText("Введите e-mail в формате name@example.ru")).toBeVisible();
-    await expect(page.getByText("Пароль не короче 8 символов")).toBeVisible();
+    const errors = page.getByRole("alert").filter({ hasText: "Проверьте поля" });
+    await expect(errors).toBeVisible();
+    await expect(
+      errors.getByRole("button", {
+        name: "Введите e-mail в формате name@example.ru",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      errors.getByRole("button", { name: "Пароль не короче 8 символов", exact: true }),
+    ).toBeVisible();
+    await expect(emailField(page)).toHaveAttribute("aria-invalid", "true");
+    await expect(emailField(page)).toHaveAccessibleDescription(
+      "Адрес, указанный в вашем профиле. Введите e-mail в формате name@example.ru",
+    );
+    await expect(passwordField(page)).toHaveAttribute("aria-invalid", "true");
+    await expect(passwordField(page)).toHaveAccessibleDescription(
+      "Не менее 8 символов. Пароль не короче 8 символов",
+    );
     await expect(page).toHaveURL(/\/login$/);
   });
 
@@ -138,7 +167,11 @@ test.describe("US-01: вход в кабинет", () => {
     await passwordField(page).fill(DEMO_STUDENTS.mark.password);
     await page.getByRole("button", { name: "Войти", exact: true }).click();
 
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Здравствуйте, Марк");
+    const homeHeading = page.getByRole("main").getByRole("heading", { level: 1 });
+    await expect(homeHeading).toBeVisible();
+    await expect(homeHeading).toHaveText(
+      /^(?:Доброе утро|Добрый день|Добрый вечер|Доброй ночи), Марк$/,
+    );
 
     await page.getByRole("button", { name: "Выйти", exact: true }).first().click();
     await expect(page.getByRole("dialog")).toBeVisible();

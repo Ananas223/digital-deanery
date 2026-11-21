@@ -8,6 +8,7 @@ import {
   buildRequestCreatedNotification,
   buildRequestStatusNotification,
   getRequestStatusDedupeKey,
+  REQUEST_NOTIFICATION_SOURCE,
 } from "@/lib/domain/request-notifications";
 import { addMoscowWorkingDays, getMoscowYear } from "@/lib/domain/request-time";
 import {
@@ -23,7 +24,7 @@ import type {
   RequestStatusTransitionInput,
   RequestTypeCode,
 } from "@/lib/validation/requests";
-import { requestPayloadSchema } from "@/lib/validation/requests";
+import { REQUEST_TYPE_CODES, requestPayloadSchema } from "@/lib/validation/requests";
 
 /** Сколько заявок студент может создать за скользящее окно. */
 export const REQUEST_RATE_LIMIT = 10;
@@ -33,6 +34,24 @@ export type RequestActor = {
   userId: string;
   role: RequestActorRole;
 };
+
+export type RequestCatalogItem = {
+  code: RequestTypeCode;
+  title: string;
+  description: string;
+  processingDays: number;
+};
+
+/** Use the same active type and working-day policy as request creation. */
+export async function listActiveRequestTypes(): Promise<RequestCatalogItem[]> {
+  const rows = await prisma.requestType.findMany({
+    where: { isActive: true, code: { in: [...REQUEST_TYPE_CODES] } },
+    select: { code: true, title: true, description: true, processingDays: true },
+    orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
+  });
+
+  return rows.map(({ code, ...row }) => ({ ...row, code: code as RequestTypeCode }));
+}
 
 export type RequestSummary = {
   id: string;
@@ -295,6 +314,7 @@ export async function createRequestForUser(
       await tx.notification.create({
         data: {
           category: "REQUESTS",
+          source: REQUEST_NOTIFICATION_SOURCE,
           priority: content.priority,
           title: content.title,
           body: content.body,
@@ -587,6 +607,7 @@ export async function cancelRequestForUser(
     await tx.notification.create({
       data: {
         category: "REQUESTS",
+        source: REQUEST_NOTIFICATION_SOURCE,
         priority: content.priority,
         title: content.title,
         body: content.body,
@@ -675,6 +696,7 @@ export async function transitionRequestStatusForActor(
     await tx.notification.create({
       data: {
         category: "REQUESTS",
+        source: REQUEST_NOTIFICATION_SOURCE,
         priority: content.priority,
         title: content.title,
         body: content.body,

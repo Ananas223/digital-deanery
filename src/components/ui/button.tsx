@@ -4,21 +4,22 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap transition-colors select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-60 aria-disabled:pointer-events-none aria-disabled:opacity-60",
+  "inline-flex min-w-0 items-center justify-center gap-2 rounded-md text-center leading-5 font-medium whitespace-normal transition-colors duration-(--duration-feedback) ease-interface select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-60 aria-disabled:pointer-events-none aria-disabled:opacity-60 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary: "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/70 active:bg-secondary/60",
-        outline: "border border-input bg-card text-foreground hover:bg-muted active:bg-muted/80",
-        ghost: "text-foreground hover:bg-muted active:bg-muted/80",
-        danger: "bg-danger text-danger-foreground hover:bg-danger/90 active:bg-danger/80",
+        primary:
+          "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-primary-muted active:bg-border",
+        outline: "border border-input bg-card text-foreground hover:bg-background active:bg-muted",
+        ghost: "text-foreground hover:bg-muted active:bg-primary-muted",
+        danger:
+          "bg-danger text-danger-foreground hover:bg-danger-fill-hover active:bg-danger-fill-hover",
       },
       size: {
-        sm: "h-9 px-3 text-sm",
-        md: "h-11 px-4 text-sm",
-        lg: "h-12 px-6 text-base",
+        sm: "min-h-11 px-3 py-2 text-sm",
+        md: "min-h-11 px-4 py-2.5 text-sm",
+        lg: "min-h-12 px-6 py-3 text-base",
         icon: "size-11",
       },
     },

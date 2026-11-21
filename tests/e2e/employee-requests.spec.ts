@@ -43,7 +43,7 @@ test.describe("US-11: кабинет сотрудника деканата", () 
 
     await expect(annaPage.getByRole("heading", { level: 1, name: "Заявки" })).toBeVisible();
     await expect(annaPage.getByText("Очередь заявок")).toHaveCount(0);
-    await expect(annaPage.getByText("Заявок пока нет")).toBeVisible();
+    await expect(annaPage.getByRole("heading", { name: "Мои заявки", exact: true })).toBeVisible();
   });
 });
 

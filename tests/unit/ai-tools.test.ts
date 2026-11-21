@@ -107,6 +107,7 @@ function notificationItem(id: string): NotificationItem {
   return {
     id,
     category: "DEANERY",
+    source: "DEANERY",
     priority: "NORMAL",
     title: `Уведомление ${id}`,
     body: "Короткий текст уведомления.",

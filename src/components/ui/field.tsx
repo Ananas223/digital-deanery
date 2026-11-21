@@ -41,7 +41,7 @@ export function Field({
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
 
   return (
-    <div className={cn("space-y-1.5", className)}>
+    <div className={cn("min-w-0 space-y-2", className)}>
       <label htmlFor={id} className="block text-sm font-medium text-foreground">
         {label}
         {required ? (
@@ -59,13 +59,13 @@ export function Field({
       })}
 
       {hint ? (
-        <p id={hintId} className="text-xs text-muted-foreground">
+        <p id={hintId} className="text-meta text-muted-foreground">
           {hint}
         </p>
       ) : null}
 
       {error ? (
-        <p id={errorId} className="text-sm text-danger-strong">
+        <p id={errorId} className="text-meta text-danger-strong">
           {error}
         </p>
       ) : null}

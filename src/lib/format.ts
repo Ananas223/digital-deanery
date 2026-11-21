@@ -62,6 +62,14 @@ export function formatNumber(value: number, options?: Intl.NumberFormatOptions):
   return new Intl.NumberFormat(LOCALE, options).format(value);
 }
 
+/** «1 рабочий день», «3 рабочих дня», «5 рабочих дней». */
+export function formatWorkingDays(value: number): string {
+  const category = new Intl.PluralRules(LOCALE).select(value);
+  const label =
+    category === "one" ? "рабочий день" : category === "few" ? "рабочих дня" : "рабочих дней";
+  return `${formatNumber(value)} ${label}`;
+}
+
 /** Курс обучения: «1 курс», «2 курса», «5 курсов». */
 export function formatCourse(value: number): string {
   if (!Number.isInteger(value) || value <= 0) {

@@ -17,6 +17,7 @@ import {
   createRequestForUser,
   getMyRequests,
   getRequest,
+  listActiveRequestTypes,
   listRequestQueueForActor,
   transitionRequestStatusForActor,
 } from "@/lib/domain/requests";
@@ -131,6 +132,37 @@ afterAll(async () => {
   }
 
   await prisma.$disconnect();
+});
+
+describe("каталог заявок", () => {
+  it("читает изменённый норматив из базы и не выдаёт отключённый тип", async () => {
+    const study = await prisma.requestType.findUniqueOrThrow({
+      where: { code: "STUDY_CERTIFICATE" },
+    });
+    const leave = await prisma.requestType.findUniqueOrThrow({ where: { code: "ACADEMIC_LEAVE" } });
+    try {
+      await prisma.$transaction([
+        prisma.requestType.update({ where: { id: study.id }, data: { processingDays: 17 } }),
+        prisma.requestType.update({ where: { id: leave.id }, data: { isActive: false } }),
+      ]);
+      const catalog = await listActiveRequestTypes();
+      expect(catalog.find(({ code }) => code === study.code)).toEqual({
+        code: study.code,
+        title: study.title,
+        description: study.description,
+        processingDays: 17,
+      });
+      expect(catalog.map(({ code }) => code)).not.toContain(leave.code);
+    } finally {
+      await prisma.$transaction([
+        prisma.requestType.update({
+          where: { id: study.id },
+          data: { processingDays: study.processingDays },
+        }),
+        prisma.requestType.update({ where: { id: leave.id }, data: { isActive: leave.isActive } }),
+      ]);
+    }
+  });
 });
 
 describe("создание заявки", () => {

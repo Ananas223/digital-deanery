@@ -5,13 +5,16 @@ import { notFound } from "next/navigation";
 
 import { EmployeeStatusForm } from "@/components/requests/employee-status-form";
 import { RequestPayloadView } from "@/components/requests/request-payload-view";
+import { RequestSnapshotNotice } from "@/components/requests/request-snapshot-notice";
 import { RequestStatusBadge } from "@/components/requests/request-status-badge";
+import { StudentRequestDetail } from "@/components/requests/student-request-detail";
 import { Alert } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getRequest } from "@/lib/domain/requests";
+import { getRequest } from "@/lib/actions/requests";
+import type { RequestDetail } from "@/lib/domain/requests";
 import { REQUEST_STATUS_LABELS } from "@/lib/domain/request-status";
 import { formatDateTime } from "@/lib/format";
 import { requestPayloadSchema, type RequestTypeCode } from "@/lib/validation/requests";
@@ -24,20 +27,46 @@ type RequestCardPageProps = {
   params: Promise<{ id: string }>;
 };
 
-/** Карточка заявки для сотрудника: данные студента, история и смена статуса. */
+function hasMixedStatus({ history, status }: Pick<RequestDetail, "history" | "status">) {
+  const latest = history.at(-1);
+  return latest !== undefined && latest.toStatus !== status;
+}
+
+/** The existing action checks ownership for students and queue access for staff. */
 export default async function RequestCardPage({ params }: RequestCardPageProps) {
   const user = await getCurrentUser();
 
-  // Студенческий экран появится отдельной задачей; чужой маршрут — нейтральный 404.
-  if (!user || user.role !== "DEAN_EMPLOYEE") {
+  if (!user) {
     notFound();
   }
 
   const { id } = await params;
-  const request = await getRequest({ userId: user.id, role: user.role }, id);
+  let request = await getRequest(id);
+  if (request && hasMixedStatus(request)) {
+    // Read the same authoritative contract once more; never infer permissions from history.
+    request = await getRequest(id);
+  }
 
   if (!request) {
     notFound();
+  }
+
+  if (hasMixedStatus(request)) {
+    const employee = user.role === "DEAN_EMPLOYEE";
+    return (
+      <div className="min-w-0 space-y-5 wrap-anywhere">
+        <Link href="/requests" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          {employee ? "К очереди" : "Мои заявки"}
+        </Link>
+        <PageHeader title={request.typeTitle} eyebrow={`№ ${request.number}`} />
+        <RequestSnapshotNotice />
+      </div>
+    );
+  }
+
+  if (user.role === "STUDENT") {
+    return <StudentRequestDetail request={request} />;
   }
 
   const parsedPayload = requestPayloadSchema.safeParse({
@@ -174,6 +203,7 @@ export default async function RequestCardPage({ params }: RequestCardPageProps) 
               </dl>
 
               <EmployeeStatusForm
+                key={request.status}
                 requestId={request.id}
                 allowedTransitions={request.allowedTransitions}
               />

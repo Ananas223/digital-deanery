@@ -22,7 +22,9 @@ for (const viewport of VIEWPORTS) {
     test("страница входа не создаёт горизонтальную прокрутку", async ({ page }) => {
       await page.goto("/login");
 
-      await expect(page.getByRole("heading", { level: 1, name: "Вход в кабинет" })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { level: 1, name: "Деканат будущего", exact: true }),
+      ).toBeVisible();
       await expectNoHorizontalScroll(page);
     });
 

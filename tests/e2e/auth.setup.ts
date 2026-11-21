@@ -24,8 +24,8 @@ for (const { data: account, statePath } of ACCOUNTS) {
     await page.getByRole("button", { name: "Войти", exact: true }).click();
 
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(
-      `Здравствуйте, ${account.firstName}`,
+    await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText(
+      new RegExp(`^(?:Доброе утро|Добрый день|Добрый вечер|Доброй ночи), ${account.firstName}$`),
     );
 
     await mkdir(STORAGE_STATE.dir, { recursive: true });
