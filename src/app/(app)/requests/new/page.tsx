@@ -9,14 +9,14 @@ import {
   type RequestDiscipline,
   type RequestFormValues,
 } from "@/components/requests/request-form";
-import { REQUEST_TYPE_DETAILS } from "@/components/requests/request-types";
 import { Alert } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { getRequest } from "@/lib/actions/requests";
+import { getRequest, getRequestCatalog } from "@/lib/actions/requests";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getSemesterOverview, getSemesters } from "@/lib/domain/grades";
+import { formatWorkingDays } from "@/lib/format";
 import { requestPayloadSchema, requestTypeCodeSchema } from "@/lib/validation/requests";
 
 export const metadata: Metadata = { title: "Новая заявка" };
@@ -72,11 +72,23 @@ export default async function NewRequestPage({ searchParams }: NewRequestPagePro
   const initialValues: Partial<RequestFormValues> | undefined = initialPayload?.success
     ? initialPayload.data.payload
     : undefined;
-  const { disciplines, unavailable } =
+  const [catalog, { disciplines, unavailable }] = await Promise.all([
+    getRequestCatalog(),
     type.data === "RETAKE"
-      ? await getDisciplineOptions(user.id)
-      : { disciplines: [], unavailable: false };
-  const details = REQUEST_TYPE_DETAILS[type.data];
+      ? getDisciplineOptions(user.id)
+      : { disciplines: [], unavailable: false },
+  ]);
+  const details = catalog.find((entry) => entry.code === type.data);
+  if (!details) {
+    return (
+      <div className="min-w-0 space-y-6">
+        <PageHeader title="Этот тип заявки недоступен" />
+        <Link href="/requests/new" className={buttonVariants({ variant: "outline" })}>
+          К каталогу заявок
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-3xl min-w-0 space-y-5 wrap-anywhere sm:space-y-6">
@@ -84,6 +96,9 @@ export default async function NewRequestPage({ searchParams }: NewRequestPagePro
         <ArrowLeft aria-hidden="true" className="size-4" /> Все заявки
       </Link>
       <PageHeader title={details.title} description={details.description} />
+      <p className="text-sm font-medium text-foreground">
+        Срок подготовки: {formatWorkingDays(details.processingDays)}
+      </p>
       {previous ? (
         <Alert tone="info" title="Повторное обращение">
           Поля из заявки № {previous.number} уже заполнены. Проверьте их и внесите исправления перед

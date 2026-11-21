@@ -4,6 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import type {
   NotificationCategory,
   NotificationPriority,
+  NotificationSource,
   NotificationTarget,
 } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
@@ -18,6 +19,7 @@ import { NOTIFICATION_PAGE_SIZE, type NotificationFilter } from "@/lib/validatio
 export type NotificationItem = {
   id: string;
   category: NotificationCategory;
+  source: NotificationSource | null;
   priority: NotificationPriority;
   title: string;
   body: string;
@@ -48,6 +50,7 @@ export type UnreadNotifications = {
 const notificationFields = {
   id: true,
   category: true,
+  source: true,
   priority: true,
   title: true,
   body: true,
@@ -82,7 +85,7 @@ function buildFeedWhere(
   now: Date,
 ): Prisma.NotificationWhereInput {
   return {
-    ...buildNotificationAudienceWhere(student, now),
+    ...buildNotificationAudienceWhere(student, now, filter.scope),
     ...(filter.category === "ALL" ? {} : { category: filter.category }),
   };
 }
@@ -106,6 +109,7 @@ function toItem(
   return {
     id: row.id,
     category: row.category,
+    source: row.source,
     priority: row.priority,
     title: row.title,
     body: row.body,
@@ -120,7 +124,7 @@ function toItem(
  * Лента доступных студенту уведомлений: важные сверху, затем новые.
  *
  * Страница ограничена `NOTIFICATION_PAGE_SIZE`; `nextCursor` — `id`
- * последнего элемента. Истёкшие уведомления в ленту и счётчик не попадают.
+ * последнего элемента. Истёкшие уведомления доступны в архиве, вне счётчика.
  */
 export async function getNotificationsForUser(
   userId: string,

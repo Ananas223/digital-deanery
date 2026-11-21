@@ -32,11 +32,16 @@ export type SessionExam = {
   assessmentType: AssessmentType;
   startsAt: Date;
   endsAt: Date;
+  /** Явно сохранённое прежнее начало, только для перенесённого испытания. */
+  previousStartsAt: Date | null;
   room: { buildingCode: string; number: string; name: string | null } | null;
   teacherName: string | null;
   /** Результат из `Grade` по той же дисциплине; `null`, если он ещё не внесён. */
   result: { score: number | null; status: GradeStatus } | null;
 };
+
+export type SessionPublication =
+  { status: "PENDING"; expectedAt: Date | null } | { status: "PUBLISHED"; publishedAt: Date };
 
 export type SemesterOverview = {
   semester: Semester;
@@ -44,6 +49,7 @@ export type SemesterOverview = {
   grades: GradeEntry[];
   /** Экзамены и зачёты группы по времени начала (`US-05`). */
   session: SessionExam[];
+  sessionPublication: SessionPublication | null;
   /** Средний балл, зачётные единицы, задолженности и текстовый вывод (`Ф-03.5`). */
   summary: GradesSummary;
 };
@@ -179,7 +185,7 @@ export async function getSemesterOverview(
     return null;
   }
 
-  const [grades, exams] = await Promise.all([
+  const [grades, exams, publication] = await Promise.all([
     prisma.grade.findMany({
       where: { studentProfileId: context.id, semesterId: semester.id },
       orderBy: [{ discipline: { name: "asc" } }, { id: "asc" }],
@@ -200,13 +206,26 @@ export async function getSemesterOverview(
       },
     }),
     prisma.exam.findMany({
-      where: { groupId: context.groupId, semesterId: semester.id },
+      where: {
+        groupId: context.groupId,
+        semesterId: semester.id,
+        // Не считываем черновые даты, даже если публикация меняется во время запроса.
+        semester: {
+          sessionPublications: {
+            none: {
+              groupId: context.groupId,
+              OR: [{ publishedAt: null }, { publishedAt: { gt: now } }],
+            },
+          },
+        },
+      },
       orderBy: [{ startsAt: "asc" }, { id: "asc" }],
       select: {
         id: true,
         assessmentType: true,
         startsAt: true,
         endsAt: true,
+        previousStartsAt: true,
         discipline: { select: { id: true, code: true, name: true } },
         room: {
           select: {
@@ -218,7 +237,18 @@ export async function getSemesterOverview(
         teacher: { select: { fullName: true } },
       },
     }),
+    prisma.sessionPublication.findUnique({
+      where: { semesterId_groupId: { semesterId: semester.id, groupId: context.groupId } },
+      select: { expectedAt: true, publishedAt: true },
+    }),
   ]);
+
+  const sessionPublication: SessionPublication | null = publication
+    ? publication.publishedAt && publication.publishedAt <= now
+      ? { status: "PUBLISHED", publishedAt: publication.publishedAt }
+      : { status: "PENDING", expectedAt: publication.expectedAt ?? publication.publishedAt }
+    : null;
+  const publishedExams = sessionPublication?.status === "PENDING" ? [] : exams;
 
   const results = new Map(
     grades.map((grade) => [grade.discipline.id, { score: grade.score, status: grade.status }]),
@@ -237,12 +267,14 @@ export async function getSemesterOverview(
   return {
     semester: toSemester(semester, now),
     grades: entries,
-    session: exams.map((exam) => ({
+    sessionPublication,
+    session: publishedExams.map((exam) => ({
       id: exam.id,
       discipline: exam.discipline,
       assessmentType: exam.assessmentType,
       startsAt: exam.startsAt,
       endsAt: exam.endsAt,
+      previousStartsAt: exam.previousStartsAt,
       room: exam.room
         ? {
             buildingCode: exam.room.building.code,

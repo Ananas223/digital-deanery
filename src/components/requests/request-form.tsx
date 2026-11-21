@@ -197,14 +197,22 @@ export function RequestForm({
           <dl className="space-y-3 text-sm">
             <div>
               <dt className="text-muted-foreground">Создана</dt>
-              <dd className="mt-1 text-foreground">{formatDateTime(created.createdAt)}</dd>
+              <dd className="mt-1 text-foreground">
+                <time dateTime={created.createdAt.toISOString()}>
+                  {formatDateTime(created.createdAt)}
+                </time>
+              </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Плановая готовность</dt>
               <dd className="mt-1 text-foreground">
-                {created.dueAt
-                  ? formatDateTime(created.dueAt)
-                  : "Деканат уточнит срок при обработке"}
+                {created.dueAt ? (
+                  <time dateTime={created.dueAt.toISOString()}>
+                    {formatDateTime(created.dueAt)}
+                  </time>
+                ) : (
+                  "Деканат уточнит срок при обработке"
+                )}
               </dd>
             </div>
           </dl>

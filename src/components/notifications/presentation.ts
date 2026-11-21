@@ -1,7 +1,8 @@
 import type { Route } from "next";
 
+import type { NotificationSource } from "@/generated/prisma/enums";
 import type { NotificationItem } from "@/lib/domain/notifications";
-import type { NotificationFilterCategory } from "@/lib/validation/notifications";
+import type { NotificationFilterCategory, NotificationScope } from "@/lib/validation/notifications";
 
 export const NOTIFICATION_LABELS: Record<NotificationFilterCategory, string> = {
   ALL: "Все",
@@ -10,6 +11,23 @@ export const NOTIFICATION_LABELS: Record<NotificationFilterCategory, string> = {
   REQUESTS: "Заявки",
   DEADLINES: "Дедлайны",
 };
+
+export const NOTIFICATION_SOURCE_LABELS: Record<NotificationSource, string> = {
+  DEANERY: "Деканат",
+  SCHEDULE_SYSTEM: "Система расписания",
+  REQUESTS_SYSTEM: "Система заявок",
+  ACADEMIC_CALENDAR: "Учебный календарь",
+};
+
+export function notificationFeedHref(
+  scope: NotificationScope,
+  category: NotificationFilterCategory,
+): Route {
+  const query = new URLSearchParams();
+  if (scope === "ARCHIVE") query.set("scope", scope);
+  if (category !== "ALL") query.set("category", category);
+  return query.size ? (`/notifications?${query}` as Route) : "/notifications";
+}
 
 const SECTIONS = {
   schedule: { href: "/schedule", label: "Открыть расписание" },

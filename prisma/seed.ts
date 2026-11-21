@@ -1,11 +1,13 @@
 import "dotenv/config";
 
+import type { NotificationSource } from "../src/generated/prisma/enums";
 import { createAuth } from "../src/lib/auth/create-auth";
 import { createPrismaClient } from "../src/lib/db/client";
 import {
   buildRequestCreatedNotification,
   buildRequestStatusNotification,
   getRequestStatusDedupeKey,
+  REQUEST_NOTIFICATION_SOURCE,
 } from "../src/lib/domain/request-notifications";
 import { addMoscowWorkingDays, getMoscowYear } from "../src/lib/domain/request-time";
 
@@ -122,6 +124,7 @@ type DemoExam = {
   day: number;
   start: [number, number];
   end: [number, number];
+  previousDayOffset?: number;
   buildingCode: string;
   roomNumber: string;
 };
@@ -185,6 +188,7 @@ type DemoSeedNotification = {
   /** Суффикс ключа дедупликации: полный ключ строки — `seed:{key}`. */
   key: string;
   category: "DEANERY" | "DEADLINES";
+  source: NotificationSource;
   priority: DemoNotificationPriority;
   title: string;
   body: string;
@@ -929,6 +933,7 @@ const DEMO_EXAMS: DemoExam[] = [
     day: 18,
     start: [10, 0],
     end: [11, 30],
+    previousDayOffset: 2,
     buildingCode: "B",
     roomNumber: "12",
   },
@@ -1334,6 +1339,7 @@ const DEMO_NOTIFICATIONS: DemoSeedNotification[] = [
   {
     key: "deanery:session-meeting",
     category: "DEANERY",
+    source: "DEANERY",
     priority: "IMPORTANT",
     title: "Собрание группы перед сессией",
     body: "Собрание группы MO-21-4 состоится в четверг в 16:30, аудитория А-305. Обсудим допуск к зачётам и выбор дисциплин.",
@@ -1345,6 +1351,7 @@ const DEMO_NOTIFICATIONS: DemoSeedNotification[] = [
   {
     key: "deanery:scholarship",
     category: "DEANERY",
+    source: "DEANERY",
     priority: "NORMAL",
     title: "Приём заявлений на повышенную стипендию",
     body: "До 30 ноября деканат принимает заявления на повышенную государственную стипендию. Кабинет А-101, будни с 10:00 до 17:00.",
@@ -1356,6 +1363,7 @@ const DEMO_NOTIFICATIONS: DemoSeedNotification[] = [
   {
     key: "deanery:coursework-consultation",
     category: "DEANERY",
+    source: "DEANERY",
     priority: "NORMAL",
     title: "Консультация по курсовой работе",
     body: "Консультация по курсовой работе по экономической географии — в пятницу в 15:00, аудитория А-410.",
@@ -1366,6 +1374,7 @@ const DEMO_NOTIFICATIONS: DemoSeedNotification[] = [
   {
     key: "deadline:coursework",
     category: "DEADLINES",
+    source: "DEANERY",
     priority: "IMPORTANT",
     title: "Дедлайн курсовой работы",
     body: "Курсовая работа по экономической географии принимается до конца зачётной недели. Загрузите файл в личный кабинет или передайте преподавателю.",
@@ -1377,6 +1386,7 @@ const DEMO_NOTIFICATIONS: DemoSeedNotification[] = [
   {
     key: "deadline:retake",
     category: "DEADLINES",
+    source: "DEANERY",
     priority: "IMPORTANT",
     title: "Дедлайн пересдачи",
     body: "Пересдача по микроэкономике — до 20 декабря. Запишитесь в деканате, кабинет А-101.",
@@ -1388,6 +1398,7 @@ const DEMO_NOTIFICATIONS: DemoSeedNotification[] = [
   {
     key: "deadline:session-week",
     category: "DEADLINES",
+    source: "ACADEMIC_CALENDAR",
     priority: "NORMAL",
     title: "Зачётная неделя",
     body: "Зачётная неделя начинается 15 декабря. Проверьте расписание зачётов и допуск по дисциплинам.",
@@ -1774,13 +1785,17 @@ async function seedGrades(
       throw new Error(`Не найдена аудитория ${exam.buildingCode}-${exam.roomNumber}`);
     }
 
+    const startsAt = examStartsAt(semester, exam.month, exam.day, exam.start);
     return {
       groupId,
       disciplineId,
       semesterId: semester.id,
       assessmentType: exam.assessmentType,
-      startsAt: examStartsAt(semester, exam.month, exam.day, exam.start),
+      startsAt,
       endsAt: examStartsAt(semester, exam.month, exam.day, exam.end),
+      previousStartsAt: exam.previousDayOffset
+        ? new Date(startsAt.getTime() - exam.previousDayOffset * DAY_MS)
+        : null,
       roomId,
       ...(teacherId ? { teacherId } : {}),
     };
@@ -1902,6 +1917,7 @@ async function seedRequests(
     await prisma.notification.create({
       data: {
         category: "REQUESTS",
+        source: REQUEST_NOTIFICATION_SOURCE,
         priority: createdContent.priority,
         title: createdContent.title,
         body: createdContent.body,
@@ -1936,6 +1952,7 @@ async function seedRequests(
       await prisma.notification.create({
         data: {
           category: "REQUESTS",
+          source: REQUEST_NOTIFICATION_SOURCE,
           priority: notification.priority,
           title: notification.title,
           body: notification.body,
@@ -2143,6 +2160,7 @@ function audienceData(
 type SeedNotificationRow = {
   key: string;
   category: "DEANERY" | "DEADLINES" | "SCHEDULE";
+  source: NotificationSource;
   priority: DemoNotificationPriority;
   title: string;
   body: string;
@@ -2176,6 +2194,7 @@ async function seedNotifications(
   const staticRows: SeedNotificationRow[] = DEMO_NOTIFICATIONS.map((row) => ({
     key: `seed:${row.key}`,
     category: row.category,
+    source: row.source,
     priority: row.priority,
     title: row.title,
     body: row.body,
@@ -2193,6 +2212,7 @@ async function seedNotifications(
     return {
       key: content.key,
       category: "SCHEDULE",
+      source: "SCHEDULE_SYSTEM",
       priority: content.priority,
       title: content.title,
       body: content.body,
@@ -2219,6 +2239,7 @@ async function seedNotifications(
     const audience = audienceData(row.audience, { profiles, groups, faculties });
     const data = {
       category: row.category,
+      source: row.source,
       priority: row.priority,
       title: row.title,
       body: row.body,

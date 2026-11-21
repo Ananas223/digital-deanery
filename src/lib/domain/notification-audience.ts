@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import type { NotificationAudience } from "@/generated/prisma/enums";
+import type { NotificationScope } from "@/lib/validation/notifications";
 
 /**
  * Правила доступности уведомления студенту.
@@ -45,7 +46,7 @@ export function isNotificationActive(expiresAt: Date | null, now: Date): boolean
 }
 
 /**
- * Условие Prisma для ленты и счётчика: аудитория студента плюс неистёкшие.
+ * Условие Prisma для ленты, архива и счётчика: та же аудитория для каждого.
  *
  * Один построитель используют все выборки, поэтому правило нельзя случайно
  * применить в ленте и забыть в счётчике.
@@ -53,6 +54,7 @@ export function isNotificationActive(expiresAt: Date | null, now: Date): boolean
 export function buildNotificationAudienceWhere(
   student: StudentNotificationAudience,
   now: Date,
+  scope: NotificationScope = "ACTIVE",
 ): Prisma.NotificationWhereInput {
   return {
     AND: [
@@ -63,7 +65,9 @@ export function buildNotificationAudienceWhere(
           { audienceType: "FACULTY", audienceFacultyId: student.facultyId },
         ],
       },
-      { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+      scope === "ARCHIVE"
+        ? { expiresAt: { lte: now }, publishedAt: { lte: now } }
+        : { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
     ],
   };
 }

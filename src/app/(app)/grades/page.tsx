@@ -135,7 +135,12 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
             className="min-w-0 scroll-mt-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             {context.tab === "session" ? (
-              <SessionList session={overview.session} context={context} now={now} />
+              <SessionList
+                session={overview.session}
+                publication={overview.sessionPublication}
+                context={context}
+                now={now}
+              />
             ) : (
               <GradesList grades={overview.grades} context={context} />
             )}

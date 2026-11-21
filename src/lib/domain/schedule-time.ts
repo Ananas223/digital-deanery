@@ -64,22 +64,20 @@ export function startOfMoscowWeek(date: Date): Date {
 
 /** Начало учебного года: понедельник недели, в которую попадает 1 сентября. */
 export function getAcademicYearStart(date: Date): Date {
-  const shifted = toMoscowShifted(date);
-  const year = shifted.getUTCFullYear();
-  const month = shifted.getUTCMonth();
-  const startYear = month >= SEPTEMBER_INDEX ? year : year - 1;
-  const septemberFirst = new Date(Date.UTC(startYear, SEPTEMBER_INDEX, 1) - MOSCOW_UTC_OFFSET_MS);
+  const year = toMoscowShifted(date).getUTCFullYear();
+  const start = (value: number) =>
+    startOfMoscowWeek(new Date(Date.UTC(value, SEPTEMBER_INDEX, 1) - MOSCOW_UTC_OFFSET_MS));
+  const thisYear = start(year);
 
-  return startOfMoscowWeek(septemberFirst);
+  // Августовские дни этой недели уже относятся к новому учебному году.
+  return date >= thisYear ? thisYear : start(year - 1);
 }
 
 /**
  * Номер учебной недели: 1 — неделя, содержащая 1 сентября.
  *
- * Семестр появится в `P3-BE-01`; до этого точкой отсчёта служит начало учебного
- * года. Необязательный `semesterStart` позволит позже передать реальное начало
- * семестра, не меняя сигнатуры запросов расписания. Даты до точки отсчёта
- * относятся к первой неделе, чтобы номер всегда был положительным.
+ * Если указан `semesterStart`, используем неделю начала семестра. Даты до
+ * точки отсчёта относятся к первой неделе, чтобы номер всегда был положительным.
  */
 export function getStudyWeekNumber(date: Date, semesterStart?: Date): number {
   const weekStart = startOfMoscowWeek(date);

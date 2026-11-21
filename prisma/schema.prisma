@@ -76,6 +76,13 @@ enum NotificationPriority {
   IMPORTANT
 }
 
+enum NotificationSource {
+  DEANERY
+  SCHEDULE_SYSTEM
+  REQUESTS_SYSTEM
+  ACADEMIC_CALENDAR
+}
+
 enum NotificationAudience {
   STUDENT
   GROUP
@@ -202,10 +209,11 @@ model Group {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  students      StudentProfile[]
-  lessons       Lesson[]
-  exams         Exam[]
-  notifications Notification[]   @relation("NotificationAudienceGroup")
+  students            StudentProfile[]
+  lessons             Lesson[]
+  exams               Exam[]
+  sessionPublications SessionPublication[]
+  notifications       Notification[]       @relation("NotificationAudienceGroup")
 
   @@index([programId])
   @@map("group")
@@ -363,8 +371,9 @@ model Semester {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  grades Grade[]
-  exams  Exam[]
+  grades              Grade[]
+  exams               Exam[]
+  sessionPublications SessionPublication[]
 
   @@unique([academicYear, term])
   @@index([startsAt])
@@ -392,23 +401,36 @@ model Grade {
   @@map("grade")
 }
 
+model SessionPublication {
+  semesterId  String
+  semester    Semester  @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  groupId     String
+  group       Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  expectedAt  DateTime?
+  publishedAt DateTime?
+
+  @@id([semesterId, groupId])
+  @@map("session_publication")
+}
+
 model Exam {
-  id             String         @id @default(cuid())
-  groupId        String
-  group          Group          @relation(fields: [groupId], references: [id])
-  disciplineId   String
-  discipline     Discipline     @relation(fields: [disciplineId], references: [id])
-  semesterId     String
-  semester       Semester       @relation(fields: [semesterId], references: [id])
-  assessmentType AssessmentType
-  startsAt       DateTime
-  endsAt         DateTime
-  roomId         String?
-  room           Room?          @relation(fields: [roomId], references: [id], onDelete: SetNull)
-  teacherId      String?
-  teacher        Teacher?       @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id               String         @id @default(cuid())
+  groupId          String
+  group            Group          @relation(fields: [groupId], references: [id])
+  disciplineId     String
+  discipline       Discipline     @relation(fields: [disciplineId], references: [id])
+  semesterId       String
+  semester         Semester       @relation(fields: [semesterId], references: [id])
+  assessmentType   AssessmentType
+  startsAt         DateTime
+  endsAt           DateTime
+  previousStartsAt DateTime?
+  roomId           String?
+  room             Room?          @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  teacherId        String?
+  teacher          Teacher?       @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   @@unique([groupId, disciplineId, semesterId])
   @@index([groupId, startsAt])
@@ -486,6 +508,7 @@ model RequestNumberSequence {
 model Notification {
   id                String               @id @default(cuid())
   category          NotificationCategory
+  source            NotificationSource?
   priority          NotificationPriority @default(NORMAL)
   title             String
   body              String

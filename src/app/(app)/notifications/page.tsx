@@ -10,11 +10,13 @@ import { PageHeader } from "@/components/ui/page-header";
 import { getNotifications } from "@/lib/actions/notifications";
 import { getCurrentUser } from "@/lib/auth/session";
 import type { NotificationPage } from "@/lib/domain/notifications";
-import { notificationFilterSchema } from "@/lib/validation/notifications";
+import { notificationFilterSchema, type NotificationFilter } from "@/lib/validation/notifications";
 
 export const metadata: Metadata = { title: "Уведомления" };
 
-type PageProps = { searchParams: Promise<{ category?: string | string[] }> };
+type PageProps = {
+  searchParams: Promise<{ category?: string | string[]; scope?: string | string[] }>;
+};
 
 export default async function NotificationsPage({ searchParams }: PageProps) {
   const user = await getCurrentUser();
@@ -39,8 +41,11 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
   }
 
   const query = await searchParams;
-  const parsed = notificationFilterSchema.safeParse({ category: query.category });
-  const filter = parsed.success ? parsed.data : { category: "ALL" as const };
+  const parsed = notificationFilterSchema.safeParse({
+    category: query.category,
+    scope: query.scope,
+  });
+  const filter: NotificationFilter = parsed.success ? parsed.data : { category: "ALL" };
   let initialPage: NotificationPage | null = null;
   try {
     initialPage = await getNotifications(filter);
@@ -56,8 +61,9 @@ export default async function NotificationsPage({ searchParams }: PageProps) {
         compact
       />
       <NotificationFeed
-        key={filter.category}
+        key={`${filter.scope ?? "ACTIVE"}:${filter.category}`}
         category={filter.category}
+        scope={filter.scope}
         initialPage={initialPage}
       />
     </div>

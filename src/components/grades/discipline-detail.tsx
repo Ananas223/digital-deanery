@@ -6,7 +6,7 @@ import { Suspense } from "react";
 
 import { GradeResult } from "@/components/grades/grade-result";
 import { RelatedLessons } from "@/components/grades/related-lessons";
-import { SessionExamDetails } from "@/components/grades/session-list";
+import { SessionExamDetails, SessionMoveNotice } from "@/components/grades/session-list";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -111,7 +111,8 @@ export function DisciplineDetail({
         {exams.length > 0 ? (
           <ul className="space-y-5">
             {exams.map((exam) => (
-              <li key={exam.id}>
+              <li key={exam.id} className="space-y-2">
+                <SessionMoveNotice exam={exam} />
                 <SessionExamDetails exam={exam} />
               </li>
             ))}

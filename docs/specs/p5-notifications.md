@@ -62,39 +62,41 @@
 
 ### 4.1. Сущности и поля
 
-| Сущность           | Поле                | Тип                    | Обязательность | Правила                                        |
-| ------------------ | ------------------- | ---------------------- | -------------- | ---------------------------------------------- |
-| `Notification`     | `id`                | `String`               | да             | `cuid()`                                       |
-|                    | `category`          | `NotificationCategory` | да             | `DEANERY`, `SCHEDULE`, `REQUESTS`, `DEADLINES` |
-|                    | `priority`          | `NotificationPriority` | да             | `NORMAL`, `IMPORTANT`; важные закрепляются     |
-|                    | `title`             | `String`               | да             | короткий заголовок                             |
-|                    | `body`              | `String`               | да             | текст без HTML                                 |
-|                    | `audienceType`      | `NotificationAudience` | да             | `STUDENT`, `GROUP`, `FACULTY`                  |
-|                    | `audienceStudentId` | `String?`              | условно        | обязателен при `STUDENT`                       |
-|                    | `audienceGroupId`   | `String?`              | условно        | обязателен при `GROUP`                         |
-|                    | `audienceFacultyId` | `String?`              | условно        | обязателен при `FACULTY`                       |
-|                    | `targetType`        | `NotificationTarget`   | да             | `REQUEST`, `LESSON`, `SECTION`, `NONE`         |
-|                    | `targetId`          | `String?`              | условно        | обязателен при `REQUEST`/`LESSON`              |
-|                    | `dedupeKey`         | `String?`              | нет            | уникальный ключ события, защита от дублей      |
-|                    | `publishedAt`       | `DateTime`             | да             | UTC; сортировка                                |
-|                    | `expiresAt`         | `DateTime?`            | нет            | после — архив, не удаление                     |
-|                    | `createdById`       | `String?`              | нет            | `null` для системных событий                   |
-| `NotificationRead` | `id`                | `String`               | да             | `cuid()`                                       |
-|                    | `notificationId`    | `String`               | да             | FK на `Notification`, каскад                   |
-|                    | `userId`            | `String`               | да             | FK на `User`                                   |
-|                    | `readAt`            | `DateTime`             | да             | UTC                                            |
-|                    | —                   | —                      | —              | уникальность `[notificationId, userId]`        |
+| Сущность           | Поле                | Тип                    | Обязательность | Правила                                                            |
+| ------------------ | ------------------- | ---------------------- | -------------- | ------------------------------------------------------------------ |
+| `Notification`     | `id`                | `String`               | да             | `cuid()`                                                           |
+|                    | `category`          | `NotificationCategory` | да             | `DEANERY`, `SCHEDULE`, `REQUESTS`, `DEADLINES`                     |
+|                    | `source`            | `NotificationSource?`  | нет            | задаёт источник при записи; `null` у старых событий без метаданных |
+|                    | `priority`          | `NotificationPriority` | да             | `NORMAL`, `IMPORTANT`; важные закрепляются                         |
+|                    | `title`             | `String`               | да             | короткий заголовок                                                 |
+|                    | `body`              | `String`               | да             | текст без HTML                                                     |
+|                    | `audienceType`      | `NotificationAudience` | да             | `STUDENT`, `GROUP`, `FACULTY`                                      |
+|                    | `audienceStudentId` | `String?`              | условно        | обязателен при `STUDENT`                                           |
+|                    | `audienceGroupId`   | `String?`              | условно        | обязателен при `GROUP`                                             |
+|                    | `audienceFacultyId` | `String?`              | условно        | обязателен при `FACULTY`                                           |
+|                    | `targetType`        | `NotificationTarget`   | да             | `REQUEST`, `LESSON`, `SECTION`, `NONE`                             |
+|                    | `targetId`          | `String?`              | условно        | обязателен при `REQUEST`/`LESSON`                                  |
+|                    | `dedupeKey`         | `String?`              | нет            | уникальный ключ события, защита от дублей                          |
+|                    | `publishedAt`       | `DateTime`             | да             | UTC; сортировка                                                    |
+|                    | `expiresAt`         | `DateTime?`            | нет            | после — архив, не удаление                                         |
+|                    | `createdById`       | `String?`              | нет            | `null` для системных событий                                       |
+| `NotificationRead` | `id`                | `String`               | да             | `cuid()`                                                           |
+|                    | `notificationId`    | `String`               | да             | FK на `Notification`, каскад                                       |
+|                    | `userId`            | `String`               | да             | FK на `User`                                                       |
+|                    | `readAt`            | `DateTime`             | да             | UTC                                                                |
+|                    | —                   | —                      | —              | уникальность `[notificationId, userId]`                            |
 
 Фактические индексы на 18.11.2026: `Notification(audienceStudentId, publishedAt)`, `Notification(audienceGroupId, publishedAt)`, `Notification(audienceType, publishedAt)`, `Notification(category, publishedAt)`, `Notification(targetType, targetId)`, `Notification(dedupeKey)` unique; `NotificationRead(userId, readAt)` и уникальность `NotificationRead(notificationId, userId)`. Модель `NotificationRead` и оба новых индекса добавлены миграцией `20261117215341_add_notification_reads` в `P5-BE-01`.
 
 ### 4.2. Enum-типы
 
-| Тип                    | Значения                                       | Правила                                                |
-| ---------------------- | ---------------------------------------------- | ------------------------------------------------------ |
-| `NotificationCategory` | `DEANERY`, `SCHEDULE`, `REQUESTS`, `DEADLINES` | фильтры ленты                                          |
-| `NotificationPriority` | `NORMAL`, `IMPORTANT`                          | важные выше в пределах даты; текстом, не только цветом |
-| `NotificationAudience` | `STUDENT`, `GROUP`, `FACULTY`                  | ровно одно поле аудитории заполнено                    |
-| `NotificationTarget`   | `REQUEST`, `LESSON`, `SECTION`, `NONE`         | ссылка в карточке; `NONE` — без действия               |
+| Тип                    | Значения                                                             | Правила                                                |
+| ---------------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
+| `NotificationCategory` | `DEANERY`, `SCHEDULE`, `REQUESTS`, `DEADLINES`                       | фильтры ленты                                          |
+| `NotificationSource`   | `DEANERY`, `SCHEDULE_SYSTEM`, `REQUESTS_SYSTEM`, `ACADEMIC_CALENDAR` | кто выпустил событие; не вычисляется по категории      |
+| `NotificationPriority` | `NORMAL`, `IMPORTANT`                                                | важные выше в пределах даты; текстом, не только цветом |
+| `NotificationAudience` | `STUDENT`, `GROUP`, `FACULTY`                                        | ровно одно поле аудитории заполнено                    |
+| `NotificationTarget`   | `REQUEST`, `LESSON`, `SECTION`, `NONE`                               | ссылка в карточке; `NONE` — без действия               |
 
 ### 4.3. Контракт события из заявок
 
@@ -110,7 +112,7 @@ getRequestStatusDedupeKey(requestId, historyId) → "request:{requestId}:status:
 Правила:
 
 - аудитория — `STUDENT` с `audienceStudentId = studentId` заявки;
-- категория — `REQUESTS`; цель — `REQUEST` с `targetId = requestId`;
+- категория — `REQUESTS`; источник — `REQUESTS_SYSTEM`; цель — `REQUEST` с `targetId = requestId`;
 - `dedupeKey = "request:{requestId}:status:{historyId}"`; повтор не создаёт дубль;
 - заголовок и текст — по статусу (`NEW`, `IN_PROGRESS`, `READY`, `REJECTED`, `CANCELLED`), без персональных данных сверх необходимого;
 - если уведомление не создано, транзакция откатывается: заявка без уведомления противоречит `Ф-04.8`.
@@ -126,16 +128,16 @@ getRequestStatusDedupeKey(requestId, historyId) → "request:{requestId}:status:
 | `markNotificationRead`     | `(notificationId: string) => Promise<ActionResult<void>>`                    | `STUDENT`, доступная аудитория | `NOT_FOUND`, `FORBIDDEN` |
 | `markAllNotificationsRead` | `() => Promise<ActionResult<{ count: number }>>`                             | `STUDENT`                      | —                        |
 
-`NotificationFilter`: `category: "ALL" | NotificationCategory`. `NotificationPage`: `items`, `nextCursor`, `unreadCount`.
+`NotificationFilter`: `category: "ALL" | NotificationCategory`, `scope?: "ACTIVE" | "ARCHIVE"` (`ACTIVE` по умолчанию). `NotificationPage`: `items`, `nextCursor`, `unreadCount`. `NotificationItem.source` передаётся из записи без подстановки по `category`.
 
 Фактическая реализация на 18.11.2026:
 
 - `getNotifications` отдаёт страницу из 20 элементов; `nextCursor` — `id` последнего элемента, следующий вызов передаёт его в `cursor`. Порядок: `priority` по убыванию (`IMPORTANT` выше), затем `publishedAt` по убыванию, затем `id` по убыванию для устойчивости страниц.
-- `unreadCount` в `NotificationPage` и `getUnreadCount` считают все непрочитанные доступные уведомления студента, без учёта выбранной категории.
-- Истёкшие уведомления (`expiresAt <= now`) не попадают ни в ленту, ни в счётчик; запись при этом не удаляется.
+- `unreadCount` в `NotificationPage` и `getUnreadCount` считают непрочитанные активные уведомления студента независимо от выбранной категории или архива.
+- Истёкшие уведомления (`expiresAt <= now`, `publishedAt <= now`) доступны в архиве с исходной датой публикации и той же проверкой аудитории. Из активной ленты и счётчика они исключены; карточка в архиве не предлагает отметить её прочитанной.
 - `markNotificationRead` проверяет аудиторию уведомления и идемпотентен: повторный вызов сохраняет первую отметку и не создаёт дубль.
 - `markAllNotificationsRead` отмечает все доступные непрочитанные уведомления и возвращает число новых отметок; повторный вызов возвращает `0`.
-- Некорректные категория и курсор отклоняются с `VALIDATION_ERROR`; сотрудник деканата получает пустую ленту, `0` в счётчике и `FORBIDDEN` на изменение.
+- Некорректные категория, область и курсор отклоняются с `VALIDATION_ERROR`; сотрудник деканата получает пустую ленту, `0` в счётчике и `FORBIDDEN` на изменение.
 
 Доступность уведомления определяется сервером: `audienceType = STUDENT` и совпадает студент, либо `GROUP` и совпадает группа профиля, либо `FACULTY` и совпадает факультет. `userId` и группа берутся из сессии, не из аргументов.
 
@@ -162,12 +164,12 @@ getRequestStatusDedupeKey(requestId, historyId) → "request:{requestId}:status:
 
 ### 6.1. Экраны и блоки
 
-| Экран / блок         | Что показывает                                   | Действия                                               | Глубокие ссылки               |
-| -------------------- | ------------------------------------------------ | ------------------------------------------------------ | ----------------------------- |
-| `/notifications`     | лента, фильтры, важные сверху, непрочитанные     | фильтр, открыть, отметить всё                          | `/notifications?category=…`   |
-| Карточка уведомления | заголовок, дата/время, источник, текст, действие | перейти к заявке/занятию/разделу, отметить прочитанным | `/requests/[id]`, `/schedule` |
-| Навигация            | счётчик непрочитанных                            | перейти в ленту                                        | —                             |
-| Главный экран        | блок непрочитанных и важных                      | перейти в ленту                                        | —                             |
+| Экран / блок         | Что показывает                                            | Действия                                               | Глубокие ссылки                           |
+| -------------------- | --------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------- |
+| `/notifications`     | «Лента» и «Архив», общие фильтры категорий, важные сверху | фильтр, открыть; отметить всё только в активной ленте  | `/notifications?scope=ARCHIVE&category=…` |
+| Карточка уведомления | заголовок, дата/время, источник, текст, действие          | перейти к заявке/занятию/разделу, отметить прочитанным | `/requests/[id]`, `/schedule`             |
+| Навигация            | счётчик непрочитанных                                     | перейти в ленту                                        | —                                         |
+| Главный экран        | блок непрочитанных и важных                               | перейти в ленту                                        | —                                         |
 
 ### 6.2. Состояния
 

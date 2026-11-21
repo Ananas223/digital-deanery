@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { Page } from "@playwright/test";
 
+import { addMoscowWorkingDays } from "../../src/lib/domain/request-time";
 import {
   DEMO_STUDENTS,
   emailField,
@@ -86,6 +87,9 @@ for (const viewport of [
       const purpose = `Библиотека: ${randomUUID()}`;
       const endpoint = "**/requests/new?type=STUDY_CERTIFICATE";
       await annaPage.goto("/requests/new?type=STUDY_CERTIFICATE");
+      const duration = await annaPage.getByText(/^Срок подготовки: \d+ рабоч/).textContent();
+      const workingDays = Number(duration?.match(/\d+/)?.[0]);
+      expect(workingDays).toBeGreaterThan(0);
       const form = annaPage.getByRole("form", { name: "Данные обращения" });
       const delivery = annaPage.getByLabel("Место предоставления");
       const submit = annaPage.getByRole("button", { name: "Отправить заявку", exact: true });
@@ -142,6 +146,20 @@ for (const viewport of [
       } finally {
         release();
       }
+      await expect(
+        annaPage.getByRole("heading", { name: "Заявка отправлена", exact: true }),
+      ).toBeFocused();
+      const creation = annaPage.getByText("Создана", { exact: true }).locator("..").locator("time");
+      const deadline = annaPage
+        .getByText("Плановая готовность", { exact: true })
+        .locator("..")
+        .locator("time");
+      const createdAt = new Date((await creation.getAttribute("datetime"))!);
+      await expect(deadline).toBeVisible();
+      await expect(deadline).toHaveAttribute(
+        "datetime",
+        addMoscowWorkingDays(createdAt, workingDays).toISOString(),
+      );
       const created = await openCreatedRequest(annaPage);
       expect(posts).toBe(1);
       await annaPage.unroute(endpoint);

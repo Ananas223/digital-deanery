@@ -15,6 +15,7 @@ import {
 import { Alert } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { AI_MAX_TOTAL_CHARS } from "@/lib/validation/ai";
 
 import { useAssistant } from "./assistant-context";
@@ -29,26 +30,55 @@ const SECTIONS = [
   { href: "/notifications", label: "Уведомления" },
 ] as const;
 
-/** Track the visible mobile viewport so a keyboard cannot cover the composer. */
-function useVisualViewport(open: boolean): CSSProperties | undefined {
-  const [viewportStyle, setViewportStyle] = useState<CSSProperties>();
+const KEYBOARD_INSET = "--assistant-keyboard-inset";
+const MOBILE_NAV_HEIGHT = "--assistant-mobile-nav-height";
+
+/** Keep the panel and the mobile navigation above the same visible viewport edge. */
+function useAssistantViewport(open: boolean) {
+  const [layout, setLayout] = useState<{ style: CSSProperties; compact: boolean }>();
   useEffect(() => {
+    if (!open) return;
     const viewport = window.visualViewport;
-    if (!open || !viewport) return;
+    const root = document.documentElement;
+    const mobileNav = document.querySelector<HTMLElement>("[data-mobile-navigation]");
+    const updateNavHeight = () => {
+      const height = mobileNav?.getBoundingClientRect().height ?? 0;
+      if (height > 0) root.style.setProperty(MOBILE_NAV_HEIGHT, `${height}px`);
+      else root.style.removeProperty(MOBILE_NAV_HEIGHT);
+    };
+    const observer = mobileNav ? new ResizeObserver(updateNavHeight) : null;
+    if (mobileNav) observer?.observe(mobileNav);
+    updateNavHeight();
     const update = () => {
-      setViewportStyle(
-        window.innerWidth < 768 ? { height: viewport.height, top: viewport.offsetTop } : undefined,
+      const mobile = window.innerWidth < 768;
+      const gap = viewport ? window.innerHeight - viewport.height : 0;
+      // The browser's toolbar and pinch zoom are not a docked keyboard.
+      const compact = mobile && viewport?.scale === 1 && gap > 100;
+      if (compact && viewport) {
+        root.style.setProperty(KEYBOARD_INSET, `${Math.max(0, gap - viewport.offsetTop)}px`);
+      } else {
+        root.style.removeProperty(KEYBOARD_INSET);
+      }
+      setLayout(
+        mobile
+          ? { style: viewport ? { height: viewport.height, top: viewport.offsetTop } : {}, compact }
+          : undefined,
       );
     };
     update();
-    viewport.addEventListener("resize", update);
-    viewport.addEventListener("scroll", update);
+    viewport?.addEventListener("resize", update);
+    viewport?.addEventListener("scroll", update);
+    window.addEventListener("resize", update);
     return () => {
-      viewport.removeEventListener("resize", update);
-      viewport.removeEventListener("scroll", update);
+      root.style.removeProperty(KEYBOARD_INSET);
+      root.style.removeProperty(MOBILE_NAV_HEIGHT);
+      observer?.disconnect();
+      viewport?.removeEventListener("resize", update);
+      viewport?.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
     };
   }, [open]);
-  return viewportStyle;
+  return open ? layout : undefined;
 }
 
 export function AssistantPanel({
@@ -64,7 +94,9 @@ export function AssistantPanel({
   const historyRef = useRef<HTMLDivElement | null>(null);
   const composerRef = useRef<HTMLElement | null>(null);
   const followLatestRef = useRef(true);
-  const viewportStyle = useVisualViewport(assistant.open);
+  const viewport = useAssistantViewport(assistant.open);
+  const compact = viewport?.compact === true;
+  const feedbackInHistory = viewport !== undefined;
   const busy = assistant.phase === "waiting" || assistant.phase === "streaming";
   const mascotState: BlikState = busy
     ? "thinking"
@@ -85,7 +117,7 @@ export function AssistantPanel({
     if (!assistant.open || !followLatestRef.current) return;
     const history = historyRef.current;
     if (history) history.scrollTop = history.scrollHeight;
-  }, [assistant.messages, assistant.open]);
+  }, [assistant.messages, assistant.error, assistant.open, compact]);
 
   useLayoutEffect(() => {
     const field = fieldRef.current;
@@ -98,7 +130,7 @@ export function AssistantPanel({
     } else if (fieldRect.top < composerRect.top) {
       composer.scrollTop -= composerRect.top - fieldRect.top;
     }
-  }, [assistant.open, viewportStyle]);
+  }, [assistant.open, viewport]);
 
   function submitQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -111,29 +143,64 @@ export function AssistantPanel({
 
   if (!assistant.enabled) return null;
 
+  const feedback =
+    assistant.error || (assistant.phase === "stopped" && assistant.canRetry) ? (
+      <div className="space-y-3">
+        {assistant.error ? (
+          <div id="assistant-error">
+            <Alert tone="danger" className="gap-2 p-3 text-sm">
+              <p>{assistant.error.message}</p>
+            </Alert>
+          </div>
+        ) : null}
+        {assistant.canRetry ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              followLatestRef.current = true;
+              void assistant.retry();
+            }}
+          >
+            <RotateCcw aria-hidden="true" className="size-4" />
+            Повторить вопрос
+          </Button>
+        ) : null}
+      </div>
+    ) : null;
+
   return (
     <BaseDialog.Root
       open={assistant.open}
       modal={false}
+      // The nav moves when the panel closes. Let its tap finish before dismissing.
+      disablePointerDismissal={compact}
       onOpenChange={(open, details) => onOpenChange(open, details.reason)}
     >
       <BaseDialog.Portal>
         <BaseDialog.Viewport
-          style={viewportStyle}
+          style={viewport?.style}
           className="pointer-events-none fixed inset-0 z-40 h-dvh overflow-clip"
         >
           <BaseDialog.Popup
             id="assistant-panel"
             data-assistant-panel=""
             initialFocus={() =>
-              window.matchMedia("(pointer: coarse)").matches ? closeRef.current : fieldRef.current
+              window.innerWidth < 768 || window.matchMedia("(any-pointer: coarse)").matches
+                ? closeRef.current
+                : fieldRef.current
             }
             finalFocus={finalFocus}
-            className="overlay-surface pointer-events-auto absolute inset-x-0 top-0 bottom-bottom-safe flex min-h-0 min-w-0 flex-col overflow-hidden border-border bg-card text-card-foreground shadow-popover motion-safe:transition-transform motion-safe:duration-(--duration-panel) motion-safe:ease-interface motion-safe:data-[ending-style]:translate-x-full motion-safe:data-[starting-style]:translate-x-full md:inset-x-auto md:right-0 md:bottom-0 md:w-144 md:border-l"
+            className="overlay-surface pointer-events-auto absolute inset-x-0 top-0 bottom-[var(--assistant-mobile-nav-height,var(--spacing-bottom-safe))] flex min-h-0 min-w-0 flex-col overflow-hidden border-border bg-card text-card-foreground shadow-popover motion-safe:transition-transform motion-safe:duration-(--duration-panel) motion-safe:ease-interface motion-safe:data-[ending-style]:translate-x-full motion-safe:data-[starting-style]:translate-x-full md:inset-x-auto md:right-0 md:bottom-0 md:w-144 md:border-l"
           >
-            <header className="max-h-[35%] shrink-0 overflow-y-auto border-b border-border px-4 py-3 md:px-6 md:py-4">
+            <header
+              className={cn(
+                "max-h-[35%] shrink-0 overflow-y-auto border-b border-border px-4 md:px-6 md:py-4",
+                compact ? "py-1.5" : "py-3",
+              )}
+            >
               <div className="flex items-center gap-2">
-                <BlikMascot state={mascotState} className="size-16" />
+                <BlikMascot state={mascotState} className={compact ? "size-10" : "size-16"} />
                 <div className="min-w-0 flex-1">
                   <BaseDialog.Title className="text-xl font-semibold tracking-tight">
                     Блик
@@ -148,7 +215,9 @@ export function AssistantPanel({
                   <X aria-hidden="true" className="size-5" />
                 </BaseDialog.Close>
               </div>
-              <BaseDialog.Description className="mt-2 text-caption text-muted-foreground">
+              <BaseDialog.Description
+                className={compact ? "sr-only" : "mt-2 text-caption text-muted-foreground"}
+              >
                 Читаю только ваши данные. Не создаю и не меняю заявки, оценки и уведомления.
               </BaseDialog.Description>
             </header>
@@ -247,35 +316,27 @@ export function AssistantPanel({
                     </Link>
                   ))}
                 </nav>
+                {feedbackInHistory && feedback ? <div className="mt-4">{feedback}</div> : null}
               </div>
             </div>
 
             <footer
               ref={composerRef}
-              className="max-h-[60%] shrink-0 space-y-3 overflow-y-auto overscroll-contain border-t border-border bg-card px-4 py-3 md:px-6 md:pb-5"
+              className={cn(
+                "max-h-[60%] shrink-0 space-y-3 overflow-y-auto overscroll-contain border-t border-border bg-card px-4 md:px-6 md:pb-5",
+                compact ? "py-2" : "py-3",
+              )}
             >
-              {assistant.error ? (
-                <div id="assistant-error">
-                  <Alert tone="danger" className="gap-2 p-3 text-sm">
-                    <p>{assistant.error.message}</p>
-                  </Alert>
-                </div>
-              ) : null}
-              {(assistant.error || assistant.phase === "stopped") && assistant.canRetry ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    followLatestRef.current = true;
-                    void assistant.retry();
-                  }}
+              {!feedbackInHistory ? feedback : null}
+              <form
+                onSubmit={submitQuestion}
+                className={
+                  compact ? "grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2" : "space-y-2"
+                }
+              >
+                <div
+                  className={cn("flex items-center justify-between gap-3", compact && "col-span-2")}
                 >
-                  <RotateCcw aria-hidden="true" className="size-4" />
-                  Повторить вопрос
-                </Button>
-              ) : null}
-              <form onSubmit={submitQuestion} className="space-y-2">
-                <div className="flex items-center justify-between gap-3">
                   <label htmlFor="assistant-question" className="text-sm font-medium">
                     Ваш вопрос
                   </label>
@@ -317,12 +378,18 @@ export function AssistantPanel({
                       if (!busy) event.currentTarget.form?.requestSubmit();
                     }
                   }}
-                  className="max-h-40 min-h-20 resize-y"
+                  className={
+                    compact ? "max-h-24 min-h-14 resize-none" : "max-h-40 min-h-20 resize-y"
+                  }
                 />
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                <div
+                  className={
+                    compact ? "contents" : "flex flex-wrap items-center justify-between gap-2"
+                  }
+                >
                   <p
                     id="assistant-question-hint"
-                    className="max-w-64 text-caption text-muted-foreground"
+                    className={compact ? "sr-only" : "max-w-64 text-caption text-muted-foreground"}
                   >
                     Enter — отправить, Shift + Enter — новая строка.
                   </p>
@@ -344,7 +411,7 @@ export function AssistantPanel({
                   </div>
                 </div>
               </form>
-              <p className="text-caption text-muted-foreground">
+              <p className={compact ? "sr-only" : "text-caption text-muted-foreground"}>
                 История исчезнет после перезагрузки страницы.
               </p>
             </footer>

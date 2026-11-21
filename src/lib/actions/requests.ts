@@ -2,6 +2,7 @@
 
 import { requireUser } from "@/lib/auth/session";
 import type {
+  RequestCatalogItem,
   RequestCreated,
   RequestDetail,
   RequestQueueItem,
@@ -12,6 +13,7 @@ import {
   createRequestForUser,
   getMyRequests as getMyRequestsForUser,
   getRequest as getRequestForActor,
+  listActiveRequestTypes,
   listRequestQueueForActor,
   transitionRequestStatusForActor,
 } from "@/lib/domain/requests";
@@ -34,6 +36,11 @@ import { toActionError } from "./result";
  * Server Actions заявок. `userId` и роль берутся только из проверенной
  * серверной сессии; клиентские идентификаторы игнорируются.
  */
+
+export async function getRequestCatalog(): Promise<RequestCatalogItem[]> {
+  const user = await requireUser();
+  return user.role === "STUDENT" ? listActiveRequestTypes() : [];
+}
 
 export async function createRequest(input: unknown): Promise<ActionResult<RequestCreated>> {
   try {

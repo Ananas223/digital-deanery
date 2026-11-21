@@ -3,7 +3,8 @@ import type { Route } from "next";
 import Link from "next/link";
 
 import { REQUEST_TYPE_DETAILS } from "@/components/requests/request-types";
-import { REQUEST_TYPE_CODES } from "@/lib/validation/requests";
+import { getRequestCatalog } from "@/lib/actions/requests";
+import { formatWorkingDays } from "@/lib/format";
 
 const TYPE_ICONS = {
   STUDY_CERTIFICATE: FileCheck2,
@@ -12,7 +13,9 @@ const TYPE_ICONS = {
   RETAKE: RotateCcw,
 } as const;
 
-export function RequestCatalog() {
+export async function RequestCatalog() {
+  const catalog = await getRequestCatalog();
+
   return (
     <section id="request-catalog" aria-labelledby="request-catalog-heading" className="space-y-4">
       <div className="space-y-1">
@@ -20,11 +23,14 @@ export function RequestCatalog() {
           С чего начнём?
         </h2>
         <p className="max-w-prose text-meta text-muted-foreground">
-          Выберите обращение. Плановая дата готовности появится после отправки.
+          Срок подготовки указан в рабочих днях. Плановая дата готовности появится после отправки.
         </p>
       </div>
+      {catalog.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Доступных типов заявок пока нет.</p>
+      ) : null}
       <ul className="grid min-w-0 gap-3 sm:grid-cols-2">
-        {REQUEST_TYPE_CODES.map((code) => {
+        {catalog.map(({ code, title, description, processingDays }) => {
           const details = REQUEST_TYPE_DETAILS[code];
           const Icon = TYPE_ICONS[code];
           return (
@@ -37,9 +43,12 @@ export function RequestCatalog() {
                   <Icon aria-hidden="true" className="size-6" />
                   <ArrowUpRight aria-hidden="true" className="size-4" />
                 </div>
-                <h3 className="text-lg leading-6 font-semibold">{details.title}</h3>
+                <h3 className="text-lg leading-6 font-semibold">{title}</h3>
                 <p className="mt-2 max-w-prose text-sm leading-6 text-muted-foreground">
-                  {details.description}
+                  {description}
+                </p>
+                <p className="mt-3 text-sm font-medium text-foreground">
+                  Срок подготовки: {formatWorkingDays(processingDays)}
                 </p>
                 <p className="mt-4 border-t border-border pt-3 text-meta text-muted-foreground">
                   <span className="font-medium text-foreground">Понадобится </span>

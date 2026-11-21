@@ -68,6 +68,21 @@ describe("учебные недели", () => {
     expect(getStudyWeekNumber(nextMonday)).toBe(2);
   });
 
+  it.each(["2026-08-31T00:00:00+03:00", "2026-09-01T12:00:00+03:00", "2026-09-06T23:59:59+03:00"])(
+    "считает %s первым учебным периодом независимо от месяца",
+    (stamp) => {
+      const day = new Date(stamp);
+      expect(getMoscowDateKey(getAcademicYearStart(day))).toBe("2026-08-31");
+      expect(getStudyWeekNumber(startOfMoscowWeek(day))).toBe(1);
+    },
+  );
+
+  it("не переносит воскресенье предыдущей недели в новый учебный год", () => {
+    expect(getMoscowDateKey(getAcademicYearStart(new Date("2026-08-30T23:59:59+03:00")))).toBe(
+      "2025-09-01",
+    );
+  });
+
   it("нумерует недели ноября", () => {
     expect(getStudyWeekNumber(new Date("2026-11-14T12:00:00.000Z"))).toBe(11);
   });

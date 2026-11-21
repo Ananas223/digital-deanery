@@ -150,11 +150,14 @@
 | `createRequest`           | `(input: CreateRequestInput) => Promise<ActionResult<RequestCreated>>`      | `STUDENT`                        | `VALIDATION_ERROR`, `RATE_LIMITED`, `CONFLICT`, `FORBIDDEN`           |
 | `cancelRequest`           | `(requestId: string) => Promise<ActionResult<void>>`                        | `STUDENT`-владелец               | `NOT_FOUND` (в т. ч. чужая), `FORBIDDEN` (роль), `INVALID_TRANSITION` |
 | `getMyRequests`           | `(filter?: RequestListQuery) => Promise<RequestSummary[]>`                  | `STUDENT`                        | —                                                                     |
+| `getRequestCatalog`       | `() => Promise<RequestCatalogItem[]>`                                       | `STUDENT`                        | —                                                                     |
 | `getRequest`              | `(requestId: string) => Promise<RequestDetail \| null>`                     | владелец; сотрудник — по матрице | `NOT_FOUND`                                                           |
 | `transitionRequestStatus` | `(input: RequestStatusTransitionInput) => Promise<ActionResult<void>>`      | `DEAN_EMPLOYEE`                  | `NOT_FOUND`, `FORBIDDEN`, `INVALID_TRANSITION`, `VALIDATION_ERROR`    |
 | `listRequestQueue`        | `(filter?: RequestQueueQuery) => Promise<ActionResult<RequestQueueItem[]>>` | `DEAN_EMPLOYEE`                  | `FORBIDDEN`, `VALIDATION_ERROR`                                       |
 
 `ActionResult<T> = { ok: true; data: T } | { ok: false; error: { code: string; message: string; requestId: string } }`.
+
+`getRequestCatalog()` читает активные типы, поддержанные формами: `code`, `title`, `description`, `processingDays`, порядок из `sortOrder`. `/requests/new` и выбранная форма показывают этот норматив в рабочих днях до подачи. После подачи подтверждение показывает уже рассчитанную сервером дату `dueAt`. Неактивный тип недоступен и по прямой ссылке.
 
 `listRequestQueue` без фильтра возвращает `NEW` и `IN_PROGRESS`: сначала новые, затем взятые в работу, внутри группы — старые сверху. Явный фильтр показывает выбранный статус от новых к старым. Некорректный статус даёт `VALIDATION_ERROR`, а не пустой список.
 

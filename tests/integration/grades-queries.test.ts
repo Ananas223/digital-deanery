@@ -253,6 +253,7 @@ beforeAll(async () => {
       assessmentType: "EXAM",
       startsAt: new Date("2030-12-20T06:00:00.000Z"),
       endsAt: new Date("2030-12-20T08:30:00.000Z"),
+      previousStartsAt: new Date("2030-12-19T09:00:00.000Z"),
       ...(room ? { roomId: room.id } : {}),
       ...(teacher?.teacherId ? { teacherId: teacher.teacherId } : {}),
     },
@@ -455,6 +456,8 @@ describe("сессия семестра", () => {
     expect(exam?.discipline.code).toBe("MO-101");
     expect(exam?.assessmentType).toBe("EXAM");
     expect(exam?.teacherName).toBe("Ирина Владимировна Соколова");
+    expect(exam?.previousStartsAt?.toISOString()).toBe("2030-12-19T09:00:00.000Z");
+    expect(exam?.startsAt.toISOString()).toBe("2030-12-20T06:00:00.000Z");
     expect(exam?.room).toEqual({ buildingCode: "A", number: "203", name: "Аудитория 203" });
     expect(exam?.result).toEqual({ score: 5, status: "PASSED" });
   });
@@ -465,5 +468,29 @@ describe("сессия семестра", () => {
     expect(mark?.session).toHaveLength(1);
     expect(mark?.session[0]?.discipline.code).toBe("MO-104");
     expect(mark?.session.some((exam) => exam.discipline.code === "MO-101")).toBe(false);
+  });
+
+  it("до даты публикации скрывает черновые экзамены только у соответствующей группы", async () => {
+    const { groupId } = await getProfile(fixture.annaId);
+    const expectedAt = new Date("2030-10-19T07:00:00.000Z");
+    const publishedAt = new Date("2030-10-20T07:00:00.000Z");
+    const key = { semesterId: fixture.currentSemesterId, groupId };
+    await prisma.sessionPublication.create({ data: { ...key, expectedAt, publishedAt } });
+    try {
+      const [anna, mark, afterPublication] = await Promise.all([
+        getSemesterOverview(fixture.annaId, fixture.currentSemesterId, NOW),
+        getSemesterOverview(fixture.markId, fixture.currentSemesterId, NOW),
+        getSemesterOverview(fixture.annaId, fixture.currentSemesterId, publishedAt),
+      ]);
+      expect(anna?.sessionPublication).toEqual({ status: "PENDING", expectedAt });
+      expect(anna?.session).toEqual([]);
+      expect(anna?.grades).toHaveLength(3);
+      expect(mark?.sessionPublication).toBeNull();
+      expect(mark?.session).toHaveLength(1);
+      expect(afterPublication?.sessionPublication).toEqual({ status: "PUBLISHED", publishedAt });
+      expect(afterPublication?.session).toHaveLength(1);
+    } finally {
+      await prisma.sessionPublication.delete({ where: { semesterId_groupId: key } });
+    }
   });
 });

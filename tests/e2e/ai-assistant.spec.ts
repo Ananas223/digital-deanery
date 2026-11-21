@@ -41,6 +41,7 @@ for (const viewport of [
         Boolean(process.env["AI_PROVIDER_API_KEY"]?.trim()),
         "Для этого no-network сценария ключ должен отсутствовать",
       ).toBe(false);
+      if (viewport.width === 360) await annaPage.setViewportSize({ width: 360, height: 636 });
       await annaPage.goto("/");
       await expect(annaPage.getByRole("main").getByRole("heading", { level: 1 })).toBeVisible();
       const api = await annaPage.request.post("/api/ai/chat", {
@@ -67,16 +68,22 @@ for (const viewport of [
           ),
         ).toBeVisible();
         const field = panel.getByRole("textbox", { name: "Ваш вопрос", exact: true });
+        const send = panel.getByRole("button", { name: "Отправить вопрос", exact: true });
         const question = "Что с моими заявками?";
         await field.fill(question);
         const response = annaPage.waitForResponse(
           (response) =>
             response.url().endsWith("/api/ai/chat") && response.request().method() === "POST",
         );
-        await panel.getByRole("button", { name: "Отправить вопрос", exact: true }).click();
+        await send.click();
         expect((await response).status()).toBe(503);
         await expect(panel.getByRole("alert")).toContainText("Блик временно недоступен");
         await expect(panel.getByRole("list", { name: "История диалога" })).toContainText(question);
+        if (viewport.width === 360) {
+          // The no-keyboard error must not push either control out of the composer.
+          await expect(field).toBeInViewport({ ratio: 1 });
+          await expect(send).toBeInViewport({ ratio: 1 });
+        }
         const retryResponse = annaPage.waitForResponse(
           (response) =>
             response.url().endsWith("/api/ai/chat") && response.request().method() === "POST",
@@ -269,6 +276,12 @@ if (assistantEnabled) {
       const fieldBounds = await field.boundingBox();
       expect(fieldBounds!.y).toBeGreaterThanOrEqual(24);
       expect(fieldBounds!.y + fieldBounds!.height).toBeLessThanOrEqual(444);
+      const keyboardNav = await navigation.boundingBox();
+      const keyboardPanel = await panel.boundingBox();
+      expect(keyboardPanel!.y + keyboardPanel!.height).toBeCloseTo(keyboardNav!.y, 0);
+      expect(keyboardNav!.y + keyboardNav!.height).toBeCloseTo(444, 0);
+      const send = panel.getByRole("button", { name: "Отправить вопрос", exact: true });
+      await expect(send).toBeInViewport({ ratio: 1 });
       const animations = await panel
         .locator("svg [data-blik-pose], svg [data-blik-auto-gaze], svg [data-blik-eyes]")
         .evaluateAll((elements) =>
@@ -279,13 +292,38 @@ if (assistantEnabled) {
       await field.press("Enter");
       await expect(panel.getByRole("status")).toHaveText("Ответ Блика готов.");
       await expect(panel.locator("form")).toHaveAttribute("data-submit-count", "1");
-      const send = panel.getByRole("button", { name: "Отправить вопрос", exact: true });
-      await send.scrollIntoViewIfNeeded();
       await expect(send).toBeInViewport({ ratio: 1 });
+      await annaPage.evaluate(() => {
+        const viewport = window.visualViewport!;
+        Object.defineProperty(viewport, "height", { configurable: true, value: innerHeight });
+        Object.defineProperty(viewport, "offsetTop", { configurable: true, value: 0 });
+        viewport.dispatchEvent(new Event("resize"));
+      });
+      await expect
+        .poll(async () => (await panel.boundingBox())!.height)
+        .toBe(originalBounds!.height);
+      await expect.poll(async () => (await navigation.boundingBox())!.y).toBe(navBounds!.y);
       await expectNoHorizontalScroll(annaPage);
       await field.press("Escape");
       await expect(panel).toBeHidden();
       await expect(trigger).toBeFocused();
+
+      await trigger.click();
+      await field.focus();
+      await annaPage.evaluate(() => {
+        const viewport = window.visualViewport!;
+        Object.defineProperty(viewport, "height", { configurable: true, value: 420 });
+        viewport.dispatchEvent(new Event("resize"));
+      });
+      await expect
+        .poll(async () => {
+          const bounds = (await navigation.boundingBox())!;
+          return Math.round(bounds.y + bounds.height);
+        })
+        .toBe(420);
+      await navigation.getByRole("link", { name: "Заявки", exact: true }).click();
+      await expect(annaPage).toHaveURL(/\/requests$/);
+      await expect(panel).toBeHidden();
     });
   });
 }

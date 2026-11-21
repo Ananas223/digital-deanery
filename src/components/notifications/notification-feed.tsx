@@ -20,18 +20,25 @@ import type { NotificationPage } from "@/lib/domain/notifications";
 import { formatNumber } from "@/lib/format";
 import {
   NOTIFICATION_FILTER_CATEGORIES,
+  NOTIFICATION_SCOPES,
   type NotificationFilterCategory,
+  type NotificationScope,
 } from "@/lib/validation/notifications";
 
 import { NotificationCard } from "./notification-card";
-import { NOTIFICATION_LABELS } from "./presentation";
+import { NOTIFICATION_LABELS, notificationFeedHref } from "./presentation";
 
 type NotificationFeedProps = {
   category: NotificationFilterCategory;
+  scope?: NotificationScope;
   initialPage: NotificationPage | null;
 };
 
-export function NotificationFeed({ category, initialPage }: NotificationFeedProps) {
+export function NotificationFeed({
+  category,
+  scope = "ACTIVE",
+  initialPage,
+}: NotificationFeedProps) {
   const router = useRouter();
   const [serverPage, setServerPage] = useState(initialPage);
   const [page, setPage] = useState(initialPage);
@@ -42,6 +49,7 @@ export function NotificationFeed({ category, initialPage }: NotificationFeedProp
   const [loadedMore, setLoadedMore] = useState(false);
   const busy = useRef(false);
   const lastAttempt = useRef<(() => Promise<void>) | null>(null);
+  const archived = scope === "ARCHIVE";
 
   // A server refresh can add events or change reads while this client stays mounted.
   // Keep keyed cards mounted so an expanded card and its focused control survive.
@@ -80,7 +88,7 @@ export function NotificationFeed({ category, initialPage }: NotificationFeedProp
 
   async function reload() {
     await perform("reload", async () => {
-      const fresh = await getNotifications({ category });
+      const fresh = await getNotifications({ category, scope });
       setPage(fresh);
       setUnreadCount(fresh.unreadCount);
       setLoadedMore(false);
@@ -132,7 +140,7 @@ export function NotificationFeed({ category, initialPage }: NotificationFeedProp
     const cursor = page?.nextCursor;
     if (!cursor) return;
     await perform("more", async () => {
-      const more = await getNotifications({ category }, cursor);
+      const more = await getNotifications({ category, scope }, cursor);
       setPage((current) => {
         if (!current) return more;
         const existing = new Set(current.items.map((item) => item.id));
@@ -151,15 +159,29 @@ export function NotificationFeed({ category, initialPage }: NotificationFeedProp
 
   return (
     <div className="min-w-0 space-y-5">
+      <nav
+        aria-label="Лента и архив"
+        className="flex min-w-0 flex-wrap gap-2 border-b border-border pb-3"
+      >
+        {NOTIFICATION_SCOPES.map((value) => (
+          <Link
+            key={value}
+            href={notificationFeedHref(value, category)}
+            aria-current={scope === value ? "page" : undefined}
+            className={buttonVariants({
+              variant: scope === value ? "primary" : "outline",
+              size: "sm",
+            })}
+          >
+            {value === "ACTIVE" ? "Лента" : "Архив"}
+          </Link>
+        ))}
+      </nav>
       <nav aria-label="Категории уведомлений" className="flex min-w-0 flex-wrap gap-2">
         {NOTIFICATION_FILTER_CATEGORIES.map((value) => (
           <Link
             key={value}
-            href={
-              value === "ALL"
-                ? "/notifications"
-                : { pathname: "/notifications", query: { category: value } }
-            }
+            href={notificationFeedHref(scope, value)}
             aria-current={category === value ? "page" : undefined}
             className={buttonVariants({
               variant: category === value ? "primary" : "outline",
@@ -171,7 +193,7 @@ export function NotificationFeed({ category, initialPage }: NotificationFeedProp
         ))}
       </nav>
 
-      {page ? (
+      {page && !archived ? (
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <p className="text-sm text-muted-foreground">
             {unreadCount === null
@@ -253,19 +275,39 @@ export function NotificationFeed({ category, initialPage }: NotificationFeedProp
         <EmptyState
           icon={Bell}
           title={
-            category === "ALL" ? "Уведомлений пока нет" : "В этой категории пока нет уведомлений"
+            archived
+              ? category === "ALL"
+                ? "Архив пока пуст"
+                : "В архиве нет уведомлений этой категории"
+              : category === "ALL"
+                ? "Уведомлений пока нет"
+                : "В этой категории пока нет уведомлений"
           }
           description={
-            category === "ALL"
-              ? "Здесь появятся объявления деканата, изменения расписания и статусы ваших заявок."
-              : "Посмотрите остальные объявления в общей ленте."
+            archived
+              ? "Сюда попадают объявления и события, у которых истёк срок актуальности."
+              : category === "ALL"
+                ? "Здесь появятся объявления деканата, изменения расписания и статусы ваших заявок."
+                : "Посмотрите остальные объявления в общей ленте."
           }
           action={
             <Link
-              href={category === "ALL" ? "/" : "/notifications"}
+              href={
+                archived
+                  ? notificationFeedHref(category === "ALL" ? "ACTIVE" : scope, "ALL")
+                  : category === "ALL"
+                    ? "/"
+                    : "/notifications"
+              }
               className={buttonVariants({ variant: "outline" })}
             >
-              {category === "ALL" ? "На главную" : "Все уведомления"}
+              {archived
+                ? category === "ALL"
+                  ? "В ленту"
+                  : "Все архивные уведомления"
+                : category === "ALL"
+                  ? "На главную"
+                  : "Все уведомления"}
             </Link>
           }
         />
@@ -278,6 +320,7 @@ export function NotificationFeed({ category, initialPage }: NotificationFeedProp
                   item={item}
                   busy={pending !== null}
                   saving={pending === item.id}
+                  archived={archived}
                   onRead={() => void markRead(item.id)}
                 />
               </li>

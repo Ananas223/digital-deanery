@@ -11,16 +11,27 @@ import type { NotificationItem } from "@/lib/domain/notifications";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-import { NOTIFICATION_LABELS, notificationDestination } from "./presentation";
+import {
+  NOTIFICATION_LABELS,
+  NOTIFICATION_SOURCE_LABELS,
+  notificationDestination,
+} from "./presentation";
 
 type NotificationCardProps = {
   item: NotificationItem;
   busy: boolean;
   saving: boolean;
+  archived?: boolean;
   onRead: () => void;
 };
 
-export function NotificationCard({ item, busy, saving, onRead }: NotificationCardProps) {
+export function NotificationCard({
+  item,
+  busy,
+  saving,
+  archived = false,
+  onRead,
+}: NotificationCardProps) {
   const [expanded, setExpanded] = useState(false);
   const headingId = `notification-heading-${item.id}`;
   const contentId = `notification-content-${item.id}`;
@@ -38,7 +49,7 @@ export function NotificationCard({ item, busy, saving, onRead }: NotificationCar
       <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2 text-caption">
         <span className="text-muted-foreground">{NOTIFICATION_LABELS[item.category]}</span>
         {item.priority === "IMPORTANT" ? <Badge variant="info">Важное</Badge> : null}
-        {!item.isRead ? (
+        {!archived && !item.isRead ? (
           <span className="inline-flex items-center gap-1.5 font-medium text-link">
             <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
             Непрочитано
@@ -70,6 +81,11 @@ export function NotificationCard({ item, busy, saving, onRead }: NotificationCar
       >
         {formatDateTime(item.publishedAt)} МСК
       </time>
+      <p className="mt-1 text-caption text-muted-foreground">
+        {item.source
+          ? `Источник: ${NOTIFICATION_SOURCE_LABELS[item.source]}`
+          : "Источник не указан"}
+      </p>
 
       <div id={contentId} hidden={!expanded} className="mt-4 space-y-4 border-t border-border pt-4">
         <p className="max-w-prose text-base leading-relaxed wrap-anywhere whitespace-pre-wrap text-foreground">
@@ -82,24 +98,26 @@ export function NotificationCard({ item, busy, saving, onRead }: NotificationCar
               <ArrowRight aria-hidden="true" className="size-4" />
             </Link>
           ) : null}
-          <Button
-            variant="ghost"
-            aria-disabled={item.isRead || busy}
-            aria-busy={saving || undefined}
-            aria-label={
-              item.isRead ? `Прочитано: ${item.title}` : `Отметить прочитанным: ${item.title}`
-            }
-            onClick={() => {
-              if (!item.isRead && !busy) onRead();
-            }}
-          >
-            {saving ? (
-              <Spinner aria-hidden="true" />
-            ) : (
-              <Check aria-hidden="true" className="size-4" />
-            )}
-            {item.isRead ? "Прочитано" : "Отметить прочитанным"}
-          </Button>
+          {!archived ? (
+            <Button
+              variant="ghost"
+              aria-disabled={item.isRead || busy}
+              aria-busy={saving || undefined}
+              aria-label={
+                item.isRead ? `Прочитано: ${item.title}` : `Отметить прочитанным: ${item.title}`
+              }
+              onClick={() => {
+                if (!item.isRead && !busy) onRead();
+              }}
+            >
+              {saving ? (
+                <Spinner aria-hidden="true" />
+              ) : (
+                <Check aria-hidden="true" className="size-4" />
+              )}
+              {item.isRead ? "Прочитано" : "Отметить прочитанным"}
+            </Button>
+          ) : null}
         </div>
       </div>
     </article>

@@ -4,8 +4,13 @@ import { CalendarDays } from "lucide-react";
 import Link from "next/link";
 
 import { GradeResult } from "@/components/grades/grade-result";
+import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { getAssessmentTypeLabel, type SessionExam } from "@/lib/domain/grades";
+import {
+  getAssessmentTypeLabel,
+  type SessionExam,
+  type SessionPublication,
+} from "@/lib/domain/grades";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { gradesHref, type GradesContext } from "@/lib/ui/grades-query";
 import { formatScheduleTimeRange } from "@/lib/ui/schedule-format";
@@ -13,6 +18,24 @@ import { formatScheduleTimeRange } from "@/lib/ui/schedule-format";
 export function formatSessionRoom(room: SessionExam["room"]): string {
   if (!room) return "Не назначена";
   return `Ауд. ${room.number}${room.name ? ` (${room.name})` : ""} · корпус ${room.buildingCode}`;
+}
+
+export function SessionMoveNotice({ exam }: { exam: SessionExam }) {
+  if (!exam.previousStartsAt) return null;
+  return (
+    <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1 text-sm leading-6">
+      <Badge variant="warning">Перенесено</Badge>
+      <span className="text-muted-foreground">
+        Было:{" "}
+        <time dateTime={exam.previousStartsAt.toISOString()}>
+          {formatDateTime(exam.previousStartsAt)}
+        </time>
+        {" · Стало: "}
+        <time dateTime={exam.startsAt.toISOString()}>{formatDateTime(exam.startsAt)}</time>
+        {" МСК"}
+      </span>
+    </div>
+  );
 }
 
 export function SessionExamDetails({ exam }: { exam: SessionExam }) {
@@ -91,6 +114,7 @@ function SessionGroup({
                 </Link>
               </h3>
             </div>
+            <SessionMoveNotice exam={exam} />
             <SessionExamDetails exam={exam} />
           </li>
         ))}
@@ -101,13 +125,29 @@ function SessionGroup({
 
 export function SessionList({
   session,
+  publication,
   context,
   now,
 }: {
   session: SessionExam[];
+  publication: SessionPublication | null;
   context: GradesContext;
   now: Date;
 }) {
+  if (publication?.status === "PENDING") {
+    return (
+      <EmptyState
+        icon={CalendarDays}
+        title="Расписание сессии ещё не опубликовано"
+        description={
+          publication.expectedAt
+            ? `Ориентир публикации — ${formatDate(publication.expectedAt)}. Точные даты экзаменов появятся здесь после публикации.`
+            : "Деканат уточняет срок. Даты экзаменов появятся здесь после публикации."
+        }
+      />
+    );
+  }
+
   if (session.length === 0) {
     return (
       <EmptyState
