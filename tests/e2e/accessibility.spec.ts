@@ -1,4 +1,4 @@
-import { DEMO_STUDENTS, emailField, expect, passwordField, test } from "./fixtures";
+import { emailField, expect, passwordField, test } from "./fixtures";
 
 /**
  * AGENTS.md § 5.4: клавиатура, видимый фокус, подписи полей и текстовые статусы.
@@ -30,14 +30,20 @@ test.describe("Доступность каркаса", () => {
     await expect(password).toHaveAttribute("aria-required", "true");
   });
 
-  test("ошибка входа объявляется как alert, а не только цветом", async ({ page }) => {
+  test("сводка ошибок формы ведёт к соответствующим полям с клавиатуры", async ({ page }) => {
     await page.goto("/login");
 
-    await emailField(page).fill(DEMO_STUDENTS.anna.email);
-    await passwordField(page).fill("WrongPassword#1");
-    await page.getByRole("button", { name: "Войти", exact: true }).click();
+    // auth.spec.ts already checks the server's invalid-password alert.
+    await page.getByRole("button", { name: "Войти", exact: true }).press("Enter");
+    const summary = page.getByRole("alert").filter({ hasText: "Проверьте поля" });
+    await expect(summary).toBeVisible();
 
-    await expect(page.getByRole("alert").filter({ hasText: "Не удалось войти" })).toBeVisible();
+    await summary
+      .getByRole("button", { name: "Пароль не короче 8 символов", exact: true })
+      .press("Enter");
+    await expect(passwordField(page)).toBeFocused();
+    await summary.getByRole("button", { name: /^Введите e-mail в формате/ }).press("Enter");
+    await expect(emailField(page)).toBeFocused();
   });
 
   test("кнопка выхода доступна с клавиатуры и диалог закрывается по Escape", async ({

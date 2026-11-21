@@ -105,12 +105,13 @@ export function RequestForm({
   const submissionId = useRef<string | null>(null);
   const inFlight = useRef(false);
   const receiptHeading = useRef<HTMLHeadingElement>(null);
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<RequestCreated | null>(null);
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, submitCount },
   } = useForm<RequestFormValues>({
     defaultValues: { ...EMPTY_VALUES, ...initialValues },
     mode: "onBlur",
@@ -120,6 +121,10 @@ export function RequestForm({
 
   const retake = typeCode === "RETAKE";
   const missingDisciplines = retake && disciplines.length === 0;
+  const validationMessages = Array.from(
+    new Set(Object.values(errors).flatMap((field) => (field?.message ? [field.message] : []))),
+  );
+  const showValidationSummary = submitCount > 0 && validationMessages.length > 0;
 
   useEffect(() => {
     if (created) receiptHeading.current?.focus({ preventScroll: true });
@@ -145,7 +150,8 @@ export function RequestForm({
     }
 
     inFlight.current = true;
-    setError(null);
+    // Lock the controls only for a valid request, not while validation moves focus.
+    setIsSending(true);
     try {
       const result = await createRequest(parsed.data);
       if (!result.ok) {
@@ -160,6 +166,7 @@ export function RequestForm({
       );
     } finally {
       inFlight.current = false;
+      setIsSending(false);
     }
   }
 
@@ -209,6 +216,9 @@ export function RequestForm({
           <Link href="/requests" className={buttonVariants({ variant: "outline" })}>
             Мои заявки
           </Link>
+          <Link href="/" className={buttonVariants({ variant: "ghost" })}>
+            На главную
+          </Link>
         </div>
       </section>
     );
@@ -216,16 +226,39 @@ export function RequestForm({
 
   return (
     <form
+      method="post"
       onSubmit={(event) => {
+        event.preventDefault();
+        if (inFlight.current) return;
+        setError(null);
         void handleSubmit(submit)(event);
       }}
       aria-labelledby="request-form-heading"
+      aria-busy={isSending || undefined}
       className="space-y-5"
       noValidate
     >
       <h2 id="request-form-heading" className="text-xl font-semibold text-foreground">
         Данные обращения
       </h2>
+      <div
+        role="status"
+        aria-atomic="true"
+        className={
+          showValidationSummary
+            ? "space-y-1 rounded-card border border-danger/30 bg-danger-muted p-4 text-sm text-foreground"
+            : "sr-only"
+        }
+      >
+        {showValidationSummary ? <p className="font-semibold">Проверьте поля заявки</p> : null}
+        {validationMessages.length > 0 ? (
+          <ul className="list-disc space-y-1 ps-5">
+            {validationMessages.map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
       {error ? (
         <Alert tone="danger" title="Заявка не подтверждена">
           {error}
@@ -253,7 +286,7 @@ export function RequestForm({
           </Link>
         </Alert>
       ) : null}
-      <fieldset className="min-w-0 space-y-5" disabled={isSubmitting}>
+      <fieldset className="min-w-0 space-y-5" disabled={isSending}>
         <legend className="sr-only">Обязательные поля и комментарий</legend>
         {typeCode === "PLACE_REQUIREMENT" ? (
           <Field
@@ -266,6 +299,7 @@ export function RequestForm({
             {(control) => (
               <Input
                 {...control}
+                aria-invalid={control["aria-invalid"] ?? false}
                 {...register("organizationName")}
                 required
                 minLength={2}
@@ -286,6 +320,7 @@ export function RequestForm({
             {(control) => (
               <Input
                 {...control}
+                aria-invalid={control["aria-invalid"] ?? false}
                 {...register("deliveryPlace")}
                 required
                 minLength={5}
@@ -305,6 +340,7 @@ export function RequestForm({
             {(control) => (
               <Select
                 {...control}
+                aria-invalid={control["aria-invalid"] ?? false}
                 {...register("disciplineId")}
                 required
                 disabled={missingDisciplines}
@@ -330,6 +366,7 @@ export function RequestForm({
             {(control) => (
               <Textarea
                 {...control}
+                aria-invalid={control["aria-invalid"] ?? false}
                 {...register("reason")}
                 required
                 minLength={10}
@@ -346,10 +383,26 @@ export function RequestForm({
               required
               error={errors.startDate?.message}
             >
-              {(control) => <Input {...control} {...register("startDate")} type="date" required />}
+              {(control) => (
+                <Input
+                  {...control}
+                  {...register("startDate")}
+                  aria-invalid={control["aria-invalid"] ?? false}
+                  type="date"
+                  required
+                />
+              )}
             </Field>
             <Field id="request-end" label="Дата окончания" required error={errors.endDate?.message}>
-              {(control) => <Input {...control} {...register("endDate")} type="date" required />}
+              {(control) => (
+                <Input
+                  {...control}
+                  {...register("endDate")}
+                  aria-invalid={control["aria-invalid"] ?? false}
+                  type="date"
+                  required
+                />
+              )}
             </Field>
           </div>
         ) : null}
@@ -359,16 +412,23 @@ export function RequestForm({
           hint="Необязательно. До 500 символов."
           error={errors.comment?.message}
         >
-          {(control) => <Textarea {...control} {...register("comment")} maxLength={500} />}
+          {(control) => (
+            <Textarea
+              {...control}
+              {...register("comment")}
+              aria-invalid={control["aria-invalid"] ?? false}
+              maxLength={500}
+            />
+          )}
         </Field>
       </fieldset>
       <p className="text-meta text-muted-foreground">
         После отправки вы получите номер заявки и сможете следить за её статусом в кабинете.
       </p>
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" loading={isSubmitting} disabled={missingDisciplines}>
-          {isSubmitting ? "Отправляем заявку" : "Отправить заявку"}
-          {!isSubmitting ? <ArrowRight aria-hidden="true" className="size-4" /> : null}
+        <Button type="submit" loading={isSending} disabled={missingDisciplines}>
+          {isSending ? "Отправляем заявку" : "Отправить заявку"}
+          {!isSending ? <ArrowRight aria-hidden="true" className="size-4" /> : null}
         </Button>
         <Link href="/requests" className={buttonVariants({ variant: "ghost" })}>
           К моим заявкам

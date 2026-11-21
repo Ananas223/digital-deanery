@@ -30,7 +30,7 @@ function SummarySection({
   children: React.ReactNode;
 }) {
   return (
-    <Card>
+    <Card role="region" aria-label={title}>
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <CardTitle>{title}</CardTitle>
         <Link href={href} className={summaryLink}>
@@ -48,7 +48,9 @@ function GradesOverview({ data }: { data: DashboardData }) {
     return (
       <OverviewError
         title="Учёба не загрузилась"
-        description="Попробуйте обновить этот блок или откройте раздел успеваемости."
+        description="Попробуйте обновить сводку или откройте раздел успеваемости."
+        href="/grades"
+        linkLabel="Открыть успеваемость"
       />
     );
   }
@@ -123,7 +125,9 @@ function RequestsOverview({ data }: { data: DashboardData }) {
     return (
       <OverviewError
         title="Заявки не загрузились"
-        description="Попробуйте обновить этот блок или откройте раздел заявок."
+        description="Попробуйте обновить сводку или откройте раздел заявок."
+        href="/requests"
+        linkLabel="Открыть заявки"
       />
     );
   }
@@ -165,7 +169,9 @@ function NotificationsOverview({ data }: { data: DashboardData }) {
     return (
       <OverviewError
         title="Уведомления не загрузились"
-        description="Попробуйте обновить этот блок или откройте ленту уведомлений."
+        description="Попробуйте обновить сводку или откройте ленту уведомлений."
+        href="/notifications"
+        linkLabel="Открыть уведомления"
       />
     );
   }
@@ -220,6 +226,8 @@ export async function DashboardOverview({ userId, now }: { userId: string; now: 
       <OverviewError
         title="Сводка не загрузилась"
         description="Попробуйте обновить её или откройте нужный раздел в меню."
+        href="/grades"
+        linkLabel="Открыть успеваемость"
       />
     );
   }
@@ -232,7 +240,9 @@ export async function DashboardOverview({ userId, now }: { userId: string; now: 
       {data.unavailable.includes("student") ? (
         <OverviewError
           title="Учебные сведения не загрузились"
-          description="Попробуйте обновить этот блок или откройте профиль."
+          description="Попробуйте обновить сводку или откройте профиль."
+          href="/profile"
+          linkLabel="Открыть профиль"
         />
       ) : (
         <Link
@@ -269,8 +279,13 @@ export function DashboardOverviewSkeleton() {
 
 export function DashboardQuickActions() {
   return (
-    <div className="min-w-0 space-y-2 border-t border-border pt-4">
-      <h2 className="text-base font-semibold text-foreground">Быстрые действия</h2>
+    <section
+      aria-labelledby="dashboard-actions-heading"
+      className="min-w-0 space-y-2 border-t border-border pt-4"
+    >
+      <h2 id="dashboard-actions-heading" className="text-base font-semibold text-foreground">
+        Быстрые действия
+      </h2>
       <div className="flex min-w-0 flex-wrap gap-2">
         <Link href="/requests/new" className={buttonVariants({ variant: "outline", size: "sm" })}>
           <FilePlus2 aria-hidden="true" className="size-4" />
@@ -288,6 +303,6 @@ export function DashboardQuickActions() {
           <ArrowRight aria-hidden="true" className="size-4" />
         </Link>
       </div>
-    </div>
+    </section>
   );
 }

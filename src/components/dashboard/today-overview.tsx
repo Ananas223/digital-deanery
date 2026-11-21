@@ -31,6 +31,8 @@ export async function TodayOverview({ userId, now }: TodayOverviewProps) {
       <OverviewError
         title="Расписание не загрузилось"
         description="Попробуйте обновить расписание. Профиль и остальные разделы по-прежнему доступны."
+        href="/schedule"
+        linkLabel="Открыть расписание"
       />
     );
   }

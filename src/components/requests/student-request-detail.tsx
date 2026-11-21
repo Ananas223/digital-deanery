@@ -146,7 +146,7 @@ export function StudentRequestDetail({ request }: { request: RequestDetail }) {
             </CardContent>
           </Card>
           <Link
-            href="/notifications"
+            href="/notifications?category=REQUESTS"
             className="inline-flex min-h-11 items-center gap-2 rounded-md py-2 text-sm font-medium text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             Уведомления по заявкам <ArrowRight aria-hidden="true" className="size-4" />

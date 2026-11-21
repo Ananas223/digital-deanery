@@ -67,7 +67,7 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
   const failedToResolveEmptyState =
     !overview && (semesters === null || (semesters.length === 0 && profile === undefined));
   return (
-    <div className="min-w-0 space-y-6 sm:space-y-8">
+    <div className="min-w-0 space-y-6 wrap-anywhere sm:space-y-8">
       <PageHeader
         title="Успеваемость"
         description={

@@ -33,6 +33,7 @@ type NotificationFeedProps = {
 
 export function NotificationFeed({ category, initialPage }: NotificationFeedProps) {
   const router = useRouter();
+  const [serverPage, setServerPage] = useState(initialPage);
   const [page, setPage] = useState(initialPage);
   const [unreadCount, setUnreadCount] = useState<number | null>(initialPage?.unreadCount ?? null);
   const [pending, setPending] = useState<string | null>(null);
@@ -41,6 +42,15 @@ export function NotificationFeed({ category, initialPage }: NotificationFeedProp
   const [loadedMore, setLoadedMore] = useState(false);
   const busy = useRef(false);
   const lastAttempt = useRef<(() => Promise<void>) | null>(null);
+
+  // A server refresh can add events or change reads while this client stays mounted.
+  // Keep keyed cards mounted so an expanded card and its focused control survive.
+  if (initialPage !== serverPage) {
+    setServerPage(initialPage);
+    setPage(initialPage);
+    setUnreadCount(initialPage?.unreadCount ?? null);
+    setLoadedMore(false);
+  }
 
   async function perform(key: string, operation: () => Promise<void>) {
     if (busy.current) return;
@@ -74,6 +84,8 @@ export function NotificationFeed({ category, initialPage }: NotificationFeedProp
       setPage(fresh);
       setUnreadCount(fresh.unreadCount);
       setLoadedMore(false);
+      setNotice("Лента обновлена.");
+      router.refresh();
     });
   }
 
@@ -166,22 +178,40 @@ export function NotificationFeed({ category, initialPage }: NotificationFeedProp
               ? "Счётчик временно недоступен"
               : `Непрочитанных ${formatNumber(unreadCount)}`}
           </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-disabled={pending !== null || unreadCount === 0}
-            aria-busy={pending === "all" || undefined}
-            onClick={() => {
-              if (pending === null) void markAllRead();
-            }}
-          >
-            {pending === "all" ? (
-              <Spinner aria-hidden="true" />
-            ) : (
-              <CheckCheck aria-hidden="true" className="size-4" />
-            )}
-            Отметить всё прочитанным
-          </Button>
+          <div className="flex min-w-0 flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              aria-disabled={pending !== null}
+              aria-busy={pending === "reload" || undefined}
+              onClick={() => {
+                if (pending === null) void reload();
+              }}
+            >
+              {pending === "reload" ? (
+                <Spinner aria-hidden="true" />
+              ) : (
+                <RefreshCw aria-hidden="true" className="size-4" />
+              )}
+              Обновить ленту
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-disabled={pending !== null || unreadCount === 0}
+              aria-busy={pending === "all" || undefined}
+              onClick={() => {
+                if (pending === null) void markAllRead();
+              }}
+            >
+              {pending === "all" ? (
+                <Spinner aria-hidden="true" />
+              ) : (
+                <CheckCheck aria-hidden="true" className="size-4" />
+              )}
+              Отметить всё прочитанным
+            </Button>
+          </div>
         </div>
       ) : null}
 

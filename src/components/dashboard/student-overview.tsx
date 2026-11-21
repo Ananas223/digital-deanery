@@ -24,6 +24,8 @@ export async function StudentOverview({ userId }: StudentOverviewProps) {
       <OverviewError
         title="Учебные сведения не загрузились"
         description="Попробуйте обновить данные. Расписание можно смотреть независимо от этого блока."
+        href="/profile"
+        linkLabel="Открыть профиль"
       />
     );
   }

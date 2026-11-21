@@ -48,10 +48,10 @@ export default async function LessonPage({ params, searchParams }: LessonPagePro
   const effective = lesson.effective;
   const changes = scheduleChangeViews(lesson);
   return (
-    <div className="min-w-0 space-y-6">
+    <div className="min-w-0 space-y-6 wrap-anywhere">
       <Link
         href={scheduleHref(context, context.view === "week")}
-        className="inline-flex min-h-11 items-center gap-2 rounded-sm text-sm font-medium text-link underline-offset-4 hover:underline"
+        className="inline-flex min-h-11 items-center gap-2 rounded-sm text-sm font-medium text-link underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />К расписанию
       </Link>
@@ -117,7 +117,7 @@ export default async function LessonPage({ params, searchParams }: LessonPagePro
       </article>
       <Link
         href={scheduleDisciplineHref(effective.discipline.id, context)}
-        className="inline-flex min-h-11 items-center rounded-sm font-medium text-link underline underline-offset-4"
+        className="inline-flex min-h-11 items-center rounded-sm font-medium text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         Успеваемость по дисциплине
       </Link>

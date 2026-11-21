@@ -59,7 +59,7 @@ export function WeekAgenda({ days, context, initialNow }: WeekAgendaProps) {
               </h2>
               <Link
                 href={scheduleHref({ ...context, view: "day", day: day.date })}
-                className="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-link underline underline-offset-4"
+                className="inline-flex min-h-11 items-center rounded-sm text-sm font-medium text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 aria-label={`Открыть день: ${formatScheduleDayHeading(day.startsAt)}`}
               >
                 Открыть день

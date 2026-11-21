@@ -149,7 +149,7 @@ export function AssistantPanel({
                 </BaseDialog.Close>
               </div>
               <BaseDialog.Description className="mt-2 text-caption text-muted-foreground">
-                Отвечаю по вашим данным. Изменения — в разделах кабинета.
+                Читаю только ваши данные. Не создаю и не меняю заявки, оценки и уведомления.
               </BaseDialog.Description>
             </header>
 
@@ -232,6 +232,21 @@ export function AssistantPanel({
                     Ответ остановлен. Можно повторить вопрос или задать новый.
                   </p>
                 ) : null}
+                <nav
+                  aria-label="Разделы кабинета из помощника"
+                  className="mt-5 flex flex-wrap gap-x-4 border-t border-border pt-3"
+                >
+                  {SECTIONS.map((section) => (
+                    <Link
+                      key={section.href}
+                      href={section.href}
+                      className="inline-flex min-h-11 items-center rounded-sm text-sm text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      onClick={() => assistant.closeAssistant(false)}
+                    >
+                      {section.label}
+                    </Link>
+                  ))}
+                </nav>
               </div>
             </div>
 
@@ -258,20 +273,6 @@ export function AssistantPanel({
                   <RotateCcw aria-hidden="true" className="size-4" />
                   Повторить вопрос
                 </Button>
-              ) : null}
-              {assistant.error ? (
-                <nav aria-label="Разделы кабинета из помощника" className="flex flex-wrap gap-x-4">
-                  {SECTIONS.map((section) => (
-                    <Link
-                      key={section.href}
-                      href={section.href}
-                      className="inline-flex min-h-11 items-center rounded-sm text-sm text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                      onClick={() => assistant.closeAssistant(false)}
-                    >
-                      {section.label}
-                    </Link>
-                  ))}
-                </nav>
               ) : null}
               <form onSubmit={submitQuestion} className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
@@ -309,7 +310,8 @@ export function AssistantPanel({
                     if (
                       event.key === "Enter" &&
                       !event.shiftKey &&
-                      !event.nativeEvent.isComposing
+                      !event.nativeEvent.isComposing &&
+                      event.nativeEvent.keyCode !== 229
                     ) {
                       event.preventDefault();
                       if (!busy) event.currentTarget.form?.requestSubmit();
