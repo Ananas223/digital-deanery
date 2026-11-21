@@ -12,7 +12,8 @@ import {
 import { addMoscowWorkingDays, getMoscowYear } from "../src/lib/domain/request-time";
 
 const prisma = createPrismaClient();
-const auth = createAuth(prisma);
+// Seed создаёт демо-аккаунты сам; публичная регистрация в приложении закрыта.
+const auth = createAuth(prisma, { allowSignUp: true });
 
 /** Пароль демо-аккаунтов для жюри; в БД хранится только scrypt-хеш Better Auth. */
 const DEMO_PASSWORD = "Deanery#2026";

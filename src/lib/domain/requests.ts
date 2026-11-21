@@ -10,6 +10,7 @@ import {
   getRequestStatusDedupeKey,
   REQUEST_NOTIFICATION_SOURCE,
 } from "@/lib/domain/request-notifications";
+import { assertOwnership } from "@/lib/domain/access";
 import { addMoscowWorkingDays, getMoscowYear } from "@/lib/domain/request-time";
 import {
   canTransition,
@@ -500,6 +501,12 @@ export async function getRequest(
 
   if (!request) {
     return null;
+  }
+
+  if (actor.role === "STUDENT" && studentId) {
+    // Инвариант поверх фильтра в запросе: даже при будущем рефакторинге выборки
+    // студент не получит чужую заявку — ответ останется нейтральным `NOT_FOUND`.
+    assertOwnership(request.studentId, studentId);
   }
 
   const parsedPayload = requestPayloadSchema.safeParse({

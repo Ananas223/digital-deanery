@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import { LessonChanges } from "@/components/schedule/lesson-changes";
 import { Alert } from "@/components/ui/alert";
@@ -22,13 +23,32 @@ import {
   type ScheduleSearchParams,
 } from "@/lib/ui/schedule-query";
 
-export const metadata: Metadata = { title: "Занятие — Расписание" };
 export const dynamic = "force-dynamic";
 
 type LessonPageProps = {
   params: Promise<{ lessonId: string }>;
   searchParams: Promise<ScheduleSearchParams>;
 };
+
+const loadLessonCard = cache(getLessonCard);
+
+/**
+ * Проверка существования занятия до начала стриминга.
+ *
+ * Сегментный `loading.tsx` отправляет оболочку раньше, чем страница вызовет
+ * `notFound()`, и ответ получает статус 200. Метаданные резолвятся до первого
+ * flush, поэтому неизвестный `lessonId` возвращает настоящий 404.
+ */
+export async function generateMetadata({ params }: LessonPageProps): Promise<Metadata> {
+  const user = await requireUser();
+  const { lessonId } = await params;
+
+  if (!(await loadLessonCard(user.id, lessonId))) {
+    notFound();
+  }
+
+  return { title: "Занятие — Расписание" };
+}
 
 function DetailField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -42,7 +62,7 @@ function DetailField({ label, children }: { label: string; children: React.React
 export default async function LessonPage({ params, searchParams }: LessonPageProps) {
   const user = await requireUser();
   const { lessonId } = await params;
-  const lesson = await getLessonCard(user.id, lessonId);
+  const lesson = await loadLessonCard(user.id, lessonId);
   if (!lesson) notFound();
   const context = readScheduleContext(await searchParams, new Date(), lesson.effective.startsAt);
   const effective = lesson.effective;

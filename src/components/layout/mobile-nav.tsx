@@ -9,6 +9,7 @@ import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const mobileLabels: Record<string, string> = {
+  "/schedule": "Пары",
   "/grades": "Учёба",
   "/notifications": "События",
 };
@@ -59,7 +60,7 @@ export function MobileNav({ unreadCount }: { unreadCount?: number }) {
                     </span>
                   ) : null}
                 </span>
-                <span className="max-w-full wrap-anywhere whitespace-normal">
+                <span className="max-w-full whitespace-nowrap">
                   {visibleLabel}
                   {visibleLabel !== item.label ? (
                     <span className="sr-only">: {item.label}</span>

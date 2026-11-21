@@ -4,9 +4,9 @@ import { ScheduleReturnLink } from "@/components/schedule/schedule-return-link";
 import { ErrorState } from "@/components/ui/error-state";
 import { PageHeader } from "@/components/ui/page-header";
 
-type ScheduleErrorPanelProps = { retry: () => void; detail?: boolean };
+type ScheduleErrorPanelProps = { onRetry: () => void; detail?: boolean };
 
-export function ScheduleErrorPanel({ retry, detail = false }: ScheduleErrorPanelProps) {
+export function ScheduleErrorPanel({ onRetry, detail = false }: ScheduleErrorPanelProps) {
   return (
     <div className="space-y-6">
       {detail ? <ScheduleReturnLink /> : null}
@@ -14,7 +14,7 @@ export function ScheduleErrorPanel({ retry, detail = false }: ScheduleErrorPanel
       <ErrorState
         title={detail ? "Не удалось открыть занятие" : "Не удалось загрузить расписание"}
         description="Попробуйте ещё раз. Выбранный день и неделя сохранятся."
-        onRetry={retry}
+        onRetry={onRetry}
       />
     </div>
   );

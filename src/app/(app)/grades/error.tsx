@@ -1,11 +1,22 @@
 "use client";
 
+import { ErrorBoundaryReporter } from "@/components/ui/error-boundary-reporter";
 import { ErrorState } from "@/components/ui/error-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { useErrorRetry } from "@/components/ui/use-error-retry";
 
-export default function GradesError({ retry }: { retry: () => void }) {
+export default function GradesError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  const retry = useErrorRetry(reset);
+
   return (
     <div className="min-w-0 space-y-6">
+      <ErrorBoundaryReporter digest={error.digest} />
       <PageHeader title="Успеваемость" />
       <ErrorState
         title="Не удалось открыть успеваемость"
