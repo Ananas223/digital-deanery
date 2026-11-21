@@ -27,10 +27,18 @@ test.describe("Главный экран и навигация", () => {
     await expect(navigation).toBeVisible();
 
     for (const section of SECTIONS) {
-      const link = navigation.getByRole("link", { name: section.label, exact: true });
+      const name =
+        section.path === "/notifications"
+          ? /^Уведомления(?: Непрочитанных [\d\s]+)?$/
+          : section.label;
+      const link = navigation.getByRole("link", { name, exact: true });
       await expect(link).toBeVisible();
       await expect(link).toHaveAttribute("href", section.path);
     }
+
+    await expect(
+      main.getByRole("heading", { level: 2, name: "Быстрые действия", exact: true }),
+    ).toBeVisible();
 
     // Пометка о конкурсном концепте видна в футере (A-10).
     await expect(annaPage.getByText("Учебный концепт для конкурса")).toBeVisible();

@@ -1,7 +1,6 @@
 import "dotenv/config";
 
-import { execFileSync } from "node:child_process";
-import path from "node:path";
+import { runLocalBin } from "../setup/run-local-bin";
 
 const rootDir = process.cwd();
 
@@ -32,14 +31,6 @@ function getTestDatabaseUrl(): string {
   return testDatabaseUrl;
 }
 
-function runLocalBin(bin: string, args: string[], env: NodeJS.ProcessEnv): void {
-  execFileSync(path.resolve(rootDir, "node_modules/.bin", bin), args, {
-    cwd: rootDir,
-    env,
-    stdio: "inherit",
-  });
-}
-
 export default function globalSetup(): void {
   const testDatabaseUrl = getTestDatabaseUrl();
 
@@ -50,6 +41,6 @@ export default function globalSetup(): void {
     NEXT_PUBLIC_APP_URL: process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3100",
   };
 
-  runLocalBin("prisma", ["migrate", "deploy"], env);
-  runLocalBin("tsx", ["prisma/seed.ts"], env);
+  runLocalBin(rootDir, "prisma", ["migrate", "deploy"], env);
+  runLocalBin(rootDir, "tsx", ["prisma/seed.ts"], env);
 }
