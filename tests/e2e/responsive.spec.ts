@@ -1,7 +1,9 @@
 import {
   DEMO_STUDENTS,
+  emailField,
   expect,
   expectNoHorizontalScroll,
+  passwordField,
   SECTIONS,
   test,
   VIEWPORTS,
@@ -27,6 +29,20 @@ for (const viewport of VIEWPORTS) {
       ).toBeVisible();
       await expectNoHorizontalScroll(page);
     });
+
+    if (viewport.width === 360) {
+      test("US-01: вход и главный экран на 360 px", async ({ page }) => {
+        await page.goto("/login");
+
+        await emailField(page).fill(DEMO_STUDENTS.anna.email);
+        await passwordField(page).fill(DEMO_STUDENTS.anna.password);
+        await page.getByRole("button", { name: "Войти", exact: true }).click();
+
+        await expect(page).toHaveURL(/\/$/);
+        await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toBeVisible();
+        await expectNoHorizontalScroll(page);
+      });
+    }
 
     test("главный экран и все разделы помещаются по ширине", async ({ annaPage }) => {
       for (const path of ["/", ...SECTIONS.map((section) => section.path)]) {
