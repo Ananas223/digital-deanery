@@ -18,6 +18,15 @@ for (const viewport of [
       await expect(main.getByText("Задолженности", { exact: true })).toBeVisible();
       await expect(main.getByRole("region", { name: "Активные заявки" })).toBeVisible();
       await expect(main.getByRole("region", { name: "Уведомления", exact: true })).toBeVisible();
+      await expect(main.getByRole("heading", { name: "Утренний бриф", exact: true })).toBeVisible();
+      const briefCards = main.getByRole("region", {
+        name: /Сейчас|Далее|Изменилось|Требует действия/,
+      });
+      if ((await briefCards.count()) === 0) {
+        await expect(main.getByText("Пока всё спокойно", { exact: true })).toBeVisible();
+      } else {
+        await expect(briefCards.first()).toBeVisible();
+      }
       expect(Date.now() - started).toBeLessThan(60_000);
       await expectNoHorizontalScroll(annaPage);
 

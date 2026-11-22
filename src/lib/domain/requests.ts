@@ -413,6 +413,33 @@ export async function getActiveRequestsForUser(userId: string): Promise<RequestS
 }
 
 /**
+ * Заявки для утреннего брифа: новые, в работе и готовые, новые сверху.
+ *
+ * Отдельная выборка не меняет контракт блока активных заявок: готовность тоже
+ * требует действия студента — забрать документ. `userId` приходит только из
+ * проверенной сессии; чужой профиль сюда не передаётся.
+ */
+export async function getRequestsForMorningBrief(
+  userId: string,
+  limit = 20,
+): Promise<RequestSummary[]> {
+  const studentId = await getStudentProfileId(userId);
+
+  if (!studentId) {
+    return [];
+  }
+
+  const requests = await prisma.request.findMany({
+    where: { studentId, status: { in: ["NEW", "IN_PROGRESS", "READY"] } },
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+    take: Math.min(50, Math.max(1, Math.trunc(limit))),
+    select: summarySelect,
+  });
+
+  return requests.map(toSummary);
+}
+
+/**
  * Очередь сотрудника деканата. Без фильтра показывает активные заявки:
  * сначала новые, затем взятые в работу; внутри группы — старые сверху.
  * Явный фильтр статуса показывает выбранную колонку от новых к старым.

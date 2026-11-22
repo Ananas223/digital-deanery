@@ -7,3 +7,6 @@ playwright-report
 test-results
 src/generated
 package-lock.json
+
+# CSV has no Prettier parser; columns are validated separately
+docs/process/ai-runs.csv
