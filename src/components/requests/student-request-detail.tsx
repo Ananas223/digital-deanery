@@ -12,8 +12,20 @@ import { PageHeader } from "@/components/ui/page-header";
 import { isCertificateType } from "@/lib/domain/certificates";
 import type { RequestDetail } from "@/lib/domain/requests";
 import { REQUEST_STATUS_LABELS } from "@/lib/domain/request-status";
+import {
+  buildRequestTimeline,
+  type RequestTimelineState,
+} from "@/lib/domain/request-timeline";
 import { formatDateTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { requestPayloadSchema } from "@/lib/validation/requests";
+
+const TIMELINE_STATE_LABELS: Record<RequestTimelineState, string> = {
+  done: "Выполнено",
+  current: "Сейчас",
+  upcoming: "Впереди",
+  stopped: "Остановлено",
+};
 
 const NEXT_STEPS = {
   NEW: "Обращение зарегистрировано. Деканат возьмёт его в работу. Пока обработка не началась, заявку можно отменить.",
@@ -32,6 +44,7 @@ export function StudentRequestDetail({ request }: { request: RequestDetail }) {
   });
   const repeatable = request.status === "REJECTED" || request.status === "CANCELLED";
   const printable = request.status === "READY" && isCertificateType(request.typeCode);
+  const timeline = buildRequestTimeline(request);
 
   return (
     <div className="min-w-0 space-y-5 wrap-anywhere sm:space-y-6">
@@ -46,6 +59,51 @@ export function StudentRequestDetail({ request }: { request: RequestDetail }) {
       />
       <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(18rem,22rem)]">
         <div className="min-w-0 space-y-5">
+          <Card>
+            <CardHeader>
+              <CardTitle>Доставка заявки</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ol aria-label="Ход обработки заявки" className="space-y-0">
+                {timeline.map((step, index) => (
+                  <li key={step.key} className="relative flex gap-3 pb-5 last:pb-0">
+                    <div className="flex flex-col items-center">
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          "mt-1 size-2.5 shrink-0 rounded-full border-2",
+                          step.state === "done" && "border-success-strong bg-success-strong",
+                          step.state === "current" && "border-link bg-link",
+                          step.state === "upcoming" && "border-border bg-card",
+                          step.state === "stopped" &&
+                            (step.tone === "danger"
+                              ? "border-danger-strong bg-danger-strong"
+                              : "border-muted-foreground bg-muted-foreground"),
+                        )}
+                      />
+                      {index < timeline.length - 1 ? (
+                        <span aria-hidden="true" className="mt-1 w-px flex-1 bg-border" />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        {step.label}
+                        <span className="ml-2 text-caption font-normal text-muted-foreground">
+                          {TIMELINE_STATE_LABELS[step.state]}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-foreground">{step.description}</p>
+                      {step.at ? (
+                        <p className="mt-1 text-caption text-muted-foreground">
+                          <time dateTime={step.at.toISOString()}>{formatDateTime(step.at)}</time>
+                        </p>
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </CardContent>
+          </Card>
           {request.rejectionReason ? (
             <Alert tone="danger" title="Причина отклонения">
               {request.rejectionReason}
@@ -144,6 +202,12 @@ export function StudentRequestDetail({ request }: { request: RequestDetail }) {
                   </dd>
                 </dl>
               ) : null}
+              <dl className="border-t border-border pt-4 text-sm">
+                <dt className="text-muted-foreground">Кто держит заявку</dt>
+                <dd className="mt-1 font-medium text-foreground">
+                  {request.assignedToName ?? "Деканат"}
+                </dd>
+              </dl>
               {request.canCancel ? <CancelRequestButton requestId={request.id} /> : null}
               {repeatable ? (
                 <Link
