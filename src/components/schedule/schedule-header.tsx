@@ -1,4 +1,9 @@
+import { Download } from "lucide-react";
+import type { Route } from "next";
+import Link from "next/link";
+
 import { ScheduleViewLinks } from "@/components/schedule/schedule-controls";
+import { buttonVariants } from "@/components/ui/button";
 import type { ScheduleContext } from "@/lib/ui/schedule-query";
 
 type ScheduleHeaderProps = { context: ScheduleContext; group?: string };
@@ -17,6 +22,13 @@ export function ScheduleHeader({ context, group }: ScheduleHeaderProps) {
       </div>
       <div className="hidden min-w-0 flex-wrap items-center gap-2 sm:flex">
         <ScheduleViewLinks context={context} />
+        <Link
+          href={`/api/schedule/export?week=${context.week}` as Route}
+          download
+          className={buttonVariants({ variant: "outline" })}
+        >
+          <Download aria-hidden="true" className="size-4" />В календарь
+        </Link>
       </div>
     </header>
   );

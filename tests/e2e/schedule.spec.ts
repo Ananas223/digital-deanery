@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+
 import type { Locator, Page } from "@playwright/test";
 
 import { expect, expectNoHorizontalScroll, test } from "./fixtures";
@@ -107,6 +109,32 @@ for (const viewport of sizes) {
       await expectNoHorizontalScroll(page);
     });
 
+    test("скачивает календарь выбранной недели", async ({ annaPage: page }) => {
+      await currentWeek(page);
+      const link = page.getByRole("link", { name: "В календарь" });
+
+      await expect(link).toBeVisible();
+
+      const href = await link.getAttribute("href");
+      expect(href).toBeTruthy();
+      const selectedWeek = new URL(href!, page.url()).searchParams.get("week");
+      expect(selectedWeek).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+      const downloadPromise = page.waitForEvent("download");
+      await link.click();
+      const download = await downloadPromise;
+
+      expect(download.suggestedFilename()).toBe(`schedule-${selectedWeek}.ics`);
+
+      const filePath = await download.path();
+      expect(filePath).toBeTruthy();
+
+      const contents = await readFile(filePath!, "utf8");
+      expect(contents.startsWith("BEGIN:VCALENDAR\r\n")).toBe(true);
+      expect(contents).toContain("BEGIN:VEVENT");
+      await expectNoHorizontalScroll(page);
+    });
+
     test("отмена и перенос видны в списке, подробности удерживают и возвращают фокус", async ({
       annaPage: page,
     }) => {
@@ -204,3 +232,10 @@ for (const viewport of sizes) {
     });
   });
 }
+
+test("гость не получает ссылку на выгрузку расписания", async ({ page }) => {
+  await page.goto("/schedule?view=week");
+
+  await expect(page).toHaveURL(/\/login(\?|$)/);
+  await expect(page.getByRole("link", { name: "В календарь" })).toHaveCount(0);
+});
