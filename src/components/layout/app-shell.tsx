@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { AssistantProvider } from "@/components/assistant/assistant-provider";
+import { AssistantRoot } from "@/components/assistant/assistant-root";
 import { AssistantTrigger } from "@/components/assistant/assistant-trigger";
 import { AppHeader } from "@/components/layout/app-header";
 import { EntranceMark } from "@/components/layout/entrance-mark";
@@ -40,7 +40,7 @@ export function AppShell({ user, children, unreadCount, assistantEnabled = false
 
   return (
     <ToastProvider>
-      <AssistantProvider enabled={assistantEnabled}>
+      <AssistantRoot enabled={assistantEnabled}>
         <div className="min-h-dvh md:grid md:grid-cols-[var(--spacing-rail)_minmax(0,1fr)]">
           <SkipLink />
           <EntranceMark />
@@ -111,7 +111,7 @@ export function AppShell({ user, children, unreadCount, assistantEnabled = false
 
           <MobileNav unreadCount={unreadCount} />
         </div>
-      </AssistantProvider>
+      </AssistantRoot>
     </ToastProvider>
   );
 }

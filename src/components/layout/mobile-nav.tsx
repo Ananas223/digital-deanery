@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { useAssistant } from "@/components/assistant/assistant-context";
+import { useAssistantLauncher } from "@/components/assistant/assistant-context";
 import { isNavItemActive, primaryNav } from "@/components/layout/nav-items";
 import { formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ const mobileLabels: Record<string, string> = {
 /** Five mobile destinations; unread state adds no extra navigation target. */
 export function MobileNav({ unreadCount }: { unreadCount?: number }) {
   const pathname = usePathname();
-  const { open, closeAssistant } = useAssistant();
+  const { open, closeAssistant } = useAssistantLauncher();
   const showUnread = unreadCount !== undefined && Number.isFinite(unreadCount) && unreadCount > 0;
 
   return (

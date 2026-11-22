@@ -2,12 +2,12 @@
 
 import { cn } from "@/lib/utils";
 
-import { useAssistant } from "./assistant-context";
+import { useAssistantLauncher } from "./assistant-context";
 import { BlikMascot } from "./blik-mascot";
 
 export function AssistantTrigger({ placement }: { placement: "sidebar" | "mobile" }) {
-  const assistant = useAssistant();
-  if (!assistant.enabled) return null;
+  const { enabled, open, openAssistant } = useAssistantLauncher();
+  if (!enabled) return null;
   const sidebar = placement === "sidebar";
 
   return (
@@ -15,9 +15,9 @@ export function AssistantTrigger({ placement }: { placement: "sidebar" | "mobile
       type="button"
       aria-label={sidebar ? undefined : "Блик, ИИ-помощник"}
       aria-haspopup="dialog"
-      aria-controls={assistant.open ? "assistant-panel" : undefined}
-      aria-expanded={assistant.open}
-      onClick={(event) => assistant.openAssistant(event.currentTarget)}
+      aria-controls={open ? "assistant-panel" : undefined}
+      aria-expanded={open}
+      onClick={(event) => openAssistant(event.currentTarget)}
       className={cn(
         "inline-flex min-h-11 shrink-0 items-center gap-3 rounded-lg text-sm text-foreground transition-colors duration-(--duration-feedback) ease-interface hover:bg-primary-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring active:bg-muted",
         sidebar ? "w-full min-w-0 px-3 py-2 text-left" : "size-11 justify-center",

@@ -5,14 +5,14 @@ import { useRef } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
 
-import { useAssistant } from "./assistant-context";
+import { useAssistantLauncher } from "./assistant-context";
 import { BlikMascot } from "./blik-mascot";
 
 /** The home card opens the same conversation that is available from the cabinet toolbar. */
 export function AssistantHomeCard() {
-  const assistant = useAssistant();
+  const { enabled, open, openAssistant } = useAssistantLauncher();
   const trackingSurfaceRef = useRef<HTMLElement | null>(null);
-  if (!assistant.enabled) return null;
+  if (!enabled) return null;
 
   return (
     <section
@@ -40,9 +40,9 @@ export function AssistantHomeCard() {
         type="button"
         className={buttonVariants({ variant: "outline", size: "md" }) + " mt-5 w-full"}
         aria-haspopup="dialog"
-        aria-expanded={assistant.open}
-        aria-controls={assistant.open ? "assistant-panel" : undefined}
-        onClick={(event) => assistant.openAssistant(event.currentTarget)}
+        aria-expanded={open}
+        aria-controls={open ? "assistant-panel" : undefined}
+        onClick={(event) => openAssistant(event.currentTarget)}
       >
         Задать вопрос
         <ArrowUpRight aria-hidden="true" className="size-4" />

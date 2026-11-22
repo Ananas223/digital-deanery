@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { AI_MAX_TOTAL_CHARS } from "@/lib/validation/ai";
 
-import { useAssistant } from "./assistant-context";
+import { useAssistantChat } from "./assistant-context";
 import { AssistantMessage } from "./assistant-message";
 import { BlikMascot, type BlikState } from "./blik-mascot";
 
@@ -82,47 +82,51 @@ function useAssistantViewport(open: boolean) {
 }
 
 export function AssistantPanel({
-  finalFocus,
+  open,
   onOpenChange,
+  onDismiss,
+  finalFocus,
 }: {
-  finalFocus: () => HTMLElement | false;
+  open: boolean;
   onOpenChange: (open: boolean, reason: string) => void;
+  onDismiss: () => void;
+  finalFocus: () => HTMLElement | false;
 }) {
-  const assistant = useAssistant();
+  const chat = useAssistantChat();
   const fieldRef = useRef<HTMLTextAreaElement | null>(null);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const historyRef = useRef<HTMLDivElement | null>(null);
   const composerRef = useRef<HTMLElement | null>(null);
   const followLatestRef = useRef(true);
-  const viewport = useAssistantViewport(assistant.open);
+  const viewport = useAssistantViewport(open);
   const compact = viewport?.compact === true;
   const feedbackInHistory = viewport !== undefined;
-  const busy = assistant.phase === "waiting" || assistant.phase === "streaming";
+  const busy = chat.phase === "waiting" || chat.phase === "streaming";
   const mascotState: BlikState = busy
     ? "thinking"
-    : assistant.phase === "complete"
+    : chat.phase === "complete"
       ? "success"
-      : assistant.error
+      : chat.error
         ? "error"
         : "idle";
   const status = busy
     ? "Готовлю ответ"
-    : assistant.phase === "complete"
+    : chat.phase === "complete"
       ? "Ответ готов"
-      : assistant.phase === "stopped"
+      : chat.phase === "stopped"
         ? "Ответ остановлен"
         : "Помощник по кабинету";
 
   useEffect(() => {
-    if (!assistant.open || !followLatestRef.current) return;
+    if (!open || !followLatestRef.current) return;
     const history = historyRef.current;
     if (history) history.scrollTop = history.scrollHeight;
-  }, [assistant.messages, assistant.error, assistant.open, compact]);
+  }, [chat.messages, chat.error, open, compact]);
 
   useLayoutEffect(() => {
     const field = fieldRef.current;
     const composer = composerRef.current;
-    if (!assistant.open || !field || !composer || document.activeElement !== field) return;
+    if (!open || !field || !composer || document.activeElement !== field) return;
     const fieldRect = field.getBoundingClientRect();
     const composerRect = composer.getBoundingClientRect();
     if (fieldRect.bottom > composerRect.bottom) {
@@ -130,36 +134,34 @@ export function AssistantPanel({
     } else if (fieldRect.top < composerRect.top) {
       composer.scrollTop -= composerRect.top - fieldRect.top;
     }
-  }, [assistant.open, viewport]);
+  }, [open, viewport]);
 
   function submitQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!busy && assistant.draft.trim()) {
+    if (!busy && chat.draft.trim()) {
       fieldRef.current?.focus({ preventScroll: true });
       followLatestRef.current = true;
-      void assistant.sendQuestion();
+      void chat.sendQuestion();
     }
   }
 
-  if (!assistant.enabled) return null;
-
   const feedback =
-    assistant.error || (assistant.phase === "stopped" && assistant.canRetry) ? (
+    chat.error || (chat.phase === "stopped" && chat.canRetry) ? (
       <div className="space-y-3">
-        {assistant.error ? (
+        {chat.error ? (
           <div id="assistant-error">
             <Alert tone="danger" className="gap-2 p-3 text-sm">
-              <p>{assistant.error.message}</p>
+              <p>{chat.error.message}</p>
             </Alert>
           </div>
         ) : null}
-        {assistant.canRetry ? (
+        {chat.canRetry ? (
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
               followLatestRef.current = true;
-              void assistant.retry();
+              void chat.retry();
             }}
           >
             <RotateCcw aria-hidden="true" className="size-4" />
@@ -171,7 +173,7 @@ export function AssistantPanel({
 
   return (
     <BaseDialog.Root
-      open={assistant.open}
+      open={open}
       modal={false}
       // The nav moves when the panel closes. Let its tap finish before dismissing.
       disablePointerDismissal={compact}
@@ -236,7 +238,7 @@ export function AssistantPanel({
               }}
             >
               <div className="px-4 py-5 md:px-6">
-                {assistant.messages.length === 0 ? (
+                {chat.messages.length === 0 ? (
                   <div className="space-y-5">
                     <div>
                       <h3 className="text-lg leading-7 font-semibold text-foreground">
@@ -255,7 +257,7 @@ export function AssistantPanel({
                             buttonVariants({ variant: "outline", size: "sm" }) + " text-left"
                           }
                           onClick={() => {
-                            assistant.setDraft(question);
+                            chat.setDraft(question);
                             fieldRef.current?.focus({ preventScroll: true });
                           }}
                         >
@@ -271,7 +273,7 @@ export function AssistantPanel({
                     role="list"
                     className="space-y-5"
                   >
-                    {assistant.messages.map((message) => (
+                    {chat.messages.map((message) => (
                       <li
                         key={message.id}
                         className={
@@ -283,10 +285,7 @@ export function AssistantPanel({
                         <p className="mb-2 text-caption font-semibold text-muted-foreground">
                           {message.role === "user" ? "Вы" : "Блик"}
                         </p>
-                        <AssistantMessage
-                          text={message.text}
-                          onNavigate={() => assistant.closeAssistant(false)}
-                        />
+                        <AssistantMessage text={message.text} onNavigate={onDismiss} />
                       </li>
                     ))}
                   </ol>
@@ -296,7 +295,7 @@ export function AssistantPanel({
                     {status}…
                   </p>
                 ) : null}
-                {assistant.phase === "stopped" ? (
+                {chat.phase === "stopped" ? (
                   <p className="mt-4 text-caption text-muted-foreground">
                     Ответ остановлен. Можно повторить вопрос или задать новый.
                   </p>
@@ -310,7 +309,7 @@ export function AssistantPanel({
                       key={section.href}
                       href={section.href}
                       className="inline-flex min-h-11 items-center rounded-sm text-sm text-link underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-                      onClick={() => assistant.closeAssistant(false)}
+                      onClick={onDismiss}
                     >
                       {section.label}
                     </Link>
@@ -342,11 +341,11 @@ export function AssistantPanel({
                   </label>
                   <button
                     type="button"
-                    disabled={busy || assistant.messages.length === 0}
+                    disabled={busy || chat.messages.length === 0}
                     aria-label="Очистить диалог"
                     className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-caption text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:opacity-50"
                     onClick={() => {
-                      assistant.clear();
+                      chat.clear();
                       fieldRef.current?.focus({ preventScroll: true });
                     }}
                   >
@@ -358,15 +357,15 @@ export function AssistantPanel({
                   ref={fieldRef}
                   id="assistant-question"
                   name="question"
-                  value={assistant.draft}
+                  value={chat.draft}
                   maxLength={AI_MAX_TOTAL_CHARS}
                   placeholder="Например, что у меня завтра первым?"
                   aria-describedby={
-                    assistant.error
+                    chat.error
                       ? "assistant-question-hint assistant-error"
                       : "assistant-question-hint"
                   }
-                  onChange={(event) => assistant.setDraft(event.target.value)}
+                  onChange={(event) => chat.setDraft(event.target.value)}
                   onKeyDown={(event) => {
                     if (
                       event.key === "Enter" &&
@@ -395,7 +394,7 @@ export function AssistantPanel({
                   </p>
                   <div className="ml-auto flex gap-2">
                     {busy ? (
-                      <Button variant="outline" size="sm" onClick={assistant.stop}>
+                      <Button variant="outline" size="sm" onClick={chat.stop}>
                         <Square aria-hidden="true" className="size-3" />
                         Остановить
                       </Button>
@@ -404,7 +403,7 @@ export function AssistantPanel({
                       type="submit"
                       size="icon"
                       aria-label="Отправить вопрос"
-                      disabled={busy || !assistant.draft.trim()}
+                      disabled={busy || !chat.draft.trim()}
                     >
                       <ArrowUp aria-hidden="true" className="size-5" />
                     </Button>
@@ -416,9 +415,9 @@ export function AssistantPanel({
               </p>
             </footer>
             <p role="status" className="sr-only">
-              {assistant.phase === "complete"
+              {chat.phase === "complete"
                 ? "Ответ Блика готов."
-                : assistant.phase === "stopped"
+                : chat.phase === "stopped"
                   ? "Ответ Блика остановлен."
                   : ""}
             </p>

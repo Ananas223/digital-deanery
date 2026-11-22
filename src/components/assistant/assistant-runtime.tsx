@@ -1,15 +1,7 @@
 "use client";
 
 import { readUIMessageStream, type UIMessageChunk } from "ai";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import {
   createAssistantTransport,
@@ -22,7 +14,7 @@ import {
   type AssistantPhase,
   type ConversationMessage,
 } from "./assistant-chat";
-import { AssistantContext } from "./assistant-context";
+import { AssistantChatContext, useAssistantLauncher } from "./assistant-context";
 import { AssistantPanel } from "./assistant-panel";
 
 type ConversationState = {
@@ -65,36 +57,27 @@ function conversationReducer(
   }
 }
 
-/** One conversation per mounted signed-in layout, never persisted in browser storage. */
-export function AssistantProvider({
-  enabled,
-  children,
-}: {
-  enabled: boolean;
-  children: ReactNode;
-}) {
-  const [open, setOpen] = useState(false);
+type AssistantRuntimeProps = {
+  open: boolean;
+  onOpen: () => void;
+  onClose: (restoreFocus: boolean) => void;
+  finalFocus: () => HTMLElement | false;
+};
+
+/**
+ * Heavy assistant runtime, loaded on demand. One conversation per mounted layout,
+ * never persisted in browser storage.
+ */
+export function AssistantRuntime({ open, onOpen, onClose, finalFocus }: AssistantRuntimeProps) {
+  const { enabled } = useAssistantLauncher();
   const [draft, setDraft] = useState("");
   const [state, dispatch] = useReducer(conversationReducer, initialState);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const restoreFocusRef = useRef(true);
   const controllerRef = useRef<AbortController | null>(null);
   const requestVersionRef = useRef(0);
   const chatIdRef = useRef<string | null>(null);
   const lastRequestRef = useRef<ConversationMessage[] | null>(null);
 
   useEffect(() => () => controllerRef.current?.abort(), []);
-
-  const openAssistant = useCallback((trigger: HTMLButtonElement) => {
-    triggerRef.current = trigger;
-    restoreFocusRef.current = true;
-    setOpen(true);
-  }, []);
-
-  const closeAssistant = useCallback((restoreFocus = true) => {
-    restoreFocusRef.current = restoreFocus;
-    setOpen(false);
-  }, []);
 
   const stop = useCallback(() => {
     requestVersionRef.current += 1;
@@ -215,38 +198,40 @@ export function AssistantProvider({
     if (lastRequestRef.current) await runRequest(lastRequestRef.current);
   }, [runRequest]);
 
-  const context = useMemo(
+  const chat = useMemo(
     () => ({
-      enabled,
-      open: enabled && open,
       messages: state.messages,
       phase: state.phase,
       error: state.error,
       draft,
       canRetry: state.phase === "stopped" || state.error?.retryable === true,
-      openAssistant,
-      closeAssistant,
       setDraft,
       sendQuestion,
       retry,
       stop,
       clear,
     }),
-    [enabled, open, state, draft, openAssistant, closeAssistant, sendQuestion, retry, stop, clear],
+    [state, draft, sendQuestion, retry, stop, clear],
   );
 
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean, reason: string) => {
+      if (nextOpen) onOpen();
+      else onClose(reason !== "outside-press" && reason !== "focus-out");
+    },
+    [onOpen, onClose],
+  );
+
+  const dismiss = useCallback(() => onClose(false), [onClose]);
+
   return (
-    <AssistantContext.Provider value={context}>
-      {children}
+    <AssistantChatContext.Provider value={chat}>
       <AssistantPanel
-        onOpenChange={(nextOpen, reason) => {
-          if (nextOpen) setOpen(true);
-          else closeAssistant(reason !== "outside-press" && reason !== "focus-out");
-        }}
-        finalFocus={() =>
-          restoreFocusRef.current && triggerRef.current?.isConnected ? triggerRef.current : false
-        }
+        open={open}
+        onOpenChange={handleOpenChange}
+        onDismiss={dismiss}
+        finalFocus={finalFocus}
       />
-    </AssistantContext.Provider>
+    </AssistantChatContext.Provider>
   );
 }
