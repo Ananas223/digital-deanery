@@ -1,5 +1,5 @@
 import { createAiChatHandler } from "@/lib/ai/chat-handler";
-import { createOpenRouterModel, isAiEnabled } from "@/lib/ai/provider";
+import { createAiModel, isAiEnabled } from "@/lib/ai/provider";
 import { aiRateLimiter } from "@/lib/ai/rate-limit";
 import { requireUser } from "@/lib/auth/session";
 import { AppError } from "@/lib/errors";
@@ -30,7 +30,7 @@ const handler = createAiChatHandler({
     }
   },
   isEnabled: () => isAiEnabled(),
-  createModel: () => createOpenRouterModel(),
+  createModel: () => createAiModel(),
   limiter: aiRateLimiter,
   now: () => new Date(),
 });
