@@ -225,5 +225,33 @@ for (const viewport of sizes) {
       await expect(page.locator("#grades-content li")).toHaveCount(4);
       await expectNoHorizontalScroll(page);
     });
+
+    test("US-14: прогноз красного диплома и «а если?» объясняют расчёт", async ({
+      annaPage: page,
+      markPage,
+    }) => {
+      await openGrades(page);
+      const forecast = page.getByRole("region", { name: "Прогноз красного диплома" });
+      await expect(forecast).toBeVisible();
+      await expect(forecast).toContainText("75 %");
+      await expect(forecast).toContainText("67 %");
+      await expect(forecast).toContainText("Нужно ещё 1 оценка «отлично»");
+      await expect(forecast).toContainText("в расчёт не входят");
+
+      const whatIf = page.getByRole("region", { name: "А если?" });
+      await expect(whatIf).toBeVisible();
+      await expect(whatIf.getByLabel("Дисциплина без оценки").locator("option")).toHaveCount(1);
+      await expect(whatIf).toContainText("Нужен балл 4");
+      await whatIf.getByLabel("Целевое среднее").selectOption("5");
+      await expect(whatIf).toContainText("Цель недостижима");
+      await expectNoHorizontalScroll(page);
+
+      await openGrades(markPage);
+      const markForecast = markPage.getByRole("region", { name: "Прогноз красного диплома" });
+      await expect(markForecast).toBeVisible();
+      await expect(markForecast).toContainText("Красный диплом недостижим");
+      await expect(markForecast).toContainText("3 или ниже");
+      await expectNoHorizontalScroll(markPage);
+    });
   });
 }

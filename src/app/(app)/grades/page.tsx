@@ -3,16 +3,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { DisciplineDetail } from "@/components/grades/discipline-detail";
+import { GradesForecast } from "@/components/grades/grades-forecast";
 import { GradesList } from "@/components/grades/grades-list";
 import { GradesSemesterSelector, GradesViewLinks } from "@/components/grades/grades-navigation";
 import { GradesRetry } from "@/components/grades/grades-retry";
 import { GradesSummary } from "@/components/grades/grades-summary";
+import { GradesWhatIf } from "@/components/grades/grades-what-if";
 import { SessionList } from "@/components/grades/session-list";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireUser } from "@/lib/auth/session";
 import { getSemesterLabel, getSemesterOverview, getSemesters } from "@/lib/domain/grades";
+import { getWhatIfCandidates, toForecastGrade } from "@/lib/domain/grades-forecast";
 import { getStudentProfile } from "@/lib/domain/profile";
 import {
   gradesHref,
@@ -66,6 +69,11 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
 
   const failedToResolveEmptyState =
     !overview && (semesters === null || (semesters.length === 0 && profile === undefined));
+  const forecastGrades = overview ? overview.grades.map(toForecastGrade) : [];
+  const whatIfCandidates = getWhatIfCandidates(forecastGrades).map((grade) => ({
+    disciplineId: grade.disciplineId,
+    disciplineName: grade.disciplineName,
+  }));
   return (
     <div className="min-w-0 space-y-6 wrap-anywhere sm:space-y-8">
       <PageHeader
@@ -90,6 +98,8 @@ export default async function GradesPage({ searchParams }: GradesPageProps) {
         />
       ) : null}
       {overview ? <GradesSummary overview={overview} context={context} now={now} /> : null}
+      {overview ? <GradesForecast overview={overview} now={now} /> : null}
+      {overview ? <GradesWhatIf grades={forecastGrades} candidates={whatIfCandidates} /> : null}
       <GradesViewLinks context={context} />
       {overviewResult.status === "rejected" || failedToResolveEmptyState ? (
         <GradesRetry />
