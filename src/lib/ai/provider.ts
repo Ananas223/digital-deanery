@@ -17,6 +17,15 @@ import type { LanguageModel } from "ai";
 /** Модель по умолчанию, если `AI_MODEL` не задан. */
 export const AI_MODEL_DEFAULT = "deepseek/deepseek-v4.1-flash";
 
+/**
+ * Название приложения для атрибуции OpenRouter.
+ *
+ * Провайдер отправляет его заголовком `X-OpenRouter-Title`, а значения
+ * заголовков допускают только ISO-8859-1: кириллица роняет `fetch` с
+ * `TypeError` до отправки запроса. Поэтому здесь только ASCII.
+ */
+export const AI_APP_NAME = "Digital Deanery";
+
 /** Флаг включённого помощника: только точное значение `"true"` включает его. */
 export function isAiEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env["AI_ASSISTANT_ENABLED"] === "true";
@@ -40,7 +49,7 @@ export function createOpenRouterModel(env: NodeJS.ProcessEnv = process.env): Lan
   const provider = createOpenRouter({
     apiKey,
     appUrl: env["NEXT_PUBLIC_APP_URL"],
-    appName: "Цифровой деканат",
+    appName: AI_APP_NAME,
   });
 
   return provider.chat(modelId);

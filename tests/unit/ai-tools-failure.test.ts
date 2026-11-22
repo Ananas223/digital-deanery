@@ -47,6 +47,9 @@ vi.mock("@/lib/domain/requests", async (importOriginal) => {
     getMyRequests: async () => {
       throw new Error(failure.message);
     },
+    getActiveRequestsForUser: async () => {
+      throw new Error(failure.message);
+    },
     getRequest: async () => {
       throw new Error(failure.message);
     },
@@ -78,13 +81,14 @@ afterEach(() => {
 });
 
 describe("нейтральный результат при сбое инструмента", () => {
-  it("возвращает заглушку для каждого из четырёх инструментов", async () => {
+  it("возвращает заглушку для каждого из пяти инструментов", async () => {
     const tools = createAiTools("student-1", NOW, { requestId: "request-1" });
 
     const schedule = await tools.getSchedule!.execute!({ range: "today" }, TOOL_CALL);
     const grades = await tools.getGrades!.execute!({}, TOOL_CALL);
     const requests = await tools.getRequests!.execute!({}, TOOL_CALL);
     const notifications = await tools.getNotifications!.execute!({}, TOOL_CALL);
+    const upcoming = await tools.getUpcoming!.execute!({ days: 14 }, TOOL_CALL);
 
     expect(schedule).toEqual({
       available: false,
@@ -112,8 +116,15 @@ describe("нейтральный результат при сбое инстру
       unreadCount: 0,
       truncated: false,
     });
+    expect(upcoming).toEqual({
+      available: false,
+      horizonDays: 14,
+      deadlines: [],
+      changes: [],
+      truncated: false,
+    });
 
-    expect(JSON.stringify({ schedule, grades, requests, notifications })).not.toContain(
+    expect(JSON.stringify({ schedule, grades, requests, notifications, upcoming })).not.toContain(
       failure.message,
     );
   });

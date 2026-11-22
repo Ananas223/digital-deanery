@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock3, Printer, RotateCcw } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 
@@ -9,6 +9,7 @@ import { Alert } from "@/components/ui/alert";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
+import { isCertificateType } from "@/lib/domain/certificates";
 import type { RequestDetail } from "@/lib/domain/requests";
 import { REQUEST_STATUS_LABELS } from "@/lib/domain/request-status";
 import { formatDateTime } from "@/lib/format";
@@ -30,6 +31,7 @@ export function StudentRequestDetail({ request }: { request: RequestDetail }) {
     payload: request.payload,
   });
   const repeatable = request.status === "REJECTED" || request.status === "CANCELLED";
+  const printable = request.status === "READY" && isCertificateType(request.typeCode);
 
   return (
     <div className="min-w-0 space-y-5 wrap-anywhere sm:space-y-6">
@@ -124,6 +126,14 @@ export function StudentRequestDetail({ request }: { request: RequestDetail }) {
                 )}
                 <p className="text-sm leading-6 text-foreground">{NEXT_STEPS[request.status]}</p>
               </div>
+              {printable ? (
+                <Link
+                  href={`/requests/${request.id}/print` as Route}
+                  className={buttonVariants({ variant: "outline" })}
+                >
+                  <Printer aria-hidden="true" className="size-4" /> Печать справки
+                </Link>
+              ) : null}
               {request.dueAt ? (
                 <dl className="border-t border-border pt-4 text-sm">
                   <dt className="text-muted-foreground">Плановая готовность</dt>

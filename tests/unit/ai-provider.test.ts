@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createOpenRouterModel, isAiEnabled } from "@/lib/ai/provider";
+import { AI_APP_NAME, createOpenRouterModel, isAiEnabled } from "@/lib/ai/provider";
 
 /**
  * Конфигурация провайдера без сети (`docs/specs/p9-ai-assistant.md` § 4.4).
@@ -37,6 +37,13 @@ describe("создание модели OpenRouter", () => {
     expect(createOpenRouterModel(env({}))).toBeNull();
     expect(createOpenRouterModel(env({ AI_PROVIDER_API_KEY: "" }))).toBeNull();
     expect(createOpenRouterModel(env({ AI_PROVIDER_API_KEY: "   " }))).toBeNull();
+  });
+
+  it("название приложения помещается в HTTP-заголовок без кириллицы", () => {
+    // Провайдер отправляет AI_APP_NAME заголовком X-OpenRouter-Title:
+    // кириллица роняет fetch ещё до отправки запроса (ByteString).
+    expect(() => new Headers({ "X-OpenRouter-Title": AI_APP_NAME })).not.toThrow();
+    expect(AI_APP_NAME).toMatch(/^[\x20-\x7E]+$/);
   });
 
   it("создаёт модель с ключом и не ходит в сеть", () => {

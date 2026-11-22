@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download } from "lucide-react";
+import type { Route } from "next";
 import Link from "next/link";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -63,8 +64,15 @@ export function ScheduleControls({ week, context, today }: ScheduleControlsProps
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-2 sm:contents">
-          <div className="sm:hidden">
+          <div className="flex items-center gap-2 sm:hidden">
             <ScheduleViewLinks context={context} compact />
+            <Link
+              href={`/api/schedule/export?week=${context.week}` as Route}
+              download
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              <Download aria-hidden="true" className="size-4" />В календарь
+            </Link>
           </div>
           <nav aria-label="Переход по неделям" className="flex flex-wrap items-center gap-1">
             <Link

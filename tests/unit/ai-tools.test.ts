@@ -4,6 +4,7 @@ import {
   AI_MAX_GRADES,
   AI_MAX_NOTIFICATIONS,
   AI_MAX_REQUESTS,
+  AI_MAX_UPCOMING_DAYS,
   formatRoomLabel,
   gradesToolInputSchema,
   notificationsToolInputSchema,
@@ -15,7 +16,11 @@ import {
   toGradeAnswers,
   toNotificationAnswer,
   toRequestAnswer,
+  toUpcomingChangeAnswers,
+  toUpcomingDeadlineAnswers,
   truncateScheduleDays,
+  upcomingToolInputSchema,
+  type ExamAnswer,
   type ScheduleDayAnswer,
   type ScheduleLessonAnswer,
 } from "@/lib/ai/tool-schemas";
@@ -72,6 +77,7 @@ const TOOL_SCHEMAS = {
   getGrades: gradesToolInputSchema,
   getRequests: requestsToolInputSchema,
   getNotifications: notificationsToolInputSchema,
+  getUpcoming: upcomingToolInputSchema,
 };
 
 function gradeEntry(
@@ -198,6 +204,24 @@ describe("схемы инструментов", () => {
     expect(notificationsToolInputSchema.safeParse({ category: "ALL" }).success).toBe(false);
     expect(notificationsToolInputSchema.safeParse({ category: "SPAM" }).success).toBe(false);
   });
+
+  it("принимает горизонт дедлайнов и по умолчанию берёт 14 дней", () => {
+    expect(upcomingToolInputSchema.safeParse({ days: 1 }).success).toBe(true);
+    expect(upcomingToolInputSchema.safeParse({ days: AI_MAX_UPCOMING_DAYS }).success).toBe(true);
+
+    const parsed = upcomingToolInputSchema.safeParse({});
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.success ? parsed.data.days : null).toBe(14);
+  });
+
+  it("отклоняет горизонт дедлайнов вне диапазона 1–30", () => {
+    expect(upcomingToolInputSchema.safeParse({ days: 0 }).success).toBe(false);
+    expect(upcomingToolInputSchema.safeParse({ days: AI_MAX_UPCOMING_DAYS + 1 }).success).toBe(
+      false,
+    );
+    expect(upcomingToolInputSchema.safeParse({ days: 2.5 }).success).toBe(false);
+  });
 });
 
 describe("закрытый вход инструментов", () => {
@@ -206,6 +230,7 @@ describe("закрытый вход инструментов", () => {
     expect(collectShapeKeys(gradesToolInputSchema)).toEqual(new Set(["semesterId"]));
     expect(collectShapeKeys(requestsToolInputSchema)).toEqual(new Set(["requestId"]));
     expect(collectShapeKeys(notificationsToolInputSchema)).toEqual(new Set(["category", "limit"]));
+    expect(collectShapeKeys(upcomingToolInputSchema)).toEqual(new Set(["days"]));
   });
 
   it("не содержит userId ни в одной схеме", () => {
@@ -481,6 +506,84 @@ describe("преобразования заявок и уведомлений", 
 
     expect(answer).not.toHaveProperty("studentId");
     expect(answer).not.toHaveProperty("payload");
+  });
+});
+
+describe("ближайшие дедлайны и изменения", () => {
+  const exam = (discipline: string, startsAt: string): ExamAnswer => ({
+    discipline,
+    assessmentType: "Экзамен",
+    startsAt,
+    endsAt: new Date(Date.parse(startsAt) + 90 * 60 * 1000).toISOString(),
+    room: "корпус A, ауд. 203",
+    teacher: "Лебедев Д. С.",
+    result: null,
+  });
+
+  it("сортирует экзамены и заявки по сроку, объявления оставляет без dueAt", () => {
+    const now = new Date("2026-11-19T09:00:00.000Z");
+    const result = toUpcomingDeadlineAnswers(
+      [exam("Физика", "2026-11-25T09:00:00.000Z"), exam("Алгебра", "2026-11-20T09:00:00.000Z")],
+      [{ ...toRequestAnswer(requestSummary("request-1")), dueAt: "2026-11-21T09:00:00.000Z" }],
+      [
+        toNotificationAnswer({
+          ...notificationItem("notification-1"),
+          category: "DEADLINES",
+          title: "Дедлайн по курсовой",
+        }),
+      ],
+      now,
+      14,
+    );
+
+    expect(result.items.map((item) => item.source)).toEqual(["EXAM", "REQUEST", "EXAM", "NOTICE"]);
+    expect(result.items[0]?.title).toBe("Алгебра");
+    expect(result.items.at(-1)?.dueAt).toBeNull();
+    expect(result.items.at(-1)?.publishedAt).toBe("2026-11-18T09:00:00.000Z");
+    expect(result.truncated).toBe(false);
+  });
+
+  it("отбрасывает экзамены и сроки заявок за горизонтом", () => {
+    const now = new Date("2026-11-19T09:00:00.000Z");
+    const result = toUpcomingDeadlineAnswers(
+      [exam("Физика", "2026-12-25T09:00:00.000Z")],
+      [{ ...toRequestAnswer(requestSummary("request-1")), dueAt: "2026-12-21T09:00:00.000Z" }],
+      [],
+      now,
+      7,
+    );
+
+    expect(result.items).toEqual([]);
+  });
+
+  it("оставляет только будущие изменения в горизонте", () => {
+    const now = new Date("2026-11-19T09:00:00.000Z");
+    const result = toUpcomingChangeAnswers(
+      [
+        {
+          date: "2026-11-20",
+          lessons: [
+            {
+              ...lessonAnswer(1),
+              startsAt: "2026-11-20T09:00:00.000Z",
+              changes: ["Перенос"],
+            },
+            {
+              ...lessonAnswer(2),
+              startsAt: "2026-12-01T09:00:00.000Z",
+              changes: ["Отмена"],
+            },
+            { ...lessonAnswer(3), changes: [] },
+          ],
+        },
+      ],
+      now,
+      7,
+    );
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.changes).toEqual(["Перенос"]);
+    expect(result.truncated).toBe(false);
   });
 });
 

@@ -173,6 +173,8 @@ type DemoRequest = {
   time: [number, number];
   /** Payload по § 4.3 спецификации; для `RETAKE` берётся id дисциплины из справочника. */
   payload: (disciplines: Map<string, string>) => Record<string, string>;
+  /** Детерминированный код проверки справки для готовой демо-справки. */
+  verifyCode?: string;
   rejectionReason?: string;
   transitions: DemoRequestTransition[];
 };
@@ -1185,6 +1187,7 @@ const DEMO_REQUESTS: DemoRequest[] = [
     status: "READY",
     daysAgo: 12,
     time: [9, 40],
+    verifyCode: "annaCertDemo0001",
     payload: () => ({
       deliveryPlace: "Отдел кадров ООО «Северный ветер»",
       comment: "Справка нужна для подтверждения периода обучения при трудоустройстве.",
@@ -1901,6 +1904,7 @@ async function seedRequests(
         updatedAt,
         // Заявки в работе и завершённые обработал демо-сотрудник.
         assignedToId: demo.status === "NEW" || demo.status === "CANCELLED" ? null : employeeUserId,
+        ...(demo.verifyCode ? { verifyCode: demo.verifyCode } : {}),
         ...(demo.rejectionReason ? { rejectionReason: demo.rejectionReason } : {}),
       },
       select: { id: true, number: true },

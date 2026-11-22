@@ -467,6 +467,7 @@ model Request {
   status          RequestStatus  @default(NEW)
   payload         Json
   clientRequestId String?
+  verifyCode      String?        @unique
   dueAt           DateTime?
   rejectionReason String?
   assignedToId    String?

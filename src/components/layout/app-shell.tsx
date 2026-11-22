@@ -30,6 +30,12 @@ type AppShellProps = {
 /** Shared rail on desktop; compact masthead and bottom navigation on mobile. */
 export function AppShell({ user, children, unreadCount, assistantEnabled = false }: AppShellProps) {
   const pathname = usePathname();
+
+  // Печатный бланк справки выводится без оболочки кабинета (P10-IDEA-02).
+  if (pathname.endsWith("/print")) {
+    return <>{children}</>;
+  }
+
   const profileActive = isNavItemActive("/profile", pathname);
 
   return (

@@ -328,6 +328,42 @@ for (const viewport of [
       ).toBeVisible();
     });
 
+    test("готовая справка печатается без оболочки кабинета, с водяным знаком и QR", async ({
+      annaPage,
+    }) => {
+      await annaPage.goto("/requests?status=READY");
+      const seededCertificate = annaPage.getByRole("link").filter({ hasText: /900001/ });
+      await expect(seededCertificate).toHaveCount(1);
+      await seededCertificate.click();
+      await expect(annaPage).toHaveURL(/\/requests\/[a-z0-9]+$/);
+      await expect(annaPage.getByText("Готова", { exact: true }).first()).toBeVisible();
+
+      const printLink = annaPage.getByRole("link", { name: "Печать справки", exact: true });
+      await expect(printLink).toBeVisible();
+      await printLink.click();
+      await expect(annaPage).toHaveURL(/\/requests\/[a-z0-9]+\/print$/);
+
+      await expect(
+        annaPage.getByRole("heading", { name: "Справка об обучении", exact: true }),
+      ).toBeVisible();
+      await expect(
+        annaPage.getByText("Учебный концепт · не официальный документ", { exact: true }),
+      ).toBeVisible();
+      await expect(
+        annaPage.getByText("КОНЦЕПТ · НЕ ОФИЦИАЛЬНЫЙ ДОКУМЕНТ", { exact: true }),
+      ).toBeVisible();
+
+      const qrCode = annaPage.getByRole("img", { name: "QR-код для проверки справки" });
+      await expect(qrCode).toBeVisible();
+      await expect(qrCode).toHaveAttribute("src", /^data:image\/png;base64,/);
+      await expect(annaPage.getByRole("button", { name: "Печать", exact: true })).toBeVisible();
+
+      // Бланк выводится без бокового меню и нижней навигации кабинета.
+      await expect(annaPage.getByRole("link", { name: "Расписание", exact: true })).toHaveCount(0);
+      await expect(annaPage.getByRole("navigation")).toHaveCount(0);
+      await expectNoHorizontalScroll(annaPage);
+    });
+
     test("четыре типа показывают свои поля, неверные даты блокируются без отправки", async ({
       annaPage,
       markPage,
