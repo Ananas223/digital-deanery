@@ -8,7 +8,12 @@ import { afterAll, beforeAll, describe, expect, it, vi, type Mock } from "vitest
 import { createAiChatHandler, type AiChatDeps, type AiChatUser } from "@/lib/ai/chat-handler";
 import type { AiLogFields } from "@/lib/ai/observability";
 import { AI_RATE_LIMIT_PER_WINDOW, createAiRateLimiter } from "@/lib/ai/rate-limit";
-import type { GradesAnswer, NotificationsAnswer, RequestsAnswer } from "@/lib/ai/tool-schemas";
+import type {
+  GradesAnswer,
+  NotificationsAnswer,
+  RequestsAnswer,
+  UpcomingAnswer,
+} from "@/lib/ai/tool-schemas";
 import { createAiTools } from "@/lib/ai/tools";
 import { createPrismaClient } from "@/lib/db/client";
 import { AppError, type PublicError } from "@/lib/errors";
@@ -461,8 +466,14 @@ describe("стриминг", () => {
 
     const toolNames = model.doStreamCalls[0]?.tools?.map((tool) => tool.name) ?? [];
 
-    expect(toolNames).toHaveLength(4);
-    expect(toolNames).toEqual(["getSchedule", "getGrades", "getRequests", "getNotifications"]);
+    expect(toolNames).toHaveLength(5);
+    expect(toolNames).toEqual([
+      "getSchedule",
+      "getGrades",
+      "getRequests",
+      "getNotifications",
+      "getUpcoming",
+    ]);
 
     const systemMessage = model.doStreamCalls[0]?.prompt.find(
       (message) => message.role === "system",
@@ -615,5 +626,25 @@ describe("изоляция данных", () => {
     for (const audienceId of annaAudienceIds) {
       expect(serialized).not.toContain(audienceId);
     }
+  });
+
+  it("ближайшие дедлайны не содержат данных Марка", async () => {
+    const tools = createAiTools(anna.id, NOW);
+    const execute = tools.getUpcoming?.execute;
+
+    expect(execute).toBeDefined();
+
+    const answer = (await execute!(
+      { days: 30 },
+      { toolCallId: "upcoming", messages: [] },
+    )) as UpcomingAnswer;
+
+    expect(answer.available).toBe(true);
+    expect(answer.horizonDays).toBe(30);
+
+    const serialized = JSON.stringify(answer);
+    expect(serialized).not.toContain(markRequestNumber);
+    expect(serialized).not.toContain(mark.name);
+    expect(serialized).not.toContain(ANNA_EMAIL);
   });
 });

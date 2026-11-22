@@ -57,6 +57,15 @@ export const AI_MAX_REQUESTS = 5;
 /** Максимум уведомлений и верхняя граница аргумента `limit`. */
 export const AI_MAX_NOTIFICATIONS = 5;
 
+/** Горизонт «ближайших» событий: от одного дня до месяца. */
+export const AI_MAX_UPCOMING_DAYS = 30;
+
+/** Максимум дедлайнов в ответе `getUpcoming`. */
+export const AI_MAX_UPCOMING_ITEMS = 10;
+
+/** Максимум изменений расписания в ответе `getUpcoming`. */
+export const AI_MAX_UPCOMING_CHANGES = 10;
+
 /** Сколько последних записей истории заявки показывать модели. */
 export const AI_MAX_REQUEST_HISTORY = 10;
 
@@ -106,10 +115,22 @@ export const notificationsToolInputSchema = z.object({
     .describe(`Сколько уведомлений вернуть: от 1 до ${AI_MAX_NOTIFICATIONS}.`),
 });
 
+/** Вход `getUpcoming`: на сколько дней вперёд смотреть дедлайны и изменения. */
+export const upcomingToolInputSchema = z.object({
+  days: z
+    .number()
+    .int()
+    .min(1)
+    .max(AI_MAX_UPCOMING_DAYS)
+    .default(14)
+    .describe(`Горизонт в днях: от 1 до ${AI_MAX_UPCOMING_DAYS}.`),
+});
+
 export type ScheduleToolInput = z.infer<typeof scheduleToolInputSchema>;
 export type GradesToolInput = z.infer<typeof gradesToolInputSchema>;
 export type RequestsToolInput = z.infer<typeof requestsToolInputSchema>;
 export type NotificationsToolInput = z.infer<typeof notificationsToolInputSchema>;
+export type UpcomingToolInput = z.infer<typeof upcomingToolInputSchema>;
 
 export type ScheduleLessonAnswer = {
   id: string;
@@ -214,6 +235,34 @@ export type NotificationsAnswer = {
   available: boolean;
   items: NotificationAnswer[];
   unreadCount: number;
+  truncated: boolean;
+};
+
+/** Источник дедлайна: экзамен, срок заявки или объявление из ленты. */
+export type UpcomingDeadlineSource = "EXAM" | "REQUEST" | "NOTICE";
+
+export type UpcomingDeadlineAnswer = {
+  source: UpcomingDeadlineSource;
+  title: string;
+  /** Срок в ISO 8601; у объявления без точной даты — `null`. */
+  dueAt: string | null;
+  /** Дата публикации объявления; у экзамена и заявки — `null`. */
+  publishedAt: string | null;
+  details: string;
+};
+
+export type UpcomingChangeAnswer = {
+  discipline: string;
+  startsAt: string;
+  room: string;
+  changes: string[];
+};
+
+export type UpcomingAnswer = {
+  available: boolean;
+  horizonDays: number;
+  deadlines: UpcomingDeadlineAnswer[];
+  changes: UpcomingChangeAnswer[];
   truncated: boolean;
 };
 
@@ -486,5 +535,127 @@ export function selectNotificationAnswers(
   return {
     items: limited.map(toNotificationAnswer),
     truncated: items.length > limited.length,
+  };
+}
+
+/**
+ * Сводит экзамены, сроки активных заявок и объявления о дедлайнах в один
+ * список «ближайшего».
+ *
+ * Экзамены и заявки имеют точный срок и сортируются по нему. Объявления из
+ * ленты точной даты срока не содержат: у них заполняется `publishedAt`, а
+ * `dueAt` остаётся `null`, чтобы модель не выдала дату публикации за дедлайн.
+ * Объявления идут после событий с точной датой.
+ */
+export function toUpcomingDeadlineAnswers(
+  exams: readonly ExamAnswer[],
+  requests: readonly RequestAnswer[],
+  notices: readonly NotificationAnswer[],
+  now: Date,
+  horizonDays: number,
+  limit: number = AI_MAX_UPCOMING_ITEMS,
+): { items: UpcomingDeadlineAnswer[]; truncated: boolean } {
+  const nowMs = now.getTime();
+  const horizonMs = nowMs + horizonDays * 24 * 60 * 60 * 1000;
+  const dated: UpcomingDeadlineAnswer[] = [];
+
+  for (const exam of exams) {
+    const startsAt = Date.parse(exam.startsAt);
+
+    if (startsAt >= nowMs && startsAt <= horizonMs) {
+      dated.push({
+        source: "EXAM",
+        title: exam.discipline,
+        dueAt: exam.startsAt,
+        publishedAt: null,
+        details: exam.room ? `${exam.assessmentType}, ${exam.room}` : exam.assessmentType,
+      });
+    }
+  }
+
+  for (const request of requests) {
+    if (!request.dueAt) {
+      continue;
+    }
+
+    const dueAt = Date.parse(request.dueAt);
+
+    if (dueAt >= nowMs && dueAt <= horizonMs) {
+      dated.push({
+        source: "REQUEST",
+        title: `${request.typeTitle} № ${request.number}`,
+        dueAt: request.dueAt,
+        publishedAt: null,
+        details: request.status,
+      });
+    }
+  }
+
+  dated.sort(
+    (left, right) =>
+      Date.parse(left.dueAt ?? "") - Date.parse(right.dueAt ?? "") ||
+      left.title.localeCompare(right.title, "ru-RU"),
+  );
+
+  const noticeItems = [...notices]
+    .sort((left, right) => Date.parse(right.publishedAt) - Date.parse(left.publishedAt))
+    .slice(0, 3)
+    .map<UpcomingDeadlineAnswer>((notice) => ({
+      source: "NOTICE",
+      title: notice.title,
+      dueAt: null,
+      publishedAt: notice.publishedAt,
+      details: notice.body,
+    }));
+
+  const combined = [...dated, ...noticeItems];
+  const limited = combined.slice(0, limit);
+
+  return {
+    items: limited,
+    truncated: combined.length > limited.length,
+  };
+}
+
+/**
+ * Оставляет изменения расписания, которые ещё впереди и попадают в горизонт.
+ *
+ * Отменённое занятие тоже считается изменением: студенту важно узнать об
+ * отмене до начала пары, а не после.
+ */
+export function toUpcomingChangeAnswers(
+  days: readonly ScheduleDayAnswer[],
+  now: Date,
+  horizonDays: number,
+  limit: number = AI_MAX_UPCOMING_CHANGES,
+): { items: UpcomingChangeAnswer[]; truncated: boolean } {
+  const nowMs = now.getTime();
+  const horizonMs = nowMs + horizonDays * 24 * 60 * 60 * 1000;
+
+  const changes = days
+    .flatMap((day) => day.lessons)
+    .filter((lesson) => lesson.changes.length > 0)
+    .filter((lesson) => {
+      const startsAt = Date.parse(lesson.startsAt);
+
+      return startsAt >= nowMs && startsAt <= horizonMs;
+    })
+    .sort(
+      (left, right) =>
+        Date.parse(left.startsAt) - Date.parse(right.startsAt) ||
+        left.discipline.localeCompare(right.discipline, "ru-RU"),
+    )
+    .map<UpcomingChangeAnswer>((lesson) => ({
+      discipline: lesson.discipline,
+      startsAt: lesson.startsAt,
+      room: lesson.room,
+      changes: lesson.changes,
+    }));
+
+  const limited = changes.slice(0, limit);
+
+  return {
+    items: limited,
+    truncated: changes.length > limited.length,
   };
 }

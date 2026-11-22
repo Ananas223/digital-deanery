@@ -4,7 +4,7 @@ import { tool, type ToolSet } from "ai";
 
 import { getSemesterOverview } from "@/lib/domain/grades";
 import { getNotificationsForUser } from "@/lib/domain/notifications";
-import { getMyRequests, getRequest } from "@/lib/domain/requests";
+import { getActiveRequestsForUser, getMyRequests, getRequest } from "@/lib/domain/requests";
 import { getTodaySchedule, getWeekSchedule } from "@/lib/domain/schedule";
 
 import { logAiError } from "./observability";
@@ -23,14 +23,18 @@ import {
   toRequestDetailAnswer,
   toScheduleDayAnswer,
   toSemesterAnswer,
+  toUpcomingChangeAnswers,
+  toUpcomingDeadlineAnswers,
   toUpcomingExamAnswers,
   truncateScheduleDays,
+  upcomingToolInputSchema,
   type GradesAnswer,
   type NotificationsAnswer,
   type NotificationsToolInput,
   type RequestsAnswer,
   type ScheduleAnswer,
   type ScheduleRange,
+  type UpcomingAnswer,
 } from "./tool-schemas";
 
 /**
@@ -50,6 +54,7 @@ export const AI_TOOL_NAMES = Object.freeze([
   "getGrades",
   "getRequests",
   "getNotifications",
+  "getUpcoming",
 ] as const);
 
 export type AiToolName = (typeof AI_TOOL_NAMES)[number];
@@ -209,8 +214,41 @@ async function buildNotificationsAnswer(
   };
 }
 
+async function buildUpcomingAnswer(
+  userId: string,
+  days: number,
+  now: Date,
+): Promise<UpcomingAnswer> {
+  const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const [overview, requests, notifications, currentWeek, followingWeek] = await Promise.all([
+    getSemesterOverview(userId, undefined, now),
+    getActiveRequestsForUser(userId),
+    getNotificationsForUser(userId, { category: "DEADLINES" }, undefined, now),
+    getWeekSchedule(userId, now),
+    getWeekSchedule(userId, nextWeek),
+  ]);
+
+  const exams = overview ? toUpcomingExamAnswers(overview.session, now).exams : [];
+  const requestAnswers = selectRequestAnswers(requests, AI_MAX_REQUESTS).items;
+  const noticeAnswers = selectNotificationAnswers(notifications.items, AI_MAX_NOTIFICATIONS).items;
+  const deadlineResult = toUpcomingDeadlineAnswers(exams, requestAnswers, noticeAnswers, now, days);
+  const scheduleDays = [currentWeek, followingWeek].flatMap((week) =>
+    week ? week.days.map(toScheduleDayAnswer) : [],
+  );
+  const changeResult = toUpcomingChangeAnswers(scheduleDays, now, days);
+
+  return {
+    available: true,
+    horizonDays: days,
+    deadlines: deadlineResult.items,
+    changes: changeResult.items,
+    truncated: deadlineResult.truncated || changeResult.truncated,
+  };
+}
+
 /**
- * Собирает четыре read-only инструмента для одного студента.
+ * Собирает пять read-only инструментов для одного студента.
  *
  * `userId` замыкается здесь и не попадает ни в схемы входа, ни в описания;
  * `now` фиксирует «сегодня» для расписания и экзаменов, поэтому ответ
@@ -268,6 +306,17 @@ export function createAiTools(
           context,
           { available: false, items: [], unreadCount: 0, truncated: false },
           () => buildNotificationsAnswer(userId, category, limit, now),
+        ),
+    }),
+    getUpcoming: tool({
+      description:
+        "Ближайшие дедлайны, экзамены, сроки заявок и изменения расписания. Только чтение.",
+      inputSchema: upcomingToolInputSchema,
+      execute: async ({ days }) =>
+        runTool<UpcomingAnswer>(
+          context,
+          { available: false, horizonDays: days, deadlines: [], changes: [], truncated: false },
+          () => buildUpcomingAnswer(userId, days, now),
         ),
     }),
   };

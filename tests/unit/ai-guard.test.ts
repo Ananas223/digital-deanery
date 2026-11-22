@@ -13,11 +13,12 @@ import { AI_TOOL_NAMES, createAiTools } from "@/lib/ai/tools";
 const NOW = new Date("2026-11-18T09:00:00.000Z");
 
 describe("закрытый список инструментов", () => {
-  it("создаёт ровно четыре инструмента из AI_TOOL_NAMES", () => {
+  it("создаёт ровно пять инструментов из AI_TOOL_NAMES", () => {
     const tools = createAiTools("user-1", NOW);
 
     expect(Object.keys(tools).sort()).toEqual([...AI_TOOL_NAMES].sort());
     expect(Object.keys(tools)).toHaveLength(AI_TOOL_NAMES.length);
+    expect(AI_TOOL_NAMES).toHaveLength(5);
   });
 
   it("не расширяется враждебным текстом", () => {
@@ -25,7 +26,7 @@ describe("закрытый список инструментов", () => {
     const tools = createAiTools(hostile, NOW);
 
     expect(Object.keys(tools).sort()).toEqual([...AI_TOOL_NAMES].sort());
-    expect(Object.keys(tools)).toHaveLength(4);
+    expect(Object.keys(tools)).toHaveLength(5);
   });
 
   it("не упоминает userId ни в одном описании", () => {
