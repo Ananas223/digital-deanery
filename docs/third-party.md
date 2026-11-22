@@ -21,6 +21,8 @@
 | OpenRouter provider   | Адаптер OpenRouter для AI SDK (`@openrouter/ai-sdk-provider@2.10.0`)     | Apache-2.0         | https://openrouter.ai                                                                 |
 | AI SDK provider types | Типы провайдера v3 для тестов (`@ai-sdk/provider@3.0.19`, dev)           | Apache-2.0         | https://sdk.vercel.ai                                                                 |
 | Playwright            | E2E-тесты                                                                | Apache-2.0         | https://playwright.dev                                                                |
+| @axe-core/playwright  | Автоматический аудит доступности WCAG 2.1 AA (`4.14.0`, dev)             | MPL-2.0            | https://github.com/dequelabs/axe-core-npm                                             |
+| Lighthouse            | Аудит производительности и доступности (`13.6.0`, запуск через `npx`)    | Apache-2.0         | https://github.com/GoogleChrome/lighthouse                                            |
 | Vitest                | Юнит- и интеграционные тесты                                             | MIT                | https://vitest.dev                                                                    |
 
 ## Правила ведения
