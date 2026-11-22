@@ -443,6 +443,45 @@ describe("список и карточка заявки", () => {
     expect(detail?.canCancel).toBe(true);
   });
 
+  it("читает статус и последнюю историю из одного снимка при конкурентных переходах", async () => {
+    const created = await createStudy(fixture.annaId);
+
+    // Прямые обновления пары «статус + история» имитируют конкурентного
+    // сотрудника. Читатель не должен увидеть статус из одного перехода,
+    // а историю — из другого (`BE-005`).
+    const writes = (async () => {
+      for (let index = 0; index < 24; index += 1) {
+        const forward = index % 2 === 0;
+        await prisma.$transaction([
+          prisma.request.update({
+            where: { id: created.id },
+            data: { status: forward ? "IN_PROGRESS" : "NEW" },
+          }),
+          prisma.requestStatusHistory.create({
+            data: {
+              requestId: created.id,
+              fromStatus: forward ? "NEW" : "IN_PROGRESS",
+              toStatus: forward ? "IN_PROGRESS" : "NEW",
+              comment: `Конкурентный переход ${index + 1}`,
+            },
+          }),
+        ]);
+      }
+    })();
+
+    const reads = Array.from({ length: 48 }, async () => {
+      const detail = await getRequest(
+        { userId: fixture.employeeId, role: "DEAN_EMPLOYEE" },
+        created.id,
+      );
+
+      expect(detail).not.toBeNull();
+      expect(detail?.history.at(-1)?.toStatus).toBe(detail?.status);
+    });
+
+    await Promise.all([writes, ...reads]);
+  });
+
   it("возвращает null на чужой идентификатор", async () => {
     const created = await createStudy(fixture.annaId);
 
