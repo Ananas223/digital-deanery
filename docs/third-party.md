@@ -24,6 +24,8 @@
 | @axe-core/playwright  | Автоматический аудит доступности WCAG 2.1 AA (`4.14.0`, dev)             | MPL-2.0            | https://github.com/dequelabs/axe-core-npm                                             |
 | Lighthouse            | Аудит производительности и доступности (`13.6.0`, запуск через `npx`)    | Apache-2.0         | https://github.com/GoogleChrome/lighthouse                                            |
 | Vitest                | Юнит- и интеграционные тесты                                             | MIT                | https://vitest.dev                                                                    |
+| qrcode                | Генерация QR-кода на печатном бланке справки (`qrcode@1.5.4`)            | MIT                | https://github.com/soldair/node-qrcode                                                |
+| @types/qrcode         | Типы `qrcode` для TypeScript (`@types/qrcode@1.5.6`, dev)                | MIT                | https://www.npmjs.com/package/@types/qrcode                                           |
 
 ## Правила ведения
 

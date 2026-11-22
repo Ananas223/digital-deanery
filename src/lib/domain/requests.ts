@@ -2,6 +2,7 @@ import "server-only";
 
 import { Prisma } from "@/generated/prisma/client";
 import type { RequestStatus } from "@/generated/prisma/enums";
+import { generateVerifyCode, isCertificateType } from "@/lib/domain/certificates";
 import { prisma } from "@/lib/db/prisma";
 import { AppError } from "@/lib/errors";
 import {
@@ -30,6 +31,9 @@ import { REQUEST_TYPE_CODES, requestPayloadSchema } from "@/lib/validation/reque
 /** Сколько заявок студент может создать за скользящее окно. */
 export const REQUEST_RATE_LIMIT = 10;
 export const REQUEST_RATE_WINDOW_MS = 10 * 60 * 1000;
+
+/** Коллизия `verifyCode` разрешается повторной генерацией, не более трёх попыток. */
+export const VERIFY_CODE_MAX_ATTEMPTS = 3;
 
 export type RequestActor = {
   userId: string;
@@ -237,39 +241,47 @@ export async function createRequestForUser(
     return ensureSameType(existing, input.typeCode);
   }
 
-  try {
-    return await prisma.$transaction(async (tx) => {
-      const type = await tx.requestType.findFirst({
-        where: { code: input.typeCode, isActive: true },
-        select: { id: true, title: true, processingDays: true },
-      });
+  // Код проверки выдаётся только справкам; у остальных типов он остаётся `null`.
+  const issuesVerifyCode = isCertificateType(input.typeCode);
+  const maxAttempts = issuesVerifyCode ? VERIFY_CODE_MAX_ATTEMPTS : 1;
+  let lastCollision: unknown;
 
-      if (!type) {
-        throw new AppError("VALIDATION", { userMessage: "Выбранный тип заявки недоступен." });
-      }
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const verifyCode = issuesVerifyCode ? generateVerifyCode() : null;
 
-      if (input.typeCode === "RETAKE") {
-        const discipline = await tx.discipline.findUnique({
-          where: { id: input.payload.disciplineId },
-          select: { id: true },
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const type = await tx.requestType.findFirst({
+          where: { code: input.typeCode, isActive: true },
+          select: { id: true, title: true, processingDays: true },
         });
 
-        if (!discipline) {
-          throw new AppError("VALIDATION", { userMessage: "Выбранная дисциплина не найдена." });
+        if (!type) {
+          throw new AppError("VALIDATION", { userMessage: "Выбранный тип заявки недоступен." });
         }
-      }
 
-      const windowStart = new Date(now.getTime() - REQUEST_RATE_WINDOW_MS);
-      const recentCount = await tx.request.count({
-        where: { studentId, createdAt: { gte: windowStart, lte: now } },
-      });
+        if (input.typeCode === "RETAKE") {
+          const discipline = await tx.discipline.findUnique({
+            where: { id: input.payload.disciplineId },
+            select: { id: true },
+          });
 
-      if (recentCount >= REQUEST_RATE_LIMIT) {
-        throw new AppError("RATE_LIMITED");
-      }
+          if (!discipline) {
+            throw new AppError("VALIDATION", { userMessage: "Выбранная дисциплина не найдена." });
+          }
+        }
 
-      const year = getMoscowYear(now);
-      const [sequence] = await tx.$queryRaw<Array<{ lastNumber: number }>>`
+        const windowStart = new Date(now.getTime() - REQUEST_RATE_WINDOW_MS);
+        const recentCount = await tx.request.count({
+          where: { studentId, createdAt: { gte: windowStart, lte: now } },
+        });
+
+        if (recentCount >= REQUEST_RATE_LIMIT) {
+          throw new AppError("RATE_LIMITED");
+        }
+
+        const year = getMoscowYear(now);
+        const [sequence] = await tx.$queryRaw<Array<{ lastNumber: number }>>`
         INSERT INTO "request_number_sequence" ("year", "lastNumber")
         VALUES (${year}, 1)
         ON CONFLICT ("year")
@@ -277,73 +289,82 @@ export async function createRequestForUser(
         RETURNING "lastNumber"
       `;
 
-      if (!sequence) {
-        throw new AppError("INTERNAL");
+        if (!sequence) {
+          throw new AppError("INTERNAL");
+        }
+
+        const number = `З-${year}-${String(sequence.lastNumber).padStart(6, "0")}`;
+        const dueAt = addMoscowWorkingDays(now, type.processingDays);
+
+        const request = await tx.request.create({
+          data: {
+            number,
+            studentId,
+            typeId: type.id,
+            status: "NEW",
+            payload: input.payload as Prisma.InputJsonValue,
+            clientRequestId: input.clientRequestId,
+            ...(verifyCode ? { verifyCode } : {}),
+            dueAt,
+            createdAt: now,
+            updatedAt: now,
+          },
+          select: summarySelect,
+        });
+
+        const history = await tx.requestStatusHistory.create({
+          data: {
+            requestId: request.id,
+            fromStatus: null,
+            toStatus: "NEW",
+            changedById: userId,
+            createdAt: now,
+          },
+          select: { id: true },
+        });
+
+        const content = buildRequestCreatedNotification(number);
+
+        await tx.notification.create({
+          data: {
+            category: "REQUESTS",
+            source: REQUEST_NOTIFICATION_SOURCE,
+            priority: content.priority,
+            title: content.title,
+            body: content.body,
+            audienceType: "STUDENT",
+            audienceStudentId: studentId,
+            targetType: "REQUEST",
+            targetId: request.id,
+            dedupeKey: getRequestStatusDedupeKey(request.id, history.id),
+            publishedAt: now,
+          },
+        });
+
+        return toCreated(request);
+      });
+    } catch (error) {
+      if (!isUniqueConstraintError(error)) {
+        throw error;
       }
 
-      const number = `З-${year}-${String(sequence.lastNumber).padStart(6, "0")}`;
-      const dueAt = addMoscowWorkingDays(now, type.processingDays);
+      // Параллельная отправка с тем же ключом: возвращаем уже созданную заявку.
+      const raced = await findByIdempotencyKey(studentId, input.clientRequestId);
 
-      const request = await tx.request.create({
-        data: {
-          number,
-          studentId,
-          typeId: type.id,
-          status: "NEW",
-          payload: input.payload as Prisma.InputJsonValue,
-          clientRequestId: input.clientRequestId,
-          dueAt,
-          createdAt: now,
-          updatedAt: now,
-        },
-        select: summarySelect,
-      });
+      if (raced) {
+        return ensureSameType(raced, input.typeCode);
+      }
 
-      const history = await tx.requestStatusHistory.create({
-        data: {
-          requestId: request.id,
-          fromStatus: null,
-          toStatus: "NEW",
-          changedById: userId,
-          createdAt: now,
-        },
-        select: { id: true },
-      });
+      if (!issuesVerifyCode) {
+        throw error;
+      }
 
-      const content = buildRequestCreatedNotification(number);
-
-      await tx.notification.create({
-        data: {
-          category: "REQUESTS",
-          source: REQUEST_NOTIFICATION_SOURCE,
-          priority: content.priority,
-          title: content.title,
-          body: content.body,
-          audienceType: "STUDENT",
-          audienceStudentId: studentId,
-          targetType: "REQUEST",
-          targetId: request.id,
-          dedupeKey: getRequestStatusDedupeKey(request.id, history.id),
-          publishedAt: now,
-        },
-      });
-
-      return toCreated(request);
-    });
-  } catch (error) {
-    if (!isUniqueConstraintError(error)) {
-      throw error;
+      // Коллизия `verifyCode`: повторяем всю транзакцию с новым кодом.
+      lastCollision = error;
     }
-
-    // Параллельная отправка с тем же ключом: возвращаем уже созданную заявку.
-    const raced = await findByIdempotencyKey(studentId, input.clientRequestId);
-
-    if (!raced) {
-      throw error;
-    }
-
-    return ensureSameType(raced, input.typeCode);
   }
+
+  throw new AppError("INTERNAL", { cause: lastCollision });
 }
 
 /** Заявки текущего студента от новых к старым; чужой профиль недоступен. */
