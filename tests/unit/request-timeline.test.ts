@@ -22,18 +22,8 @@ describe("buildRequestTimeline", () => {
       history: [{ toStatus: "NEW", createdAt: CREATED_AT }],
     });
 
-    expect(timeline.map((step) => step.label)).toEqual([
-      "Подана",
-      "Принята",
-      "В работе",
-      "Готова",
-    ]);
-    expect(timeline.map((step) => step.state)).toEqual([
-      "done",
-      "current",
-      "upcoming",
-      "upcoming",
-    ]);
+    expect(timeline.map((step) => step.label)).toEqual(["Подана", "Принята", "В работе", "Готова"]);
+    expect(timeline.map((step) => step.state)).toEqual(["done", "current", "upcoming", "upcoming"]);
     expect(timeline[1]?.at).toEqual(CREATED_AT);
     expect(timeline[2]?.at).toBeNull();
     expect(timeline[3]?.at).toBeNull();
@@ -49,12 +39,7 @@ describe("buildRequestTimeline", () => {
       ],
     });
 
-    expect(timeline.map((step) => step.state)).toEqual([
-      "done",
-      "done",
-      "current",
-      "upcoming",
-    ]);
+    expect(timeline.map((step) => step.state)).toEqual(["done", "done", "current", "upcoming"]);
     expect(timeline[2]?.at).toEqual(IN_PROGRESS_AT);
   });
 

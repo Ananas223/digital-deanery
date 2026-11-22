@@ -179,10 +179,7 @@ function notificationHref(item: NotificationItem): string {
   return item.category === "REQUESTS" ? "/requests" : "/schedule";
 }
 
-function buildMorningChanges(
-  items: readonly NotificationItem[],
-  now: Date,
-): MorningBriefChange[] {
+function buildMorningChanges(items: readonly NotificationItem[], now: Date): MorningBriefChange[] {
   const since = now.getTime() - MORNING_CHANGES_WINDOW_MS;
 
   return items

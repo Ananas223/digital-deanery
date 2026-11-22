@@ -12,10 +12,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { isCertificateType } from "@/lib/domain/certificates";
 import type { RequestDetail } from "@/lib/domain/requests";
 import { REQUEST_STATUS_LABELS } from "@/lib/domain/request-status";
-import {
-  buildRequestTimeline,
-  type RequestTimelineState,
-} from "@/lib/domain/request-timeline";
+import { buildRequestTimeline, type RequestTimelineState } from "@/lib/domain/request-timeline";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { requestPayloadSchema } from "@/lib/validation/requests";

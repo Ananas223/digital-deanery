@@ -19,9 +19,7 @@ async function openCreatedRequest(page: Page) {
   await expect(page.getByText("Новая", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Открыть заявку", exact: true }).click();
   await expect(page).toHaveURL(/\/requests\/[a-z0-9]+$/);
-  await expect(
-    page.getByRole("heading", { name: "Доставка заявки", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Доставка заявки", exact: true })).toBeVisible();
   await expect(page.getByRole("list", { name: "Ход обработки заявки" })).toBeVisible();
   await expect(page.getByText("Кто держит заявку", { exact: true })).toBeVisible();
   return { path: new URL(page.url()).pathname, number: number! };

@@ -300,7 +300,9 @@ describe("getMorningBrief: карточка «Требует действия»"
       makeRequest({ id: "ready", status: "READY", dueAt: null }),
       makeRequest({ id: "due", dueAt: new Date("2026-11-18T10:00:00.000Z") }),
     ]);
-    mocks.getSemesterOverview.mockResolvedValue(makeOverview({ summary: makeSummary({ debtCount: 2 }) }));
+    mocks.getSemesterOverview.mockResolvedValue(
+      makeOverview({ summary: makeSummary({ debtCount: 2 }) }),
+    );
 
     const data = await getMorningBrief(USER_ID, NOW);
 
@@ -314,7 +316,9 @@ describe("getMorningBrief: карточка «Требует действия»"
     mocks.getRequestsForMorningBrief.mockResolvedValue([
       makeRequest({ id: "due", dueAt: new Date("2026-11-18T10:00:00.000Z") }),
     ]);
-    mocks.getSemesterOverview.mockResolvedValue(makeOverview({ summary: makeSummary({ debtCount: 2 }) }));
+    mocks.getSemesterOverview.mockResolvedValue(
+      makeOverview({ summary: makeSummary({ debtCount: 2 }) }),
+    );
 
     const data = await getMorningBrief(USER_ID, NOW);
 

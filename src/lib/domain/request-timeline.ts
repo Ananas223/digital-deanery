@@ -24,10 +24,7 @@ export type RequestTimelineInput = {
   rejectionReason: string | null;
 };
 
-function historyAt(
-  history: readonly TimelineHistoryEntry[],
-  status: RequestStatus,
-): Date | null {
+function historyAt(history: readonly TimelineHistoryEntry[], status: RequestStatus): Date | null {
   return history.find((entry) => entry.toStatus === status)?.createdAt ?? null;
 }
 
@@ -86,11 +83,7 @@ export function buildRequestTimeline(request: RequestTimelineInput): RequestTime
         : "Деканат обрабатывает обращение.",
     at: inProgressAt,
     state:
-      request.status === "IN_PROGRESS"
-        ? "current"
-        : request.status === "NEW"
-          ? "upcoming"
-          : "done",
+      request.status === "IN_PROGRESS" ? "current" : request.status === "NEW" ? "upcoming" : "done",
     tone: "neutral",
   });
 
