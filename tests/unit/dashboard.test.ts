@@ -12,7 +12,9 @@ const mocks = vi.hoisted(() => ({
   getTodaySchedule: vi.fn(),
   getSemesterOverview: vi.fn(),
   getActiveRequestsForUser: vi.fn(),
+  getRequestsForMorningBrief: vi.fn(),
   getUnreadNotificationsForUser: vi.fn(),
+  getNotificationsForUser: vi.fn(),
 }));
 
 vi.mock("@/lib/domain/profile", () => ({ getStudentProfile: mocks.getStudentProfile }));
@@ -20,9 +22,11 @@ vi.mock("@/lib/domain/schedule", () => ({ getTodaySchedule: mocks.getTodaySchedu
 vi.mock("@/lib/domain/grades", () => ({ getSemesterOverview: mocks.getSemesterOverview }));
 vi.mock("@/lib/domain/requests", () => ({
   getActiveRequestsForUser: mocks.getActiveRequestsForUser,
+  getRequestsForMorningBrief: mocks.getRequestsForMorningBrief,
 }));
 vi.mock("@/lib/domain/notifications", () => ({
   getUnreadNotificationsForUser: mocks.getUnreadNotificationsForUser,
+  getNotificationsForUser: mocks.getNotificationsForUser,
   UNREAD_PREVIEW_DEFAULT_LIMIT: 3,
 }));
 
