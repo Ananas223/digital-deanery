@@ -124,7 +124,7 @@ Lighthouse 13.6.0 запускался на production-сборке `next start`
 | 21.11.2026    | `V4-FE-FINISH-001`: четыре задачи и четыре гейта  | GPT-6.2 Sol (OpenCode)          | `5862c8d`, база `b1369a9`                                        | 0 — без делегирования                                                             | 2+       | 419 / 91 и 94 · Android                     |
 | 22.11.2026    | `V4-FIX-001`: P7, axe/Lighthouse и `BE-005`       | DeepSeek V4.1 Flash 1017        | `98f0776`, `abe2dc4`, `d3329ef`, `c289dcd`, `e12e6c2`            | 0 — без делегирования                                                             | 2        | да · 420 / 124 · axe 13/13 · keyboard 13/13 |
 | 22.11.2026    | `P10-IDEA-02`–`P10-IDEA-04`: QR, прогноз, `.ics`  | DeepSeek V4.1 Flash 1017        | `0e76c26`, `8c11b40`, `9102f8a`, `9b77c9a`, `c208da8`            | 3: QR, прогноз, `.ics`                                                            | 2        | да · 468 / 40 целевых · build               |
-| 22.11.2026    | `P9-AI-FIX-01`: Блик с реальным провайдером       | DeepSeek V4.1 Flash 1017        | —                                                                | 0 — без делегирования                                                             | 1        | да · 5/5 `ai-provider` · typecheck · lint   |
+| 22.11.2026    | `P9-AI-FIX-01`: Блик с реальным провайдером       | DeepSeek V4.1 Flash 1017        | `837d95c`                                                        | 0 — без делегирования                                                             | 1        | да · 5/5 `ai-provider` · typecheck · lint   |
 
 Как читать колонки:
 
