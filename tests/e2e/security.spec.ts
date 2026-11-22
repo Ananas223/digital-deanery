@@ -54,11 +54,15 @@ test.describe("US-10: разделение данных", () => {
   test("чужая заявка по прямому адресу не раскрывается", async ({ annaPage, markPage }) => {
     await markPage.goto("/requests");
     // На странице есть ссылка «Новая заявка» (`/requests/new`); нужна карточка с идентификатором.
-    const foreignHref = await markPage.locator('a[href^="/requests/"]').evaluateAll((links) =>
-      links
-        .map((link) => link.getAttribute("href"))
-        .find((href) => href !== null && /^\/requests\/[^/]+$/.test(href) && href !== "/requests/new"),
-    );
+    const foreignHref = await markPage
+      .locator('a[href^="/requests/"]')
+      .evaluateAll((links) =>
+        links
+          .map((link) => link.getAttribute("href"))
+          .find(
+            (href) => href !== null && /^\/requests\/[^/]+$/.test(href) && href !== "/requests/new",
+          ),
+      );
     expect(foreignHref).toBeTruthy();
 
     const response = await annaPage.goto(foreignHref!);
