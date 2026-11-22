@@ -12,7 +12,9 @@ function hasSessionCookie(request: NextRequest): boolean {
  * Без cookie сессии сразу отправляем на вход и сохраняем запрошенный путь.
  * Это только редирект: личность и права по-прежнему проверяются на сервере
  * рядом с данными (`AGENTS.md` § 3.2). Публичная проверка справки `/verify`
- * открыта без сессии: решение о данных принимает страница.
+ * открыта без сессии: решение о данных принимает страница. Проба живости
+ * `/api/health` тоже публична: контейнеру нужен ответ до появления сессии,
+ * а маршрут отдаёт только состояние БД без персональных данных.
  */
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -20,6 +22,7 @@ export function proxy(request: NextRequest) {
   if (
     pathname === "/login" ||
     pathname.startsWith("/api/auth") ||
+    pathname === "/api/health" ||
     pathname === "/verify" ||
     pathname.startsWith("/verify/")
   ) {

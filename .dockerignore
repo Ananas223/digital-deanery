@@ -1,0 +1,35 @@
+# Контекст сборки Docker-образа (см. Dockerfile).
+# Всё, что пересоздаётся внутри образа или не нужно рантайму, исключаем.
+
+# Зависимости и артефакты сборки
+node_modules
+.next
+out
+build
+coverage
+
+# Окружение и секреты: в образ не попадают ни реальные, ни локальные файлы
+.env
+.env.*
+
+# Тесты, отчёты и браузерные профили
+playwright-report
+test-results
+blob-report
+.auth
+*.log
+
+# Документация, служебные материалы и конфигурация инструментов
+docs
+.github
+.idea
+.vscode
+.impeccable
+.playwright-mcp
+AGENTS.md
+DESIGN.md
+HackTask.md
+README.md
+brainstorm-results.md
+.measure-bundle.mjs
+tsconfig.tsbuildinfo

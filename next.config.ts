@@ -36,6 +36,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Самодостаточная сборка для Docker-образа (см. Dockerfile): рантайм
+  // получает `server.js` и только те модули, которые реально импортируются.
+  output: "standalone",
   typedRoutes: true,
   poweredByHeader: false,
   // Не даём `next dev` дописывать служебные правила в AGENTS.md.
