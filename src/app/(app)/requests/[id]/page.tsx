@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 import { EmployeeStatusForm } from "@/components/requests/employee-status-form";
 import { RequestPayloadView } from "@/components/requests/request-payload-view";
@@ -19,13 +20,28 @@ import { REQUEST_STATUS_LABELS } from "@/lib/domain/request-status";
 import { formatDateTime } from "@/lib/format";
 import { requestPayloadSchema, type RequestTypeCode } from "@/lib/validation/requests";
 
-export const metadata: Metadata = {
-  title: "Карточка заявки",
-};
-
 type RequestCardPageProps = {
   params: Promise<{ id: string }>;
 };
+
+const loadRequest = cache(getRequest);
+
+/**
+ * Проверка существования и доступа до начала стриминга.
+ *
+ * `notFound()` из тела страницы при включённом `loading.tsx` уже не может
+ * изменить HTTP-статус: оболочка отправлена. Метаданные резолвятся раньше,
+ * поэтому чужой или несуществующий идентификатор получает честный 404.
+ */
+export async function generateMetadata({ params }: RequestCardPageProps): Promise<Metadata> {
+  const { id } = await params;
+
+  if (!(await loadRequest(id))) {
+    notFound();
+  }
+
+  return { title: "Карточка заявки" };
+}
 
 function hasMixedStatus({ history, status }: Pick<RequestDetail, "history" | "status">) {
   const latest = history.at(-1);
@@ -41,7 +57,7 @@ export default async function RequestCardPage({ params }: RequestCardPageProps) 
   }
 
   const { id } = await params;
-  let request = await getRequest(id);
+  let request = await loadRequest(id);
   if (request && hasMixedStatus(request)) {
     // Read the same authoritative contract once more; never infer permissions from history.
     request = await getRequest(id);

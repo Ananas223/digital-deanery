@@ -21,6 +21,11 @@ process.env["DATABASE_URL"] = testDatabaseUrl;
 process.env["BETTER_AUTH_URL"] = E2E_BASE_URL;
 process.env["NEXT_PUBLIC_APP_URL"] = E2E_BASE_URL;
 
+// E2E никогда не вызывает реальную модель: сценарий Блика проверяет no-network
+// ветку. Пустой ключ перекрывает значение из `.env`, поэтому прогон герметичен.
+process.env["AI_ASSISTANT_ENABLED"] = "true";
+process.env["AI_PROVIDER_API_KEY"] = "";
+
 /**
  * E2E-конфигурация (P0-BE-07, P0-FE-04).
  *
@@ -84,6 +89,8 @@ export default defineConfig({
       DATABASE_URL: testDatabaseUrl,
       BETTER_AUTH_URL: E2E_BASE_URL,
       NEXT_PUBLIC_APP_URL: E2E_BASE_URL,
+      AI_ASSISTANT_ENABLED: "true",
+      AI_PROVIDER_API_KEY: "",
     },
   },
 });

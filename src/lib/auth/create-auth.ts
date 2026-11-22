@@ -17,7 +17,7 @@ function getTrustedOrigins(): string[] {
  * Фабрика используется приложением (`auth.ts`) и seed-скриптом, чтобы пароли
  * хешировались одним и тем же способом Better Auth (scrypt).
  */
-export function createAuth(prisma: PrismaClient) {
+export function createAuth(prisma: PrismaClient, options: { allowSignUp?: boolean } = {}) {
   return betterAuth({
     appName: "Цифровой деканат будущего",
     baseURL: process.env["BETTER_AUTH_URL"],
@@ -28,6 +28,9 @@ export function createAuth(prisma: PrismaClient) {
     }),
     emailAndPassword: {
       enabled: true,
+      // Публичная регистрация закрыта: аккаунты создаёт только seed.
+      // Отдельный экземпляр для seed включается флагом allowSignUp.
+      disableSignUp: !options.allowSignUp,
     },
     session: {
       expiresIn: SESSION_EXPIRES_IN_SECONDS,

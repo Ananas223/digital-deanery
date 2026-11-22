@@ -8,9 +8,9 @@ import NotificationsError from "@/app/(app)/notifications/error";
 import NotificationsLoading from "@/app/(app)/notifications/loading";
 import RequestCardPage from "@/app/(app)/requests/[id]/page";
 import RequestsError from "@/app/(app)/requests/error";
-import RequestsLoading from "@/app/(app)/requests/loading";
+import RequestsLoading from "@/app/(app)/requests/(queue)/loading";
 import ScheduleError from "@/app/(app)/schedule/error";
-import ScheduleLoading from "@/app/(app)/schedule/loading";
+import ScheduleLoading from "@/app/(app)/schedule/(list)/loading";
 import {
   DashboardOverview,
   DashboardOverviewSkeleton,
@@ -94,8 +94,8 @@ describe("Состояния основных разделов", () => {
     { ErrorView: RequestsError, title: "Не удалось загрузить заявки" },
     { ErrorView: NotificationsError, title: "Уведомления не загрузились" },
   ])("$title: предлагает повтор без внутренних деталей", ({ ErrorView, title }) => {
-    const props = { error: unavailable, retry: vi.fn() };
-    const html = renderToStaticMarkup(React.createElement(() => ErrorView(props)));
+    const props = { error: unavailable, reset: vi.fn() };
+    const html = renderToStaticMarkup(React.createElement(ErrorView, props));
     expect(html).toContain('role="alert"');
     expect(html).toContain(title);
     expect(html).toContain("Повторить");

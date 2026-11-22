@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import type { RequestStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db/prisma";
 import { AppError } from "@/lib/errors";
@@ -10,6 +10,7 @@ import {
   getRequestStatusDedupeKey,
   REQUEST_NOTIFICATION_SOURCE,
 } from "@/lib/domain/request-notifications";
+import { assertOwnership } from "@/lib/domain/access";
 import { addMoscowWorkingDays, getMoscowYear } from "@/lib/domain/request-time";
 import {
   canTransition,
@@ -465,41 +466,54 @@ export async function getRequest(
     }
   }
 
-  const request = await prisma.request.findFirst({
-    where: {
-      id: requestId,
-      ...(studentId ? { studentId } : {}),
-    },
-    select: {
-      ...summarySelect,
-      studentId: true,
-      payload: true,
-      assignedTo: { select: { name: true } },
-      student: {
-        select: {
-          studentNumber: true,
-          user: { select: { name: true } },
-          group: { select: { code: true } },
-          faculty: { select: { name: true } },
-          program: { select: { name: true } },
+  // Статус и история читаются в одном снимке `REPEATABLE READ`: иначе два
+  // отдельных SELECT могли попасть по разные стороны от конкурентного перехода
+  // и карточка показала бы противоречивые данные (`BE-005`).
+  const request = await prisma.$transaction(
+    (tx) =>
+      tx.request.findFirst({
+        where: {
+          id: requestId,
+          ...(studentId ? { studentId } : {}),
         },
-      },
-      history: {
-        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: {
-          id: true,
-          fromStatus: true,
-          toStatus: true,
-          comment: true,
-          createdAt: true,
-          changedBy: { select: { name: true } },
+          ...summarySelect,
+          studentId: true,
+          payload: true,
+          assignedTo: { select: { name: true } },
+          student: {
+            select: {
+              studentNumber: true,
+              user: { select: { name: true } },
+              group: { select: { code: true } },
+              faculty: { select: { name: true } },
+              program: { select: { name: true } },
+            },
+          },
+          history: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: {
+              id: true,
+              fromStatus: true,
+              toStatus: true,
+              comment: true,
+              createdAt: true,
+              changedBy: { select: { name: true } },
+            },
+          },
         },
-      },
-    },
-  });
+      }),
+    { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+  );
 
   if (!request) {
     return null;
+  }
+
+  if (actor.role === "STUDENT" && studentId) {
+    // Инвариант поверх фильтра в запросе: даже при будущем рефакторинге выборки
+    // студент не получит чужую заявку — ответ останется нейтральным `NOT_FOUND`.
+    assertOwnership(request.studentId, studentId);
   }
 
   const parsedPayload = requestPayloadSchema.safeParse({
